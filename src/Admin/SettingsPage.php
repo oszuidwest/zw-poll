@@ -21,9 +21,7 @@ final class SettingsPage
     private const PAGE = 'zw-poll-settings';
     private const CAPABILITY = 'manage_options';
 
-    /**
-     * Registers admin hooks.
-     */
+    /** Registers admin hooks. */
     public function register(): void
     {
         add_action('admin_menu', [$this, 'addMenuPage']);
@@ -31,9 +29,7 @@ final class SettingsPage
         add_filter('option_page_capability_' . self::OPTION_GROUP, [$this, 'optionPageCapability']);
     }
 
-    /**
-     * Adds a settings submenu under Polls.
-     */
+    /** Adds a settings submenu under Polls. */
     public function addMenuPage(): void
     {
         add_submenu_page(
@@ -46,17 +42,13 @@ final class SettingsPage
         );
     }
 
-    /**
-     * Returns the capability required by options.php for this option group.
-     */
+    /** Returns the capability required by options.php for this option group. */
     public function optionPageCapability(): string
     {
         return self::CAPABILITY;
     }
 
-    /**
-     * Registers the settings schema and fields.
-     */
+    /** Registers the settings schema and fields. */
     public function registerSettings(): void
     {
         register_setting(self::OPTION_GROUP, Settings::OPTION, [
@@ -68,6 +60,21 @@ final class SettingsPage
         if (!current_user_can(self::CAPABILITY)) {
             return;
         }
+
+        add_settings_section(
+            'zw_poll_display',
+            __('Weergave', 'zw-poll'),
+            [$this, 'renderDisplaySection'],
+            self::PAGE
+        );
+        add_settings_field(
+            'zw_poll_total_min_votes',
+            __('Minimumaantal stemmen voor zichtbaar totaal', 'zw-poll'),
+            [$this, 'renderTotalMinVotesField'],
+            self::PAGE,
+            'zw_poll_display',
+            ['label_for' => 'zw_poll_total_min_votes']
+        );
 
         add_settings_section(
             'zw_poll_voting',
@@ -122,9 +129,7 @@ final class SettingsPage
         );
     }
 
-    /**
-     * Renders the settings page wrapper.
-     */
+    /** Renders the settings page wrapper. */
     public function render(): void
     {
         if (!current_user_can(self::CAPABILITY)) {
@@ -141,9 +146,7 @@ final class SettingsPage
         echo '</div>';
     }
 
-    /**
-     * Renders the voting section description.
-     */
+    /** Renders the voting section description. */
     public function renderVotingSection(): void
     {
         echo '<p>' . esc_html__(
@@ -152,9 +155,27 @@ final class SettingsPage
         ) . '</p>';
     }
 
-    /**
-     * Renders the uninstall section description.
-     */
+    /** Renders the display section description. */
+    public function renderDisplaySection(): void
+    {
+        echo '<p>' . esc_html__(
+            'Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd bij polls die de site-instelling volgen.',
+            'zw-poll'
+        ) . '</p>';
+    }
+
+    /** Renders the site-wide total vote threshold. */
+    public function renderTotalMinVotesField(): void
+    {
+        $this->renderNumber(
+            'total_min_votes',
+            Settings::TOTAL_MIN_VOTES_MIN,
+            Settings::TOTAL_MIN_VOTES_MAX,
+            __('Per poll kan hiervan worden afgeweken.', 'zw-poll')
+        );
+    }
+
+    /** Renders the uninstall section description. */
     public function renderUninstallSection(): void
     {
         echo '<p>' . esc_html__(
@@ -163,9 +184,7 @@ final class SettingsPage
         ) . '</p>';
     }
 
-    /**
-     * Renders the rate-limit enabled checkbox.
-     */
+    /** Renders the rate-limit enabled checkbox. */
     public function renderRateLimitEnabledField(): void
     {
         $this->renderCheckbox(
@@ -175,17 +194,13 @@ final class SettingsPage
         );
     }
 
-    /**
-     * Renders the rate-limit maximum field.
-     */
+    /** Renders the rate-limit maximum field. */
     public function renderRateLimitMaxField(): void
     {
         $this->renderNumber('rate_limit_max', Settings::RATE_LIMIT_MAX_MIN, Settings::RATE_LIMIT_MAX_MAX);
     }
 
-    /**
-     * Renders the rate-limit window field.
-     */
+    /** Renders the rate-limit window field. */
     public function renderRateLimitWindowField(): void
     {
         $this->renderNumber(
@@ -196,9 +211,7 @@ final class SettingsPage
         );
     }
 
-    /**
-     * Renders the proxy header dropdown.
-     */
+    /** Renders the proxy header dropdown. */
     public function renderProxyHeaderField(): void
     {
         $settings = Settings::get();
@@ -240,9 +253,7 @@ final class SettingsPage
         ) . '</p>';
     }
 
-    /**
-     * Renders the uninstall cleanup checkbox.
-     */
+    /** Renders the uninstall cleanup checkbox. */
     public function renderDeleteDataOnUninstallField(): void
     {
         $this->renderCheckbox(

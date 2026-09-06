@@ -10,21 +10,18 @@ declare(strict_types=1);
 namespace ZuidWest\Poll\Admin;
 
 use ZuidWest\Poll\PostType\PollPostType;
+use ZuidWest\Poll\Support\Settings;
 use WP_Post;
 
 /**
- * Lets editors manage poll options from the classic edit screen, so polls remain
- * fully usable on classic-editor sites. The question itself is the post title,
- * which core saves.
+ * Manages poll fields on the classic edit screen; core saves the question as the title.
  */
 final class PollEditForm
 {
     private const NONCE_ACTION = 'zw_poll_edit_form';
     private const NONCE_FIELD = 'zw_poll_edit_form_nonce';
 
-    /**
-     * Registers edit form hooks.
-     */
+    /** Registers edit form hooks. */
     public function register(): void
     {
         // Registering at 9 (before PollMetaBoxes at 10) renders this box
@@ -35,9 +32,7 @@ final class PollEditForm
         add_action('admin_notices', [$this, 'renderIncompleteNotice']);
     }
 
-    /**
-     * Adds the poll edit meta boxes.
-     */
+    /** Adds the poll edit meta boxes. */
     public function addMetaBoxes(): void
     {
         add_meta_box(
@@ -47,6 +42,14 @@ final class PollEditForm
             PollPostType::POST_TYPE,
             'normal',
             'high'
+        );
+        add_meta_box(
+            'zw-poll-planning',
+            __('Planning', 'zw-poll'),
+            [$this, 'renderPlanning'],
+            PollPostType::POST_TYPE,
+            'side',
+            'default'
         );
         add_meta_box(
             'zw-poll-display',
@@ -71,13 +74,7 @@ final class PollEditForm
             : $placeholder;
     }
 
-    /**
-     * Warns when a published poll is not renderable for readers.
-     *
-     * Uses the same displayability predicate as the frontend gate
-     * (PollPostType::isComplete), so the warning and the render path
-     * can never drift apart.
-     */
+    /** Warns when a published poll is not renderable for readers. */
     public function renderIncompleteNotice(): void
     {
         // Only the post editor screen has the post type as its id; the list
@@ -94,7 +91,7 @@ final class PollEditForm
         $options = PollPostType::options($post->ID);
         if (!PollPostType::isComplete($post->post_title, $options)) {
             printf(
-                '<div class="notice notice-warning"><p>%s</p></div>',
+                '<div class="notice notice-warning zw-poll-incomplete-notice"><p>%s</p></div>',
                 esc_html(sprintf(
                     /* translators: %d: minimum number of answers. */
                     __(
@@ -175,37 +172,76 @@ final class PollEditForm
     /**
      * Renders the display settings meta box.
      *
-     * The hidden "0" makes the browser always submit the field while this box
-     * renders; a checked checkbox overrides it with "1". A missing field thus
-     * means the box was removed, and save() keeps the stored setting.
-     *
      * @param WP_Post $post Poll post.
      */
     public function renderDisplay(WP_Post $post): void
     {
+        $visibility = PollPostType::totalVisibility($post->ID);
+        $total_min_votes = Settings::get()['total_min_votes'];
         wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
         ?>
-<input type="hidden" name="zw_poll_show_total" value="0">
-<label class="zw-poll-edit-display">
-    <input type="checkbox" name="zw_poll_show_total" value="1" <?php checked(!PollPostType::hidesTotal($post->ID)); ?>>
-    <?php esc_html_e('Totaal aantal stemmen tonen', 'zw-poll'); ?>
-</label>
-<p class="description"><?php esc_html_e('Uitgeschakeld: lezers zien alleen percentages, geen totaal onder de resultaten.', 'zw-poll'); ?></p>
+<fieldset class="zw-poll-edit-display" aria-describedby="zw-poll-total-visibility-description">
+    <legend><?php esc_html_e('Totaal aantal stemmen', 'zw-poll'); ?></legend>
+    <div class="zw-poll-edit-display__options">
+        <?php foreach (self::totalVisibilityLabels() as $value => $label) : ?>
+            <label>
+                <input
+                    type="radio"
+                    name="zw_poll_total_visibility"
+                    value="<?php echo esc_attr($value); ?>"
+                    <?php checked($visibility, $value); ?>
+                >
+                <?php echo esc_html($label); ?>
+            </label>
+        <?php endforeach; ?>
+    </div>
+</fieldset>
+<p id="zw-poll-total-visibility-description" class="description zw-poll-edit-display__description"><?php echo esc_html(self::totalVisibilityDescription($total_min_votes)); ?></p>
+        <?php
+    }
+
+    /**
+     * Renders the poll closing deadline in the site timezone.
+     *
+     * @param WP_Post $post Poll post.
+     */
+    public function renderPlanning(WP_Post $post): void
+    {
+        $value = PollPostType::formatClosesAt(PollPostType::closesAt($post->ID), PollPostType::DEADLINE_INPUT_FORMAT);
+
+        wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
+        ?>
+<p class="zw-poll-edit-planning">
+    <label for="zw-poll-closes-at"><?php esc_html_e('Einddatum', 'zw-poll'); ?></label>
+    <input
+        type="datetime-local"
+        id="zw-poll-closes-at"
+        name="zw_poll_closes_at"
+        class="widefat"
+        value="<?php echo esc_attr($value); ?>"
+        data-now="<?php echo esc_attr((string) wp_date(PollPostType::DEADLINE_INPUT_FORMAT)); ?>"
+    >
+</p>
+<p class="description">
+    <?php esc_html_e('Datum en tijd gebruiken de tijdzone van deze site.', 'zw-poll'); ?>
+</p>
+<div class="notice notice-warning notice-alt inline zw-poll-edit-planning__warning" role="status" hidden>
+    <p><?php esc_html_e('Deze datum is al verstreken. De poll sluit bij de eerstvolgende controle.', 'zw-poll'); ?></p>
+</div>
         <?php
     }
 
     /**
      * Persists the classic form fields.
      *
-     * REST saves never carry this nonce; they
-     * return early here and keep their own meta payload authoritative. The
-     * question is not handled here: it is the post title, which core saves.
-     *
      * @param int $post_id Poll post ID.
      */
     public function save(int $post_id): void
     {
-        $nonce = isset($_POST[self::NONCE_FIELD]) ? sanitize_key(wp_unslash($_POST[self::NONCE_FIELD])) : '';
+        // REST saves omit this form nonce and let registered meta callbacks validate input.
+        $nonce = isset($_POST[self::NONCE_FIELD]) && is_string($_POST[self::NONCE_FIELD])
+            ? sanitize_key(wp_unslash($_POST[self::NONCE_FIELD]))
+            : '';
         if ($nonce === '' || !wp_verify_nonce($nonce, self::NONCE_ACTION)) {
             return;
         }
@@ -216,13 +252,9 @@ final class PollEditForm
             return;
         }
 
-        // A rendered options box always submits this key (rows are padded to
-        // the minimum and every row carries hidden inputs), so an absent key
-        // means another plugin removed the box: keep the stored options
-        // instead of wiping them.
+        // Preserve options when another plugin removes the meta box.
         if (isset($_POST['zw_poll_options'])) {
-            // The registered meta sanitizer (sanitizeOptions) runs inside
-            // update_post_meta and stays authoritative for both editor paths.
+            // update_post_meta() also applies PollPostType::sanitizeOptions().
             $raw_options = is_array($_POST['zw_poll_options'])
                 // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Rows sanitized field-by-field in readOptionRows().
                 ? wp_unslash($_POST['zw_poll_options'])
@@ -230,18 +262,64 @@ final class PollEditForm
             update_post_meta($post_id, PollPostType::META_OPTIONS, self::readOptionRows($raw_options));
         }
 
-        // Absent entirely when another plugin removed the display box; keep
-        // the stored setting instead of treating the checkbox as unchecked.
-        if (isset($_POST['zw_poll_show_total'])) {
-            update_post_meta($post_id, PollPostType::META_HIDE_TOTAL, sanitize_key(wp_unslash($_POST['zw_poll_show_total'])) !== '1');
+        // Missing or invalid input preserves existing meta.
+        if (isset($_POST['zw_poll_total_visibility']) && is_string($_POST['zw_poll_total_visibility'])) {
+            $visibility = sanitize_key(wp_unslash($_POST['zw_poll_total_visibility']));
+            if (in_array($visibility, PollPostType::totalVisibilityValues(), true)) {
+                update_post_meta($post_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
+            }
+        }
+
+        // Empty input clears the deadline; absent or invalid input preserves it.
+        if (isset($_POST['zw_poll_closes_at']) && is_string($_POST['zw_poll_closes_at'])) {
+            $raw_closes_at = sanitize_text_field(wp_unslash($_POST['zw_poll_closes_at']));
+            if ($raw_closes_at === '') {
+                delete_post_meta($post_id, PollPostType::META_CLOSES_AT);
+            } elseif (($deadline = PollPostType::parseDeadline($raw_closes_at)) !== null) {
+                update_post_meta($post_id, PollPostType::META_CLOSES_AT, $deadline);
+            }
         }
     }
 
     /**
-     * Reduces submitted option rows to sanitized id/label pairs.
+     * Returns labels for the total visibility radio group.
      *
-     * Keeping the stored UUID of an existing option is required: votes are
-     * keyed by option ID, so regenerating IDs would orphan cast votes.
+     * @return array<string, string>
+     */
+    private static function totalVisibilityLabels(): array
+    {
+        return [
+            PollPostType::TOTAL_VISIBILITY_DEFAULT => __('Site-instelling volgen', 'zw-poll'),
+            PollPostType::TOTAL_VISIBILITY_HIDE => __('Altijd verbergen', 'zw-poll'),
+            PollPostType::TOTAL_VISIBILITY_SHOW => __('Altijd tonen', 'zw-poll'),
+        ];
+    }
+
+    /**
+     * Describes the effective site-wide threshold.
+     *
+     * @param int $total_min_votes Configured minimum vote count.
+     */
+    private static function totalVisibilityDescription(int $total_min_votes): string
+    {
+        if ($total_min_votes === 0) {
+            return __('Standaard wordt het aantal stemmen altijd getoond, omdat de drempel op 0 staat.', 'zw-poll');
+        }
+
+        return sprintf(
+            /* translators: %s: configured minimum vote count. */
+            _n(
+                'Standaard wordt het aantal stemmen getoond zodra er %s stem is.',
+                'Standaard wordt het aantal stemmen getoond zodra er %s of meer stemmen zijn.',
+                $total_min_votes,
+                'zw-poll'
+            ),
+            number_format_i18n($total_min_votes)
+        );
+    }
+
+    /**
+     * Reduces submitted option rows to sanitized option fields.
      *
      * @param array<int|string, mixed> $rows Submitted option rows.
      * @return array<int, array{id: string, label: string, imageId: int}>
@@ -254,8 +332,12 @@ final class PollEditForm
                 continue;
             }
             $out[] = [
-                'id' => isset($row['id']) ? sanitize_text_field((string) $row['id']) : '',
-                'label' => isset($row['label']) ? sanitize_text_field((string) $row['label']) : '',
+                'id' => isset($row['id']) && is_string($row['id'])
+                    ? sanitize_text_field($row['id'])
+                    : '',
+                'label' => isset($row['label']) && is_string($row['label'])
+                    ? sanitize_text_field($row['label'])
+                    : '',
                 'imageId' => PollPostType::normalizeImageId($row['imageId'] ?? 0),
             ];
         }

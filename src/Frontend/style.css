@@ -276,6 +276,13 @@
 	gap: 0.5em;
 }
 
+.zw-poll__deadline {
+	margin: 10px 0 0;
+	color: var(--zw-poll-meta-color);
+	font-size: 0.8em;
+	text-align: center;
+}
+
 .zw-poll button {
 	min-height: var(--zw-poll-control-height);
 	cursor: pointer;
@@ -450,6 +457,11 @@
 
 .zw-poll--images .zw-poll__results-foot {
 	flex: 0 0 100%;
+}
+
+/* An open poll below its threshold hides the total and nothing else remains. */
+.zw-poll__results-foot:not(:has(> :not([hidden]))) {
+	display: none;
 }
 
 .zw-poll__final {

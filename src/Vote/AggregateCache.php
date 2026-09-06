@@ -40,9 +40,6 @@ final class AggregateCache
     /**
      * Normalizes a stored aggregate meta value without rebuilding.
      *
-     * Read-only display paths cannot write during GET/list-table renders, so
-     * malformed meta falls back to zeroes instead of rebuilding.
-     *
      * @param mixed $stored Raw aggregate meta value.
      * @return array{counts: array<string, int>, total: int, updated_at: string}
      */
@@ -53,8 +50,6 @@ final class AggregateCache
 
     /**
      * Decodes a stored aggregate meta value, or null when malformed.
-     *
-     * Central shape check for aggregate meta.
      *
      * @param mixed $stored Raw aggregate meta value.
      * @return array{counts: array<string, int>, total: int, updated_at: string}|null
@@ -73,9 +68,6 @@ final class AggregateCache
 
     /**
      * Projects a full aggregate payload onto the visible options, zero-seeded.
-     *
-     * Public aggregate shape for SSR and REST: counts are zero-seeded for
-     * visible options and removed options are excluded from the total.
      *
      * @param array{counts: array<string, int>, total: int, updated_at?: string} $aggregate Stored aggregate payload.
      * @param array<int|string, mixed>                                           $options   Current option rows.
@@ -102,8 +94,6 @@ final class AggregateCache
     /**
      * Calculates the display percentage for an option.
      *
-     * Shared rounding policy for PHP render/admin output; view.js mirrors it.
-     *
      * @param int $count Option vote count.
      * @param int $total Total vote count.
      */
@@ -114,9 +104,6 @@ final class AggregateCache
 
     /**
      * Decodes and projects a poll's stored aggregate for display.
-     *
-     * Display paths decode raw meta and project it onto visible options without
-     * rebuilding or writing; REST hydrates the same shape.
      *
      * @param int                      $poll_id Poll post ID.
      * @param array<int|string, mixed> $options Current option rows.
@@ -145,9 +132,6 @@ final class AggregateCache
 
     /**
      * Increments the cached aggregate without scanning the votes table.
-     *
-     * The votes table remains source of truth. This hot path CAS-updates
-     * postmeta, clears stale meta between misses, then falls back to rebuild.
      *
      * @param int    $poll_id   Poll post ID.
      * @param string $option_id Selected option ID.

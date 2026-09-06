@@ -17,6 +17,7 @@ use ZuidWest\Poll\Admin\PollMetaBoxes;
 use ZuidWest\Poll\Admin\SettingsPage;
 use ZuidWest\Poll\Admin\UsageTracker;
 use ZuidWest\Poll\Cli\Commands;
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Frontend\Assets;
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Rest\AdminController;
@@ -34,9 +35,7 @@ use ZuidWest\Poll\Vote\VoteRepository;
  */
 final class Plugin
 {
-    /**
-     * Wires WordPress hooks and service collaborators.
-     */
+    /** Wires WordPress hooks and service collaborators. */
     public static function boot(): void
     {
         // File-only deployments skip activation; init keeps runtime paths on the current schema.
@@ -44,6 +43,8 @@ final class Plugin
         add_action('init', [Activation::class, 'ensureInstalled']);
 
         (new PollPostType())->register();
+        $close_sweep = new PollCloseSweep();
+        $close_sweep->register();
         (new Assets())->register();
         (new PollShortcode())->register();
 
@@ -112,6 +113,6 @@ final class Plugin
         (new UsageTracker())->register();
         (new DeleteGuard($repository))->register();
 
-        Commands::register($cache, $resetter);
+        Commands::register($cache, $resetter, $close_sweep);
     }
 }

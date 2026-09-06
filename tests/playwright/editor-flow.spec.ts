@@ -1,24 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
-import { login } from './utils';
-
-/**
- * Publishes or updates a poll and reopens its edit screen in a fresh page.
- *
- * After the classic publish redirect chain, headless Chromium stops
- * producing animation frames for the page, which wedges every later
- * Playwright click on its actionability (stability) checks — even across
- * goto/reload. Only a new page gets a healthy renderer again, so callers
- * must continue on the returned page.
- */
-async function publishAndReopen( page: Page ): Promise< Page > {
-	await page.click( '#publish' );
-	await page.waitForURL( /post\.php\?post=\d+&action=edit/ );
-	const postId = new URL( page.url() ).searchParams.get( 'post' );
-	const fresh = await page.context().newPage();
-	await page.close();
-	await fresh.goto( `/wp-admin/post.php?post=${ postId }&action=edit` );
-	return fresh;
-}
+import { test, expect } from '@playwright/test';
+import { login, publishAndReopen, startNewPoll } from './utils';
 
 /**
  * Covers the custom poll admin surface against the seeded demo poll.
@@ -59,15 +40,15 @@ test.describe( 'Admin / poll-beheer', () => {
 	test( 'redacteur maakt een poll via het klassieke formulier', async ( {
 		page,
 	} ) => {
-		await page.goto( '/wp-admin/post-new.php?post_type=zw_poll' );
-		// The title is the reader-facing question; there is no separate field.
-		await page.fill( '#title', 'Vind je dit formulier handig?' );
-
-		const labels = page.locator( '.zw-poll-edit-option__label' );
-		await labels.nth( 0 ).fill( 'Ja' );
-		await labels.nth( 1 ).fill( 'Nee' );
+		await startNewPoll( page, 'Vind je dit formulier handig?', [
+			'Ja',
+			'Nee',
+		] );
 		await page.click( '.zw-poll-edit-options__add' );
-		await labels.nth( 2 ).fill( 'Geen mening' );
+		await page
+			.locator( '.zw-poll-edit-option__label' )
+			.nth( 2 )
+			.fill( 'Geen mening' );
 
 		const editor = await publishAndReopen( page );
 		const saved = editor.locator( '.zw-poll-edit-option__label' );
@@ -78,7 +59,9 @@ test.describe( 'Admin / poll-beheer', () => {
 		await expect( saved ).toHaveCount( 3 );
 		await expect( saved.nth( 2 ) ).toHaveValue( 'Geen mening' );
 
-		await expect( editor.locator( '.notice-warning' ) ).toHaveCount( 0 );
+		await expect(
+			editor.locator( '.zw-poll-incomplete-notice' )
+		).toHaveCount( 0 );
 
 		await expect(
 			editor.locator( '#zw-poll-edit-shortcode-value' )
@@ -91,14 +74,13 @@ test.describe( 'Admin / poll-beheer', () => {
 	test( 'gepubliceerde poll zonder opties toont de onvolledig-waarschuwing', async ( {
 		page,
 	} ) => {
-		await page.goto( '/wp-admin/post-new.php?post_type=zw_poll' );
-		await page.fill( '#title', 'Poll zonder opties?' );
+		await startNewPoll( page, 'Poll zonder opties?', [] );
 
 		const editor = await publishAndReopen( page );
 
-		await expect( editor.locator( '.notice-warning' ) ).toContainText(
-			'onvolledig'
-		);
+		await expect(
+			editor.locator( '.zw-poll-incomplete-notice' )
+		).toContainText( 'onvolledig' );
 	} );
 
 	test( 'REST: een poll met titel en opties rendert de vraag veilig', async ( {
@@ -135,7 +117,9 @@ test.describe( 'Admin / poll-beheer', () => {
 		expect( poll.title.raw ).toBe( question );
 
 		await page.goto( `/wp-admin/post.php?post=${ poll.id }&action=edit` );
-		await expect( page.locator( '.notice-warning' ) ).toHaveCount( 0 );
+		await expect(
+			page.locator( '.zw-poll-incomplete-notice' )
+		).toHaveCount( 0 );
 
 		const pageCreated = await page.request.post( '/wp-json/wp/v2/pages', {
 			headers: { 'X-WP-Nonce': nonce ?? '' },
@@ -158,17 +142,16 @@ test.describe( 'Admin / poll-beheer', () => {
 		// Votes are keyed by option ID: a save that regenerates IDs would
 		// silently orphan cast votes. Use a fresh poll so the test does not
 		// depend on shared seed state.
-		await page.goto( '/wp-admin/post-new.php?post_type=zw_poll' );
-		await page.fill( '#title', 'Blijven IDs behouden?' );
-
-		const labels = page.locator( '.zw-poll-edit-option__label' );
-		await labels.nth( 0 ).fill( 'Eerste' );
-		await labels.nth( 1 ).fill( 'Tweede' );
+		await startNewPoll( page, 'Blijven IDs behouden?', [
+			'Eerste',
+			'Tweede',
+		] );
 		const editor = await publishAndReopen( page );
 
 		const hiddenIds =
 			'.zw-poll-edit-options__list input[type="hidden"][name$="[id]"]';
-		const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+		const uuid =
+			/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 		await expect( editor.locator( hiddenIds ) ).toHaveCount( 2 );
 		const idsBefore = await editor
 			.locator( hiddenIds )
@@ -191,9 +174,7 @@ test.describe( 'Admin / poll-beheer', () => {
 
 		const finalLabels = reopened.locator( '.zw-poll-edit-option__label' );
 		await expect( finalLabels.nth( 0 ) ).toHaveValue( 'Tweede' );
-		await expect( finalLabels.nth( 1 ) ).toHaveValue(
-			'Eerste (hernoemd)'
-		);
+		await expect( finalLabels.nth( 1 ) ).toHaveValue( 'Eerste (hernoemd)' );
 		await expect( finalLabels.nth( 2 ) ).toHaveValue( 'Derde' );
 
 		const idsAfter = await reopened

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\PostType;
 
+use DateTimeImmutable;
+
 /**
  * Defines the poll CPT and validates editor-controlled meta.
  */
@@ -21,7 +23,11 @@ final class PollPostType
     public const META_PREFIX = '_zw_poll_';
     public const META_OPTIONS = self::META_PREFIX . 'options';
     public const META_STATUS = self::META_PREFIX . 'status';
-    public const META_HIDE_TOTAL = self::META_PREFIX . 'hide_total';
+    public const META_CLOSES_AT = self::META_PREFIX . 'closes_at';
+    public const META_TOTAL_VISIBILITY = self::META_PREFIX . 'total_visibility';
+    public const TOTAL_VISIBILITY_DEFAULT = 'default';
+    public const TOTAL_VISIBILITY_HIDE = 'hide';
+    public const TOTAL_VISIBILITY_SHOW = 'show';
     public const META_AGGREGATE = self::META_PREFIX . 'aggregate';
     public const META_VOTE_EPOCH = self::META_PREFIX . 'vote_epoch';
 
@@ -31,9 +37,9 @@ final class PollPostType
     public const MAX_QUESTION_LEN = 200;
     public const MAX_OPTION_LEN = 280;
 
-    /**
-     * Registers post-type and meta hooks.
-     */
+    public const DEADLINE_INPUT_FORMAT = 'Y-m-d\TH:i';
+
+    /** Registers post-type and meta hooks. */
     public function register(): void
     {
         add_action('init', [$this, 'registerPostType']);
@@ -42,9 +48,7 @@ final class PollPostType
         add_filter('wp_insert_post_data', [$this, 'capTitleLength']);
     }
 
-    /**
-     * Registers the private editorial poll post type.
-     */
+    /** Registers the private editorial poll post type. */
     public function registerPostType(): void
     {
         register_post_type(self::POST_TYPE, [
@@ -79,9 +83,7 @@ final class PollPostType
         ]);
     }
 
-    /**
-     * Registers REST-enabled poll meta fields.
-     */
+    /** Registers REST-enabled poll meta fields. */
     public function registerMeta(): void
     {
         $auth = static fn (bool $allowed, string $meta_key, int $post_id): bool => current_user_can('edit_post', $post_id);
@@ -121,12 +123,26 @@ final class PollPostType
             'auth_callback' => $auth,
         ]);
 
-        register_post_meta(self::POST_TYPE, self::META_HIDE_TOTAL, [
-            'type' => 'boolean',
+        register_post_meta(self::POST_TYPE, self::META_CLOSES_AT, [
+            'type' => 'integer',
             'single' => true,
-            'default' => false,
+            'default' => 0,
             'show_in_rest' => true,
-            'sanitize_callback' => 'rest_sanitize_boolean',
+            'sanitize_callback' => 'absint',
+            'auth_callback' => $auth,
+        ]);
+
+        register_post_meta(self::POST_TYPE, self::META_TOTAL_VISIBILITY, [
+            'type' => 'string',
+            'single' => true,
+            'default' => self::TOTAL_VISIBILITY_DEFAULT,
+            'show_in_rest' => [
+                'schema' => [
+                    'type' => 'string',
+                    'enum' => self::totalVisibilityValues(),
+                ],
+            ],
+            'sanitize_callback' => [self::class, 'sanitizeTotalVisibility'],
             'auth_callback' => $auth,
         ]);
 
@@ -158,20 +174,85 @@ final class PollPostType
     }
 
     /**
-     * Checks whether the total vote count is hidden for a poll.
+     * Returns the configured closing timestamp, or zero without a deadline.
      *
      * @param int $poll_id Poll post ID.
      */
-    public static function hidesTotal(int $poll_id): bool
+    public static function closesAt(int $poll_id): int
     {
-        return (bool) get_post_meta($poll_id, self::META_HIDE_TOTAL, true);
+        return absint(get_post_meta($poll_id, self::META_CLOSES_AT, true));
+    }
+
+    /**
+     * Formats a UTC deadline in the site timezone; zero returns an empty string.
+     *
+     * @param int         $closes_at UTC closing timestamp.
+     * @param string|null $format    PHP date format; defaults to the site's date and time format.
+     */
+    public static function formatClosesAt(int $closes_at, ?string $format = null): string
+    {
+        if ($closes_at <= 0) {
+            return '';
+        }
+
+        $format ??= trim((string) get_option('date_format') . ' ' . (string) get_option('time_format'));
+
+        return (string) wp_date($format, $closes_at);
+    }
+
+    /**
+     * Parses datetime-local input in the site timezone.
+     *
+     * @param string $raw Submitted datetime-local value.
+     */
+    public static function parseDeadline(string $raw): ?int
+    {
+        $deadline = DateTimeImmutable::createFromFormat('!' . self::DEADLINE_INPUT_FORMAT, $raw, wp_timezone());
+        if ($deadline === false || $deadline->format(self::DEADLINE_INPUT_FORMAT) !== $raw) {
+            return null;
+        }
+
+        return $deadline->getTimestamp();
+    }
+
+    /**
+     * Returns the supported per-poll total visibility values.
+     *
+     * @return list<string>
+     */
+    public static function totalVisibilityValues(): array
+    {
+        return [
+            self::TOTAL_VISIBILITY_DEFAULT,
+            self::TOTAL_VISIBILITY_HIDE,
+            self::TOTAL_VISIBILITY_SHOW,
+        ];
+    }
+
+    /**
+     * Sanitizes a total visibility value to the default policy.
+     *
+     * @param mixed $value Raw meta value.
+     */
+    public static function sanitizeTotalVisibility(mixed $value): string
+    {
+        return is_string($value) && in_array($value, self::totalVisibilityValues(), true)
+            ? $value
+            : self::TOTAL_VISIBILITY_DEFAULT;
+    }
+
+    /**
+     * Returns the stored per-poll total visibility policy, normalized to a known value.
+     *
+     * @param int $poll_id Poll post ID.
+     */
+    public static function totalVisibility(int $poll_id): string
+    {
+        return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
     }
 
     /**
      * Returns valid option rows for a poll.
-     *
-     * Re-validates at every read boundary because stored meta may predate
-     * sanitizeOptions(); callers only receive valid rows.
      *
      * @param int $poll_id Poll post ID.
      * @return array<int, array{id: string, label: string, imageId: int}>
@@ -310,10 +391,10 @@ final class PollPostType
         $out = [];
         $used_ids = [];
         foreach ($value as $opt) {
-            if (!is_array($opt) || !isset($opt['label'])) {
+            if (!is_array($opt) || !isset($opt['label']) || !is_string($opt['label'])) {
                 continue;
             }
-            $label = mb_substr(trim(sanitize_text_field((string) $opt['label'])), 0, self::MAX_OPTION_LEN);
+            $label = mb_substr(trim(sanitize_text_field($opt['label'])), 0, self::MAX_OPTION_LEN);
             if ($label === '') {
                 continue;
             }
@@ -335,11 +416,6 @@ final class PollPostType
 
     /**
      * Caps poll titles on every save path.
-     *
-     * The title is the reader-facing question. Core's own title handling is
-     * allowed to keep editorial text intact, including literal comparison
-     * signs; this filter only enforces the plugin's length limit across quick
-     * edit, REST, CLI, and classic-editor saves.
      *
      * @param array<string, mixed> $data Slashed post data about to be saved.
      * @return array<string, mixed>

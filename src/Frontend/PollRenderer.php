@@ -11,6 +11,7 @@ namespace ZuidWest\Poll\Frontend;
 
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Rest\VoteController;
+use ZuidWest\Poll\Support\Settings;
 use ZuidWest\Poll\Vote\AggregateCache;
 use ZuidWest\Poll\Vote\VoteEpoch;
 use WP_Post;
@@ -68,15 +69,21 @@ final class PollRenderer
         $counts = $aggregate['counts'];
         $total = $aggregate['total'];
         $is_closed = (PollPostType::status($poll_id) !== 'open');
+        $deadline = $is_closed ? '' : PollPostType::formatClosesAt(PollPostType::closesAt($poll_id));
         // Presentation-only: totals/counts stay in context so view.js can
         // update percentage bars after a vote; page caches may hold this flag
         // until the rendered page refreshes.
-        $show_total = !PollPostType::hidesTotal($poll_id);
+        $total_visibility = PollPostType::totalVisibility($poll_id);
+        $show_total = $total_visibility !== PollPostType::TOTAL_VISIBILITY_HIDE;
+        // "show" is the site threshold lowered to zero; "hide" skips the markup entirely.
+        $total_min_votes = $total_visibility === PollPostType::TOTAL_VISIBILITY_SHOW
+            ? 0
+            : Settings::get()['total_min_votes'];
 
         /* translators: %s: total number of votes. */
         $total_label = __('Totaal aantal stemmen: %s', 'zw-poll');
 
-        // WordPress 6.9 cannot load text domains for script modules; pass strings through state.
+        // Pass script-module translations through Interactivity API state.
         wp_interactivity_state('zw-poll', [
             'restUrl' => esc_url_raw(VoteController::voteUrl()),
             'cookiePrefix' => VoteController::COOKIE_PREFIX,
@@ -99,6 +106,10 @@ final class PollRenderer
             'showResults' => static function (): bool {
                 $ctx = wp_interactivity_get_context();
                 return !empty($ctx['voted']) || !empty($ctx['closed']);
+            },
+            'showTotalCount' => static function (): bool {
+                $ctx = wp_interactivity_get_context();
+                return (int) ($ctx['total'] ?? 0) >= (int) ($ctx['totalMinVotes'] ?? 0);
             },
             'cannotSubmit' => static function (): bool {
                 $ctx = wp_interactivity_get_context();
@@ -124,6 +135,7 @@ final class PollRenderer
             'votedOptionId' => '',
             'token' => '',
             'errorMessage' => '',
+            'totalMinVotes' => $total_min_votes,
             'counts' => (object) $counts,
             'total' => $total,
         ];
@@ -221,6 +233,17 @@ final class PollRenderer
                 <?php esc_html_e('Stem', 'zw-poll'); ?>
             </button>
         </div>
+        <?php if ($deadline !== '') : ?>
+            <p class="zw-poll__deadline">
+                <?php
+                echo esc_html(sprintf(
+                    /* translators: %s: poll closing date and time. */
+                    __('Stemmen kan tot %s', 'zw-poll'),
+                    $deadline
+                ));
+                ?>
+            </p>
+        <?php endif; ?>
     </div>
 
     <div
@@ -293,7 +316,11 @@ final class PollRenderer
                 <span class="zw-poll__final"><?php esc_html_e('Einduitslag', 'zw-poll'); ?></span>
             <?php endif; ?>
             <?php if ($show_total) : ?>
-                <p class="zw-poll__total" data-wp-text="state.totalText"></p>
+                <p
+                    class="zw-poll__total"
+                    data-wp-text="state.totalText"
+                    data-wp-bind--hidden="!state.showTotalCount"
+                ></p>
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -363,10 +390,10 @@ final class PollRenderer
     /**
      * Renders a diagnostic placeholder for editors only.
      *
-     * @param string $class   Wrapper class list.
-     * @param string $message Placeholder message.
+     * @param string $css_class Wrapper class list.
+     * @param string $message   Placeholder message.
      */
-    private static function editorPlaceholder(string $class, string $message): string
+    private static function editorPlaceholder(string $css_class, string $message): string
     {
         if (!current_user_can('edit_posts')) {
             return '';
@@ -374,7 +401,7 @@ final class PollRenderer
 
         ob_start();
         ?>
-<div class="<?php echo esc_attr($class); ?>">
+<div class="<?php echo esc_attr($css_class); ?>">
     <?php echo esc_html($message); ?>
 </div>
 <?php

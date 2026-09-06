@@ -7,6 +7,7 @@ namespace ZuidWest\Poll\Tests;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use ZuidWest\Poll\Cli\Commands;
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Vote\AggregateCache;
 use ZuidWest\Poll\Vote\PollReset;
@@ -40,10 +41,10 @@ final class CommandsTest extends TestCase
     }
 
     /** Build CLI commands over a fake tally. */
-    private function commands(array $tally = [], int $deleted = 0): Commands
+    private function commands(array $tally = [], int|false $deleted = 0): Commands
     {
         $db = new class($tally, $deleted) extends wpdb {
-            public function __construct(private array $tally, private int $deleted)
+            public function __construct(private array $tally, private int|false $deleted)
             {
                 $this->prefix = 'wp_';
             }
@@ -62,7 +63,7 @@ final class CommandsTest extends TestCase
         $repository = new VoteRepository($db);
         $cache = new AggregateCache($repository);
 
-        return new Commands($cache, new PollReset($repository, $cache));
+        return new Commands($cache, new PollReset($repository, $cache), new PollCloseSweep());
     }
 
     private function poll(): WP_Post
@@ -115,6 +116,17 @@ final class CommandsTest extends TestCase
             [['level' => 'success', 'message' => '7 stemmen verwijderd voor poll 42.']],
             WP_CLI::$log
         );
+    }
+
+    #[Test]
+    public function reset_aborts_when_the_database_delete_fails(): void
+    {
+        Functions\when('get_post')->justReturn($this->poll());
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Stemmen konden niet worden verwijderd.');
+
+        $this->commands(deleted: false)->reset([(string) self::POLL_ID], ['yes' => true]);
     }
 
     #[Test]

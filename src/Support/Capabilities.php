@@ -32,9 +32,7 @@ final class Capabilities
 
     public const ROLES = ['administrator', 'editor'];
 
-    /**
-     * Grants poll capabilities to default editorial roles.
-     */
+    /** Grants poll capabilities to default editorial roles. */
     public static function grantToDefaultRoles(): void
     {
         foreach (self::ROLES as $role_name) {
@@ -48,9 +46,7 @@ final class Capabilities
         }
     }
 
-    /**
-     * Revokes poll capabilities from default editorial roles.
-     */
+    /** Revokes poll capabilities from default editorial roles. */
     public static function revokeFromDefaultRoles(): void
     {
         foreach (self::ROLES as $role_name) {

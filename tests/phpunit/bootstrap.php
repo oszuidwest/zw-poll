@@ -125,9 +125,6 @@ if (!class_exists('wpdb', false)) {
     class wpdb // phpcs:ignore -- WordPress runtime stub.
     {
         public string $prefix = 'wp_';
-        public string $posts = 'wp_posts';
-        public string $postmeta = 'wp_postmeta';
-        public string $last_error = '';
 
         public function prepare(string $query, mixed ...$args): string
         {
@@ -137,17 +134,6 @@ if (!class_exists('wpdb', false)) {
         public function get_var(string $query): mixed
         {
             return null;
-        }
-
-        /**
-         * Return no rows by default.
-         *
-         * @param string $query SQL query.
-         * @return list<string>
-         */
-        public function get_col(string $query): array
-        {
-            return [];
         }
 
         /**

@@ -3,8 +3,8 @@
  * Plugin Name:       ZuidWest Poll
  * Plugin URI:        https://github.com/oszuidwest/zw-poll
  * Description:       Poll voor WordPress: laat lezers stemmen via een shortcode in artikelen en pagina's.
- * Version:           0.0.1
- * Requires at least: 6.9
+ * Version:           0.2.0
+ * Requires at least: 7.1
  * Requires PHP:      8.3
  * Author:            Streekomroep ZuidWest
  * Author URI:        https://www.zuidwesttv.nl/
@@ -30,12 +30,12 @@ $zw_poll_autoload = __DIR__ . '/vendor/autoload.php';
 if (file_exists($zw_poll_autoload)) {
     require_once $zw_poll_autoload;
 } else {
-    spl_autoload_register(static function (string $class): void {
+    spl_autoload_register(static function (string $class_name): void {
         $prefix = 'ZuidWest\\Poll\\';
-        if (!str_starts_with($class, $prefix)) {
+        if (!str_starts_with($class_name, $prefix)) {
             return;
         }
-        $relative = substr($class, strlen($prefix));
+        $relative = substr($class_name, strlen($prefix));
         $path = __DIR__ . '/src/' . str_replace('\\', '/', $relative) . '.php';
         if (is_readable($path)) {
             require_once $path;
@@ -44,6 +44,7 @@ if (file_exists($zw_poll_autoload)) {
 }
 
 register_activation_hook(__FILE__, [\ZuidWest\Poll\Activation::class, 'activate']);
+register_deactivation_hook(__FILE__, [\ZuidWest\Poll\Activation::class, 'deactivate']);
 
 add_action('init', static function (): void {
     load_plugin_textdomain('zw-poll', false, dirname(plugin_basename(__FILE__)) . '/languages');

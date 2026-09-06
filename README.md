@@ -8,7 +8,7 @@ compatibility, and made interactive with the WordPress Interactivity API.
 
 | Component | Version |
 |---|---|
-| WordPress | 6.9+ |
+| WordPress | 7.1+ |
 | PHP | 8.3+ |
 | Node.js | 20+ locally, 24 in CI |
 
@@ -78,19 +78,37 @@ removal under **Polls → Settings**. Settings are stored per site in
   `X-Real-IP`. A `zw_poll_client_ip` filter in code takes precedence.
 - Removing data on uninstall is opt-in. By default, the votes table, salt,
   settings, and capabilities are retained.
-- Percentages are always displayed. The total vote count can be toggled per
-  poll and is enabled by default.
+- Percentages are always displayed. The numeric vote total is shown after 100
+  votes by default; administrators can change the site-wide threshold from 0
+  to 1,000,000. Each poll can use that default, always hide the total, or always
+  show it.
+
+The visibility decision is rendered on the server and mirrored by the
+Interactivity API state. Cached pages therefore keep the configured policy,
+while the total appears immediately when a newly submitted vote reaches the
+threshold.
 
 ## WP-CLI and REST API
 
 ```bash
 wp zw-poll list
+wp zw-poll close-expired
 wp zw-poll rebuild <poll_id>
 wp zw-poll reset <poll_id> --yes
 ```
 
-Use `rebuild` after manual database changes or to restore the aggregate cache
-from the votes table.
+Editors can set an end date and time for each poll in the **Planning** meta box.
+Input and display use the WordPress site timezone; storage uses a UTC timestamp.
+An idempotent WP-Cron sweep runs every five minutes and closes published, open
+polls after their deadline. Drafts, trashed polls, polls without a deadline,
+and polls already closed are left unchanged.
+
+WP-Cron is request-driven, so a vote may still be accepted between the deadline
+and the next sweep. Sites that need more precise closing can run
+`wp zw-poll close-expired` from system cron. Consumers can listen to
+`zw_poll_closed` to purge caches or perform other follow-up work; the action
+receives the poll ID and its tracked content IDs. Use `rebuild` after manual
+database changes or to restore the aggregate cache from the votes table.
 
 REST endpoints:
 
@@ -125,7 +143,7 @@ npm run test:e2e
 ```
 
 CI also runs WordPress Plugin Check, verifies the translation template, and runs
-Playwright against WordPress 6.9 and the latest WordPress release.
+Playwright against WordPress 7.1 and the latest WordPress release.
 
 ## Architecture
 
@@ -140,7 +158,8 @@ through `Plugin::boot()`. Its main components are:
   `Shortcode\PollShortcode`.
 - Frontend: `Frontend\PollRenderer`, `Frontend\Assets`,
   `src/Frontend/view.js`, and `src/Frontend/style.css`.
-- Admin and CLI: the classes under `Admin\` and `Cli\Commands`.
+- Admin, cron, and CLI: the classes under `Admin\`, `Cron\PollCloseSweep`, and
+  `Cli\Commands`.
 
 Polls are stored as `zw_poll` posts. Votes are stored in
 `{$wpdb->prefix}zw_poll_votes`; `_zw_poll_aggregate` holds cached counts per
@@ -250,6 +269,6 @@ ZuidWest Poll is free software licensed under the
 
 ## Out of scope
 
-The plugin does not provide multiple-choice or ranked polls, automatic closing,
-an export UI, email notifications, external embeds, A/B tests, a Gutenberg
-block, or a non-JavaScript form fallback.
+The plugin does not provide multiple-choice or ranked polls, an export UI,
+email notifications, external embeds, A/B tests, a Gutenberg block, or a
+non-JavaScript form fallback.

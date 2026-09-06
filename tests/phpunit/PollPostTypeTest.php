@@ -6,6 +6,7 @@ namespace ZuidWest\Poll\Tests;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use DateTimeZone;
 use ZuidWest\Poll\PostType\PollPostType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +50,7 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
-    public function register_meta_exposes_hide_total_as_boolean_defaulting_to_shown(): void
+    public function register_meta_exposes_total_visibility_as_an_enum(): void
     {
         $registered = [];
         Functions\when('register_post_meta')->alias(
@@ -60,12 +61,11 @@ final class PollPostTypeTest extends TestCase
 
         $this->sut->registerMeta();
 
-        $args = $registered[PollPostType::META_HIDE_TOTAL];
-        $this->assertSame('boolean', $args['type']);
-        $this->assertFalse($args['default']);
-        $this->assertTrue($args['show_in_rest']);
-        // The REST layer may hand over any JSON scalar; storage stays boolean.
-        $this->assertSame('rest_sanitize_boolean', $args['sanitize_callback']);
+        $args = $registered[PollPostType::META_TOTAL_VISIBILITY];
+        $this->assertSame('string', $args['type']);
+        $this->assertSame(PollPostType::TOTAL_VISIBILITY_DEFAULT, $args['default']);
+        $this->assertSame(PollPostType::totalVisibilityValues(), $args['show_in_rest']['schema']['enum']);
+        $this->assertSame([PollPostType::class, 'sanitizeTotalVisibility'], $args['sanitize_callback']);
     }
 
     #[Test]
@@ -126,18 +126,51 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
-    public function hides_total_casts_the_stored_meta_string(): void
+    public function register_meta_exposes_the_closing_deadline(): void
     {
-        Functions\when('get_post_meta')->justReturn('1');
-        $this->assertTrue(PollPostType::hidesTotal(42));
+        $registered = [];
+        Functions\when('register_post_meta')->alias(
+            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
+                $registered[$meta_key] = $args;
+            }
+        );
 
-        // Meta stores booleans as '1'/'' and returns false when missing;
-        // both falsy shapes read as "total shown".
-        Functions\when('get_post_meta')->justReturn('');
-        $this->assertFalse(PollPostType::hidesTotal(42));
+        $this->sut->registerMeta();
 
-        Functions\when('get_post_meta')->justReturn(false);
-        $this->assertFalse(PollPostType::hidesTotal(42));
+        $args = $registered[PollPostType::META_CLOSES_AT];
+        $this->assertSame('integer', $args['type']);
+        $this->assertSame(0, $args['default']);
+        $this->assertTrue($args['show_in_rest']);
+        $this->assertSame('absint', $args['sanitize_callback']);
+    }
+
+    #[Test]
+    public function deadline_helpers_use_the_site_timezone_and_reject_invalid_dates(): void
+    {
+        Functions\when('wp_timezone')->justReturn(new DateTimeZone('Europe/Amsterdam'));
+        Functions\when('get_post_meta')->justReturn('1784809800');
+        Functions\when('get_option')->alias(
+            static fn (string $key): string => $key === 'date_format' ? 'd-m-Y' : 'H:i'
+        );
+        Functions\when('wp_date')->alias(
+            static fn (string $format, int $timestamp): string => gmdate($format, $timestamp)
+        );
+
+        $this->assertSame(1784809800, PollPostType::closesAt(42));
+        $this->assertSame(1767223800, PollPostType::parseDeadline('2026-01-01T00:30'));
+        $this->assertNull(PollPostType::parseDeadline('2026-02-30T12:00'));
+        $this->assertSame('23-07-2026 12:30', PollPostType::formatClosesAt(1784809800));
+        $this->assertSame('', PollPostType::formatClosesAt(0));
+    }
+
+    #[Test]
+    public function total_visibility_uses_stored_meta_and_defaults_invalid_values(): void
+    {
+        Functions\when('get_post_meta')->justReturn('hide');
+        $this->assertSame('hide', PollPostType::totalVisibility(42));
+
+        Functions\when('get_post_meta')->justReturn('corrupt');
+        $this->assertSame('default', PollPostType::totalVisibility(42));
     }
 
     #[Test]
@@ -145,9 +178,6 @@ final class PollPostTypeTest extends TestCase
     {
         // A null default fails core's type check and keeps the object meta out
         // of the registry; readers handle missing meta.
-        Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = []): mixed => $default
-        );
         $registered = [];
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
@@ -164,7 +194,6 @@ final class PollPostTypeTest extends TestCase
     public function registered_meta_auth_uses_object_level_edit_permission(): void
     {
         $callbacks = [];
-        Functions\when('get_option')->justReturn([]);
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$callbacks): void {
                 $callbacks[$meta_key] = $args['auth_callback'];
@@ -301,6 +330,22 @@ final class PollPostTypeTest extends TestCase
         $out = $this->sut->sanitizeOptions($input);
         $this->assertCount(1, $out);
         $this->assertSame('Real', $out[0]['label']);
+    }
+
+    #[Test]
+    public function sanitize_options_skips_non_string_labels(): void
+    {
+        $input = [
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeeee', 'label' => ['nested']],
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeeef', 'label' => new \stdClass()],
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeef0', 'label' => 'Real'],
+        ];
+
+        $out = $this->sut->sanitizeOptions($input);
+
+        $this->assertSame([
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeef0', 'label' => 'Real', 'imageId' => 0],
+        ], $out);
     }
 
     #[Test]

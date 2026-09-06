@@ -18,9 +18,7 @@ use ZuidWest\Poll\Vote\AggregateCache;
  */
 final class PollAdminColumns
 {
-    /**
-     * Registers list-table hooks.
-     */
+    /** Registers list-table hooks. */
     public function register(): void
     {
         $cpt = PollPostType::POST_TYPE;
@@ -155,9 +153,7 @@ final class PollAdminColumns
         return add_query_arg('zw_poll_bulk_' . $action, $count, $redirect);
     }
 
-    /**
-     * Renders bulk-action result notices.
-     */
+    /** Renders bulk-action result notices. */
     public function bulkNotices(): void
     {
         $templates = [

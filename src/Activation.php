@@ -9,10 +9,11 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll;
 
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
- * Installs the votes table and plugin capabilities.
+ * Manages per-site activation and deactivation.
  */
 final class Activation
 {
@@ -21,9 +22,7 @@ final class Activation
     public const IP_SALT_OPTION = 'zw_poll_ip_salt';
     public const VOTES_TABLE = 'zw_poll_votes';
 
-    /**
-     * Registers runtime lifecycle hooks.
-     */
+    /** Registers runtime lifecycle hooks. */
     public static function registerHooks(): void
     {
         if (is_multisite()) {
@@ -38,18 +37,41 @@ final class Activation
      */
     public static function activate(bool $network_wide = false): void
     {
-        if ($network_wide && is_multisite()) {
-            foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $site_id) {
-                switch_to_blog((int) $site_id);
-                try {
-                    self::activateSite();
-                } finally {
-                    restore_current_blog();
-                }
-            }
+        self::forEachSite($network_wide, static fn () => self::activateSite());
+    }
+
+    /**
+     * Clears the plugin's scheduled events for the current site or network.
+     *
+     * @param bool $network_wide Whether deactivation is network-wide.
+     */
+    public static function deactivate(bool $network_wide = false): void
+    {
+        self::forEachSite($network_wide, static function (): void {
+            wp_clear_scheduled_hook(PollCloseSweep::EVENT);
+        });
+    }
+
+    /**
+     * Runs a callback for each affected site.
+     *
+     * @param bool             $network_wide Whether the hook fired network-wide.
+     * @param callable(): void $callback     Per-site callback.
+     */
+    private static function forEachSite(bool $network_wide, callable $callback): void
+    {
+        if (!$network_wide || !is_multisite()) {
+            $callback();
             return;
         }
-        self::activateSite();
+        foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $site_id) {
+            switch_to_blog((int) $site_id);
+            try {
+                $callback();
+            } finally {
+                restore_current_blog();
+            }
+        }
     }
 
     /**
@@ -86,27 +108,15 @@ final class Activation
         }
     }
 
-    /**
-     * Ensures the current site's database objects are installed.
-     */
-    public static function ensureInstalled(): void
-    {
-        self::installVotesTable();
-    }
-
-    /**
-     * Activates the plugin for the current site.
-     */
+    /** Activates the plugin for the current site. */
     private static function activateSite(): void
     {
-        self::installVotesTable();
+        self::ensureInstalled();
         Capabilities::grantToDefaultRoles();
         // IpHasher seeds the salt lazily, including installs that bypass activation.
     }
 
-    /**
-     * Checks whether this plugin is network-active.
-     */
+    /** Checks whether this plugin is network-active. */
     private static function isNetworkActive(): bool
     {
         if (!function_exists('is_plugin_active_for_network')) {
@@ -132,10 +142,6 @@ final class Activation
     /**
      * Returns the canonical dbDelta() statement for the votes table.
      *
-     * The statement follows the dbDelta() rules: lowercase types, two spaces
-     * after PRIMARY KEY, one column/index per line, no backticks. Deduplication
-     * is based on the anonymous cookie token.
-     *
      * @param string $table Fully-qualified votes table name.
      */
     private static function votesTableSchema(string $table): string
@@ -144,6 +150,7 @@ final class Activation
 
         $charset_collate = $wpdb->get_charset_collate();
 
+        // Keep this formatting compatible with dbDelta's strict SQL parser.
         return "CREATE TABLE {$table} (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   poll_id bigint(20) unsigned NOT NULL,
@@ -158,14 +165,10 @@ final class Activation
 ) {$charset_collate};";
     }
 
-    /**
-     * Creates the votes table for the current site when needed.
-     */
-    private static function installVotesTable(): void
+    /** Ensures the current site's votes table is installed. */
+    public static function ensureInstalled(): void
     {
-        $installed = (string) get_option(self::DB_VERSION_OPTION);
-
-        if ($installed === self::DB_VERSION) {
+        if ((string) get_option(self::DB_VERSION_OPTION) === self::DB_VERSION) {
             return;
         }
 
@@ -173,6 +176,7 @@ final class Activation
         $table = $wpdb->prefix . self::VOTES_TABLE;
         self::createVotesTable($table);
 
+        // Store the version only after the schema is complete, so partial installs retry.
         if (!self::cookieIndexIsUnique($table)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.
             error_log(sprintf(
@@ -184,7 +188,7 @@ final class Activation
             return;
         }
 
-        // Autoload this scalar: ensureInstalled() reads it on every request, and
+        // Autoload this scalar: init runs this on every request, and
         // one alloptions read is cheaper than a standalone query without persistent object cache.
         if (!update_option(self::DB_VERSION_OPTION, self::DB_VERSION, true)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.

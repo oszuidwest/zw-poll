@@ -28,9 +28,7 @@ final class DeleteGuard
      */
     public function __construct(private readonly VoteRepository $repository) {}
 
-    /**
-     * Registers delete guard hooks.
-     */
+    /** Registers delete guard hooks. */
     public function register(): void
     {
         add_filter('pre_delete_post', [$this, 'guard'], 10, 3);
@@ -45,7 +43,7 @@ final class DeleteGuard
      * @param mixed $post         Post object passed by WordPress.
      * @param bool  $force_delete Whether the delete is permanent.
      */
-    public function guard($delete, mixed $post, bool $force_delete): mixed
+    public function guard(mixed $delete, mixed $post, bool $force_delete): mixed
     {
         if (!($post instanceof WP_Post) || $post->post_type !== PollPostType::POST_TYPE) {
             return $delete;
@@ -87,9 +85,6 @@ final class DeleteGuard
     /**
      * Determines why a permanent delete must be blocked, or null to allow it.
      *
-     * Usage is checked before votes because "remove it from the article" is
-     * the actionable message when both apply.
-     *
      * @param int $poll_id Poll post ID.
      * @return 'in_use'|'votes'|null
      */
@@ -112,9 +107,7 @@ final class DeleteGuard
         return null;
     }
 
-    /**
-     * Shows the deferred admin notice after a blocked delete.
-     */
+    /** Shows the deferred admin notice after a blocked delete. */
     public function showBlockedNotice(): void
     {
         // Blocked deletes redirect to poll screens; skip lookups elsewhere.

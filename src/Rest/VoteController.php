@@ -46,17 +46,13 @@ final class VoteController
         private readonly AggregateCache $cache,
     ) {}
 
-    /**
-     * Registers REST hooks.
-     */
+    /** Registers REST hooks. */
     public function register(): void
     {
         add_action('rest_api_init', [$this, 'registerRoutes']);
     }
 
-    /**
-     * Registers public vote routes.
-     */
+    /** Registers public vote routes. */
     public function registerRoutes(): void
     {
         register_rest_route(self::NAMESPACE, '/vote', [
@@ -85,9 +81,7 @@ final class VoteController
         ]);
     }
 
-    /**
-     * Returns the public vote endpoint URL.
-     */
+    /** Returns the public vote endpoint URL. */
     public static function voteUrl(): string
     {
         return rest_url(self::NAMESPACE . '/vote/');
@@ -195,9 +189,7 @@ final class VoteController
         ], 200);
     }
 
-    /**
-     * Reports a duplicate anonymous vote.
-     */
+    /** Reports a duplicate anonymous vote. */
     private static function alreadyVoted(): WP_Error
     {
         return new WP_Error(
@@ -231,9 +223,7 @@ final class VoteController
         return $error;
     }
 
-    /**
-     * Returns the request IP address from the filter or configured proxy header.
-     */
+    /** Returns the request IP address from the filter or configured proxy header. */
     private static function clientIp(): string
     {
         $ip = isset($_SERVER['REMOTE_ADDR'])
@@ -276,9 +266,6 @@ final class VoteController
     /**
      * Resolves a configured proxy header to an IP address with valid syntax.
      *
-     * Syntax validation does not make a header trustworthy; configure only
-     * headers set or overwritten by a trusted reverse proxy.
-     *
      * @param string $header   Configured proxy header key.
      * @param string $fallback REMOTE_ADDR fallback.
      */
@@ -289,6 +276,7 @@ final class VoteController
             return $fallback;
         }
 
+        // This is trustworthy only when the configured proxy overwrites the header.
         $raw = sanitize_text_field(wp_unslash((string) $_SERVER[$server_key]));
         if ($header === Settings::PROXY_HEADER_X_FORWARDED_FOR) {
             $parts = array_map('trim', explode(',', $raw));
@@ -349,9 +337,6 @@ final class VoteController
 
     /**
      * Resolves the voter token.
-     *
-     * Existing cookies win. Otherwise, use the client token so retries and
-     * double-submits share one identity; mint a server token as a final fallback.
      *
      * @param string $cookie_name Vote cookie name.
      * @param string $body_token  Sanitized request token.

@@ -8,6 +8,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use ZuidWest\Poll\Admin\PollEditForm;
 use ZuidWest\Poll\PostType\PollPostType;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -35,6 +36,7 @@ final class PollEditFormTest extends TestCase
         );
         Functions\when('wp_is_post_revision')->justReturn(false);
         Functions\when('wp_is_post_autosave')->justReturn(false);
+        Functions\when('delete_post_meta')->justReturn(true);
     }
 
     protected function tearDown(): void
@@ -57,7 +59,8 @@ final class PollEditFormTest extends TestCase
                 ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 0],
                 ['id' => '', 'label' => 'Nee', 'imageId' => 0],
             ],
-            'zw_poll_show_total' => '1',
+            'zw_poll_total_visibility' => PollPostType::TOTAL_VISIBILITY_SHOW,
+            'zw_poll_closes_at' => '',
         ], $overrides);
     }
 
@@ -78,6 +81,18 @@ final class PollEditFormTest extends TestCase
     {
         $this->submitForm();
         Functions\when('wp_verify_nonce')->justReturn(false);
+        Functions\expect('update_post_meta')->never();
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function save_ignores_a_non_string_nonce(): void
+    {
+        $this->submitForm(['zw_poll_edit_form_nonce' => ['nonce123']]);
+        Functions\expect('wp_verify_nonce')->never();
         Functions\expect('update_post_meta')->never();
 
         (new PollEditForm())->save(self::POLL_ID);
@@ -146,20 +161,65 @@ final class PollEditFormTest extends TestCase
             ]],
             $writes[PollPostType::META_OPTIONS]
         );
-        // A checked "toon totaal" box stores hide_total = false.
-        $this->assertSame([self::POLL_ID, false], $writes[PollPostType::META_HIDE_TOTAL]);
+        $this->assertSame([self::POLL_ID, PollPostType::TOTAL_VISIBILITY_SHOW], $writes[PollPostType::META_TOTAL_VISIBILITY]);
         // The question is the post title and is saved by core, not here.
         $this->assertSame(
-            [PollPostType::META_OPTIONS, PollPostType::META_HIDE_TOTAL],
+            [PollPostType::META_OPTIONS, PollPostType::META_TOTAL_VISIBILITY],
             array_keys($writes)
         );
     }
 
-    #[Test]
-    public function save_hides_the_total_when_the_checkbox_is_unchecked(): void
+    /**
+     * @return array<string, array{string|null, int|null, bool}>
+     */
+    public static function deadlineSubmissions(): array
     {
-        // Unchecked checkbox: the browser submits only the hidden "0" field.
-        $this->submitForm(['zw_poll_show_total' => '0']);
+        return [
+            'valid site-timezone input is stored as a UTC timestamp' => ['2026-07-23T14:30', 1784809800, false],
+            'cleared field removes the stored deadline' => ['', null, true],
+            'invalid date keeps the stored deadline' => ['2026-02-30T14:30', null, false],
+            'missing field (box removed) keeps the stored deadline' => [null, null, false],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('deadlineSubmissions')]
+    public function save_handles_deadline_input(?string $submitted, ?int $written, bool $deleted): void
+    {
+        $this->submitForm(['zw_poll_closes_at' => $submitted]);
+        if ($submitted === null) {
+            unset($_POST['zw_poll_closes_at']);
+        }
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        Functions\when('wp_timezone')->justReturn(new \DateTimeZone('Europe/Amsterdam'));
+        $deletes = [];
+        Functions\when('delete_post_meta')->alias(
+            static function (int $post_id, string $key) use (&$deletes): bool {
+                $deletes[] = [$post_id, $key];
+                return true;
+            }
+        );
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame($deleted ? [[self::POLL_ID, PollPostType::META_CLOSES_AT]] : [], $deletes);
+        if ($written === null) {
+            $this->assertArrayNotHasKey(PollPostType::META_CLOSES_AT, $writes);
+            return;
+        }
+        $this->assertSame([self::POLL_ID, $written], $writes[PollPostType::META_CLOSES_AT]);
+    }
+
+    #[Test]
+    public function save_ignores_non_string_optional_fields(): void
+    {
+        $this->submitForm([
+            'zw_poll_total_visibility' => ['show'],
+            'zw_poll_closes_at' => ['2026-07-23T14:30'],
+        ]);
         Functions\when('wp_verify_nonce')->justReturn(1);
         Functions\when('current_user_can')->justReturn(true);
         $writes = [];
@@ -167,7 +227,21 @@ final class PollEditFormTest extends TestCase
 
         (new PollEditForm())->save(self::POLL_ID);
 
-        $this->assertSame([self::POLL_ID, true], $writes[PollPostType::META_HIDE_TOTAL]);
+        $this->assertSame([PollPostType::META_OPTIONS], array_keys($writes));
+    }
+
+    #[Test]
+    public function save_hides_the_total_when_the_checkbox_is_unchecked(): void
+    {
+        $this->submitForm(['zw_poll_total_visibility' => PollPostType::TOTAL_VISIBILITY_HIDE]);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame([self::POLL_ID, PollPostType::TOTAL_VISIBILITY_HIDE], $writes[PollPostType::META_TOTAL_VISIBILITY]);
     }
 
     #[Test]
@@ -175,7 +249,7 @@ final class PollEditFormTest extends TestCase
     {
         $this->submitForm();
         // Display box removed by another plugin: even the hidden "0" is gone.
-        unset($_POST['zw_poll_show_total']);
+        unset($_POST['zw_poll_total_visibility']);
         Functions\when('wp_verify_nonce')->justReturn(1);
         Functions\when('current_user_can')->justReturn(true);
         $writes = [];
@@ -184,7 +258,7 @@ final class PollEditFormTest extends TestCase
         (new PollEditForm())->save(self::POLL_ID);
 
         $this->assertArrayHasKey(PollPostType::META_OPTIONS, $writes);
-        $this->assertArrayNotHasKey(PollPostType::META_HIDE_TOTAL, $writes);
+        $this->assertArrayNotHasKey(PollPostType::META_TOTAL_VISIBILITY, $writes);
     }
 
     #[Test]
@@ -247,7 +321,7 @@ final class PollEditFormTest extends TestCase
         (new PollEditForm())->save(self::POLL_ID);
 
         $this->assertArrayNotHasKey(PollPostType::META_OPTIONS, $writes);
-        $this->assertArrayHasKey(PollPostType::META_HIDE_TOTAL, $writes);
+        $this->assertArrayHasKey(PollPostType::META_TOTAL_VISIBILITY, $writes);
     }
 
     #[Test]
@@ -264,17 +338,49 @@ final class PollEditFormTest extends TestCase
         $this->assertSame([], $writes[PollPostType::META_OPTIONS][1]);
     }
 
+    #[Test]
+    public function save_rejects_nested_option_values_without_casting_them(): void
+    {
+        $this->submitForm([
+            'zw_poll_options' => [
+                ['id' => ['nested'], 'label' => ['nested']],
+                ['id' => 'valid-id', 'label' => 'Valid label'],
+            ],
+        ]);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame([
+            ['id' => '', 'label' => '', 'imageId' => 0],
+            ['id' => 'valid-id', 'label' => 'Valid label', 'imageId' => 0],
+        ], $writes[PollPostType::META_OPTIONS][1]);
+    }
+
     /**
      * Render the display meta box with a controlled stored hide flag.
      */
     private function renderDisplayBox(bool $hidden): string
     {
         Functions\when('wp_nonce_field')->justReturn('');
+        Functions\when('__')->returnArg();
         Functions\when('esc_html_e')->echoArg();
-        Functions\when('checked')->alias(static function (bool $checked): void {
-            echo $checked ? 'checked="checked"' : '';
+        Functions\when('esc_html')->returnArg();
+        Functions\when('esc_attr')->returnArg();
+        Functions\when('_n')->alias(static fn (string $single, string $plural, int $count): string => $count === 1 ? $single : $plural);
+        Functions\when('number_format_i18n')->alias(static fn (int $number): string => (string) $number);
+        Functions\when('checked')->alias(static function (mixed $checked, mixed $current): void {
+            echo $checked === $current ? 'checked="checked"' : '';
         });
-        Functions\when('get_post_meta')->justReturn($hidden);
+        Functions\when('get_post_meta')->justReturn(
+            $hidden ? PollPostType::TOTAL_VISIBILITY_HIDE : PollPostType::TOTAL_VISIBILITY_SHOW
+        );
+        Functions\when('get_option')->alias(
+            static fn (string $option, mixed $default = []): mixed => $default
+        );
 
         ob_start();
         (new PollEditForm())->renderDisplay($this->pollPost('publish'));
@@ -287,9 +393,8 @@ final class PollEditFormTest extends TestCase
     {
         $html = $this->renderDisplayBox(false);
 
-        // The hidden "0" doubles as the box-was-rendered marker for save().
-        $this->assertStringContainsString('name="zw_poll_show_total" value="0"', $html);
-        $this->assertStringContainsString('name="zw_poll_show_total" value="1"', $html);
+        $this->assertSame(3, substr_count($html, 'name="zw_poll_total_visibility"'));
+        $this->assertStringContainsString('value="show"', $html);
         $this->assertStringContainsString('checked="checked"', $html);
     }
 
@@ -298,8 +403,22 @@ final class PollEditFormTest extends TestCase
     {
         $html = $this->renderDisplayBox(true);
 
-        $this->assertStringContainsString('name="zw_poll_show_total"', $html);
-        $this->assertStringNotContainsString('checked="checked"', $html);
+        $this->assertStringContainsString('value="hide"', $html);
+        $this->assertStringContainsString('checked="checked"', $html);
+    }
+
+    #[Test]
+    public function save_ignores_invalid_total_visibility_values(): void
+    {
+        $this->submitForm(['zw_poll_total_visibility' => 'invalid']);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertArrayNotHasKey(PollPostType::META_TOTAL_VISIBILITY, $writes);
     }
 
     #[Test]

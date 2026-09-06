@@ -288,4 +288,19 @@
 
 		refresh();
 	} );
+
+	// Site-local YYYY-MM-DDTHH:mm values compare lexicographically.
+	const deadline = document.getElementById( 'zw-poll-closes-at' );
+	const deadlineWarning = document.querySelector(
+		'.zw-poll-edit-planning__warning'
+	);
+	if ( deadline && deadlineWarning ) {
+		const refreshWarning = () => {
+			deadlineWarning.hidden = ! (
+				deadline.value && deadline.value <= deadline.dataset.now
+			);
+		};
+		deadline.addEventListener( 'input', refreshWarning );
+		refreshWarning();
+	}
 } )();

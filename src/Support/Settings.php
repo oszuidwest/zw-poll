@@ -13,6 +13,7 @@ namespace ZuidWest\Poll\Support;
  * Central schema and typed accessors for per-site plugin settings.
  *
  * @phpstan-type SettingsArray array{
+ *     total_min_votes: int,
  *     rate_limit_enabled: bool,
  *     rate_limit_max: int,
  *     rate_limit_window: int,
@@ -36,6 +37,9 @@ final class Settings
     public const RATE_LIMIT_MAX_MAX = 10000;
     public const RATE_LIMIT_WINDOW_MIN = 1;
     public const RATE_LIMIT_WINDOW_MAX = DAY_IN_SECONDS;
+    public const TOTAL_MIN_VOTES_DEFAULT = 100;
+    public const TOTAL_MIN_VOTES_MIN = 0;
+    public const TOTAL_MIN_VOTES_MAX = 1000000;
 
     private const PROXY_HEADER_SERVER_KEYS = [
         self::PROXY_HEADER_CF_CONNECTING_IP => 'HTTP_CF_CONNECTING_IP',
@@ -44,6 +48,7 @@ final class Settings
     ];
 
     private const ADMIN_ONLY_KEYS = [
+        'total_min_votes',
         'rate_limit_enabled',
         'rate_limit_max',
         'rate_limit_window',
@@ -59,6 +64,7 @@ final class Settings
     public static function defaults(): array
     {
         return [
+            'total_min_votes' => self::TOTAL_MIN_VOTES_DEFAULT,
             'rate_limit_enabled' => true,
             'rate_limit_max' => self::RATE_LIMIT_MAX_DEFAULT,
             'rate_limit_window' => self::RATE_LIMIT_WINDOW_DEFAULT,
@@ -69,8 +75,6 @@ final class Settings
 
     /**
      * Returns the settings for the current site.
-     *
-     * WordPress caches options per request; no local memoization needed.
      *
      * @return SettingsArray
      */
@@ -93,15 +97,13 @@ final class Settings
     /**
      * Sanitizes settings before storage through the Settings API.
      *
-     * Settings are registered for manage_options; keeping admin-only values for
-     * non-admin callers is defense-in-depth for direct or third-party saves.
-     *
      * @param mixed $raw Raw settings value from the Settings API.
      * @return SettingsArray
      */
     public static function sanitizeForSave(mixed $raw): array
     {
         $settings = self::sanitizeInternal($raw, true);
+        // Preserve privileged values if a third party bypasses options.php.
         if (current_user_can('manage_options')) {
             return $settings;
         }
@@ -137,8 +139,16 @@ final class Settings
         $defaults = self::defaults();
 
         return [
+            'total_min_votes' => self::boundedInt(
+                $raw['total_min_votes'] ?? $defaults['total_min_votes'],
+                self::TOTAL_MIN_VOTES_MIN,
+                self::TOTAL_MIN_VOTES_MAX,
+                'total_min_votes',
+                'Minimumaantal stemmen voor zichtbaar totaal',
+                $report_errors
+            ),
             'rate_limit_enabled' => self::sanitizeBoolean($raw['rate_limit_enabled'] ?? false),
-            'rate_limit_max' => self::boundedPositiveInt(
+            'rate_limit_max' => self::boundedInt(
                 $raw['rate_limit_max'] ?? $defaults['rate_limit_max'],
                 self::RATE_LIMIT_MAX_MIN,
                 self::RATE_LIMIT_MAX_MAX,
@@ -146,7 +156,7 @@ final class Settings
                 'Maximumaantal stemmen per periode',
                 $report_errors
             ),
-            'rate_limit_window' => self::boundedPositiveInt(
+            'rate_limit_window' => self::boundedInt(
                 $raw['rate_limit_window'] ?? $defaults['rate_limit_window'],
                 self::RATE_LIMIT_WINDOW_MIN,
                 self::RATE_LIMIT_WINDOW_MAX,
@@ -183,7 +193,7 @@ final class Settings
     }
 
     /**
-     * Sanitizes and clamps a positive integer option.
+     * Sanitizes and clamps an integer option.
      *
      * @param mixed  $value  Raw integer-like value.
      * @param int    $min    Minimum accepted value.
@@ -192,7 +202,7 @@ final class Settings
      * @param string $label  Human-readable field label.
      * @param bool   $report Whether coercions should be shown in wp-admin.
      */
-    private static function boundedPositiveInt(
+    private static function boundedInt(
         mixed $value,
         int $min,
         int $max,
