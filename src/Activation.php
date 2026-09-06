@@ -19,8 +19,11 @@ final class Activation
 {
     public const DB_VERSION = \ZW_POLL_VERSION;
     public const DB_VERSION_OPTION = 'zw_poll_db_version';
+    public const TOTAL_VISIBILITY_CURSOR_OPTION = 'zw_poll_total_visibility_cursor';
     public const IP_SALT_OPTION = 'zw_poll_ip_salt';
     public const VOTES_TABLE = 'zw_poll_votes';
+
+    private const TOTAL_VISIBILITY_BATCH_SIZE = 100;
 
     /**
      * Registers runtime lifecycle hooks.
@@ -189,11 +192,6 @@ final class Activation
         }
 
         if (!self::migrateTotalVisibility()) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.
-            error_log(sprintf(
-                'zw-poll: total visibility migration for %s is incomplete; it retries on the next request.',
-                self::DB_VERSION
-            ));
             return;
         }
 
@@ -205,7 +203,10 @@ final class Activation
                 'zw-poll: failed to store database version %s; installation retries on the next request.',
                 self::DB_VERSION
             ));
+            return;
         }
+
+        delete_option(self::TOTAL_VISIBILITY_CURSOR_OPTION);
     }
 
     /**
@@ -213,16 +214,31 @@ final class Activation
      *
      * Every poll, trashed ones included, receives an explicit policy before
      * its legacy key is removed: hidden totals stay hidden and formerly
-     * visible totals are forced visible. Returns false when a write failed.
+     * visible totals are forced visible. One ID-ordered batch runs per request.
+     * Returns true only after the final batch completes.
      */
     private static function migrateTotalVisibility(): bool
     {
-        $poll_ids = array_map('intval', get_posts([
-            'post_type' => PollPostType::POST_TYPE,
-            'post_status' => array_keys(get_post_stati()),
-            'numberposts' => -1,
-            'fields' => 'ids',
-        ]));
+        global $wpdb;
+
+        $cursor = max(0, (int) get_option(self::TOTAL_VISIBILITY_CURSOR_OPTION, 0));
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A live, bounded ID cursor avoids offset skips while posts change.
+        $poll_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d ORDER BY ID ASC LIMIT %d",
+            PollPostType::POST_TYPE,
+            $cursor,
+            self::TOTAL_VISIBILITY_BATCH_SIZE
+        )));
+        if ($wpdb->last_error !== '') {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
+            error_log(sprintf(
+                'zw-poll: total visibility migration query failed after post %d: %s',
+                $cursor,
+                $wpdb->last_error
+            ));
+            return false;
+        }
+
         update_meta_cache('post', $poll_ids);
 
         $complete = true;
@@ -243,7 +259,32 @@ final class Activation
             delete_post_meta($poll_id, PollPostType::META_HIDE_TOTAL);
         }
 
-        return $complete;
+        if (!$complete) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
+            error_log(sprintf(
+                'zw-poll: total visibility migration failed after post %d; the batch retries on the next request.',
+                $cursor
+            ));
+            return false;
+        }
+
+        if (count($poll_ids) < self::TOTAL_VISIBILITY_BATCH_SIZE) {
+            return true;
+        }
+
+        $next_cursor = $poll_ids[count($poll_ids) - 1];
+        if (
+            !update_option(self::TOTAL_VISIBILITY_CURSOR_OPTION, $next_cursor, false)
+            && (int) get_option(self::TOTAL_VISIBILITY_CURSOR_OPTION, 0) !== $next_cursor
+        ) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
+            error_log(sprintf(
+                'zw-poll: failed to store the total visibility migration cursor after post %d.',
+                $next_cursor
+            ));
+        }
+
+        return false;
     }
 
     /**

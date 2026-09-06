@@ -354,7 +354,7 @@ msgid "Bepaal hoeveel stemmen er per IP-adres binnen een periode zijn toegestaan
 msgstr ""
 
 #: src/Admin/SettingsPage.php:175
-msgid "Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd."
+msgid "Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd bij polls die de site-instelling volgen."
 msgstr ""
 
 #: src/Admin/SettingsPage.php:190

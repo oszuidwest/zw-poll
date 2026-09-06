@@ -173,7 +173,7 @@ final class SettingsPage
     public function renderDisplaySection(): void
     {
         echo '<p>' . esc_html__(
-            'Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd.',
+            'Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd bij polls die de site-instelling volgen.',
             'zw-poll'
         ) . '</p>';
     }
