@@ -1,21 +1,21 @@
 # ZuidWest Poll
 
-WordPress-plugin voor anonieme polls met één antwoord per stem. Polls worden via
-een shortcode in berichten en pagina's geplaatst, server-side gerenderd voor
-paginacaches en interactief gemaakt met de WordPress Interactivity API.
+A WordPress plugin for anonymous, single-choice polls. Polls are embedded in
+posts and pages with a shortcode, rendered server-side for page-cache
+compatibility, and made interactive with the WordPress Interactivity API.
 
-## Vereisten
+## Requirements
 
-| Onderdeel | Versie |
+| Component | Version |
 |---|---|
 | WordPress | 6.9+ |
 | PHP | 8.3+ |
-| Node.js | 20+ lokaal, 24 in CI |
+| Node.js | 20+ locally, 24 in CI |
 
-Node.js is alleen nodig voor linting, Playground en Playwright. De frontend- en
-admin-assets in `src/` worden zonder buildstap uitgeleverd.
+Node.js is only required for linting, WordPress Playground, and Playwright. The
+frontend and admin assets in `src/` ship without a build step.
 
-## Aan de slag
+## Getting started
 
 ```bash
 composer install
@@ -23,55 +23,58 @@ npm install
 npm run playground
 ```
 
-De demo draait op `http://127.0.0.1:9400`. De
-[Playground-blueprint](playground/blueprint.json) activeert de plugin en Classic
-Editor en maakt een open en een gesloten demo-poll aan:
+The demo runs at `http://127.0.0.1:9400`. The
+[Playground blueprint](playground/blueprint.json) activates the plugin and
+Classic Editor, then creates an open and a closed demo poll:
 
 - `/poll-demo/`
 - `/poll-gesloten-demo/`
 
-Maak voor installatie in een andere WordPress-omgeving een uploadbare pluginzip
-met SHA-256-controlesom:
+To install the plugin in another WordPress environment, build an uploadable ZIP
+with a SHA-256 checksum:
 
 ```bash
 npm run build:plugin
 ```
 
-De bestanden komen in `dist/`; de versie wordt gelezen uit [zw-poll.php](zw-poll.php).
+The generated files are written to `dist/`. The version is read from
+[zw-poll.php](zw-poll.php).
 
-## Gebruik
+## Usage
 
-1. Maak onder **Polls** een poll met een vraag, antwoordopties en status.
-2. Kopieer de shortcode uit het vak **Insluiten** of uit de pollslijst.
-3. Plaats deze in een bericht of pagina:
+1. Create a poll under **Polls** and provide a question, answer options, and a
+   status.
+2. Copy the shortcode from the **Embed** panel or the poll list.
+3. Add it to a post or page:
 
 ```text
 [zw_poll id="123"]
 ```
 
-Classic Editor heeft ook een knop **Poll invoegen** in de visuele toolbar en een
-compacte **poll**-knop in de tekstmodus. De titel van een poll is de vraag aan de
-lezer. Optie-ID's blijven bij hernoemen behouden, waardoor bestaande stemmen
-geldig blijven.
+Classic Editor also provides an **Insert poll** button in the visual toolbar
+and a compact **poll** button in text mode. The poll title is the question shown
+to readers. Option IDs remain stable when labels are renamed, so existing votes
+remain valid.
 
-Shortcode-gebruik verschijnt in **Gebruikt op** en wordt meegenomen door de delete-guard.
+Shortcode usage is listed under **Used in** and is taken into account by the
+delete guard.
 
-## Instellingen
+## Settings
 
-Beheerders vinden onder **Polls → Instellingen** de stembeveiliging,
-proxy-header en optie voor gegevensverwijdering. Instellingen worden per site
-opgeslagen in `zw_poll_settings`.
+Administrators can configure vote protection, proxy headers, and uninstall data
+removal under **Polls → Settings**. Settings are stored per site in
+`zw_poll_settings`.
 
-- Rate limiting kan worden uitgeschakeld en staat standaard op 30 verzoeken per
-  60 seconden. Wijzigingen gelden voor nieuwe transientvensters.
-- Ondersteunde proxy-headers zijn `CF-Connecting-IP`, `X-Forwarded-For` en
-  `X-Real-IP`. Een `zw_poll_client_ip`-filter in code heeft voorrang.
-- Gegevens verwijderen bij uninstall is opt-in. Standaard blijven de stemtabel,
-  salt, instellingen en capabilities behouden.
-- Percentages worden altijd getoond. Het totale aantal stemmen is per poll aan
-  of uit te zetten en staat standaard aan.
+- Rate limiting can be disabled and defaults to 30 requests per 60 seconds.
+  Changes apply to newly created transient windows.
+- Supported proxy headers are `CF-Connecting-IP`, `X-Forwarded-For`, and
+  `X-Real-IP`. A `zw_poll_client_ip` filter in code takes precedence.
+- Removing data on uninstall is opt-in. By default, the votes table, salt,
+  settings, and capabilities are retained.
+- Percentages are always displayed. The total vote count can be toggled per
+  poll and is enabled by default.
 
-## WP-CLI en REST
+## WP-CLI and REST API
 
 ```bash
 wp zw-poll list
@@ -79,83 +82,86 @@ wp zw-poll rebuild <poll_id>
 wp zw-poll reset <poll_id> --yes
 ```
 
-Gebruik `rebuild` na handmatige databasewijzigingen of om de aggregate-cache
-vanuit de stemtabel te herstellen.
+Use `rebuild` after manual database changes or to restore the aggregate cache
+from the votes table.
 
-REST-endpoints:
+REST endpoints:
 
-- Publiek: `POST /wp-json/zw-poll/v1/vote`
+- Public: `POST /wp-json/zw-poll/v1/vote`
 - Editor/admin: `POST /wp-json/zw-poll/v1/poll/{id}/reset`
-- Pollbeheer: standaard CPT-routes onder `/wp-json/wp/v2/zw-polls`
+- Poll management: standard custom post type routes under
+  `/wp-json/wp/v2/zw-polls`
 
-Het publieke vote-endpoint gebruikt bewust geen REST-nonce. Beveiliging bestaat
-uit same-origin-controle, schemavalidatie, rate limiting en een unieke
-deduplicatie-index.
+The public vote endpoint intentionally does not use a REST nonce. Protection is
+provided by same-origin validation, schema validation, rate limiting, and a
+unique deduplication index.
 
-## Ontwikkeling en tests
+## Development and testing
 
 ```bash
 composer test      # PHPUnit
-composer coverage  # PHPUnit en minimaal 80% line coverage
+composer coverage  # PHPUnit with a minimum of 80% line coverage
 composer stan      # PHPStan level 8
 composer lint      # PHPCS/WPCS
 composer lint:fix  # PHPCBF
-composer security  # Composer-audit
-npm run lint       # JS- en CSS-lint
-npm run security   # npm-audit; faalt op high/critical
-npm run make-pot   # languages/zw-poll.pot bijwerken
+composer security  # Composer audit
+npm run lint       # JavaScript and CSS linting
+npm run security   # npm audit; fails on high or critical advisories
+npm run make-pot   # Update languages/zw-poll.pot
 ```
 
-Start voor de end-to-endtests eerst Playground in een aparte terminal:
+Start Playground in a separate terminal before running the end-to-end tests:
 
 ```bash
 npm run playground
 npm run test:e2e
 ```
 
-CI controleert daarnaast Plugin Check, de POT-diff en Playwright tegen WordPress
-6.9 en de nieuwste WordPress-versie.
+CI also runs WordPress Plugin Check, verifies the translation template, and runs
+Playwright against WordPress 6.9 and the latest WordPress release.
 
-## Architectuur
+## Architecture
 
-De PHP-code gebruikt de namespace `ZuidWest\Poll\` onder `src/` en wordt gestart
-via `Plugin::boot()`. De belangrijkste onderdelen zijn:
+The PHP code uses the `ZuidWest\Poll\` namespace under `src/` and is bootstrapped
+through `Plugin::boot()`. Its main components are:
 
-- Bootstrap en instellingen: `Plugin`, `Activation`, `Support\Capabilities` en
+- Bootstrap and settings: `Plugin`, `Activation`, `Support\Capabilities`, and
   `Support\Settings`.
-- Polls en stemmen: `PostType\PollPostType`, `Vote\VoteRepository`,
-  `Vote\AggregateCache` en `Vote\RateLimiter`.
-- REST en shortcode: `Rest\VoteController`, `Rest\AdminController` en
+- Polls and votes: `PostType\PollPostType`, `Vote\VoteRepository`,
+  `Vote\AggregateCache`, and `Vote\RateLimiter`.
+- REST API and shortcode: `Rest\VoteController`, `Rest\AdminController`, and
   `Shortcode\PollShortcode`.
 - Frontend: `Frontend\PollRenderer`, `Frontend\Assets`,
-  `src/Frontend/view.js` en `src/Frontend/style.css`.
-- Beheer en CLI: de klassen onder `Admin\` en `Cli\Commands`.
+  `src/Frontend/view.js`, and `src/Frontend/style.css`.
+- Admin and CLI: the classes under `Admin\` and `Cli\Commands`.
 
-Polls zijn `zw_poll`-posts. Stemmen staan in
-`{$wpdb->prefix}zw_poll_votes`; `_zw_poll_aggregate` bewaart de cache met
-aantallen per optie-ID. De polltitel is de vraag en is begrensd op 200 tekens.
+Polls are stored as `zw_poll` posts. Votes are stored in
+`{$wpdb->prefix}zw_poll_votes`; `_zw_poll_aggregate` holds cached counts per
+option ID. The poll title is the question and is limited to 200 characters.
 
-`PollShortcode::render()` laat `PollRenderer` de Interactivity API-markup bouwen
-en server-side verwerken. Daardoor tonen gecachte pagina's ook zonder JavaScript
-resultaten. `src/Frontend/view.js` is een native ES-module die
-`@wordpress/interactivity` via de WordPress-importmap laadt. De derived state in
-PHP en de getters in JavaScript moeten gelijk blijven.
+`PollShortcode::render()` delegates Interactivity API markup generation to
+`PollRenderer` and applies server-side directive processing. Cached pages
+therefore show results even without JavaScript. `src/Frontend/view.js` is a
+native ES module that loads `@wordpress/interactivity` through the WordPress
+import map. The derived state in PHP and the JavaScript getters must remain in
+sync.
 
-## Beveiliging en privacy
+## Security and privacy
 
-De standaardbeveiliging is bedoeld voor informele polls achter paginacaches.
-Cookie-tokens en same-origin-headers beperken gewone dubbele stemmen en fouten,
-maar zijn geen cryptografisch bewijs tegen een doelbewuste client. Gebruik de
-plugin zonder aanvullende controles niet voor bindende verkiezingen.
+The default protection is intended for informal polls behind page caches.
+Cookie tokens and same-origin headers limit ordinary duplicate votes and
+mistakes, but they do not provide cryptographic proof against a determined
+client. Do not use the plugin for binding elections without additional
+controls.
 
-- De plugin slaat geen user-ID op bij een stem.
-- Deduplicatie gebruikt de functionele cookie `zwpoll_voted_{poll_id}` en een
-  unieke index op `(poll_id, cookie_token)`.
-- IP-adressen worden met HMAC-SHA256 en de server-side salt `zw_poll_ip_salt`
-  gehasht voor rate limiting en audit.
-- SQL gebruikt `$wpdb->prepare()` en uitvoer wordt geëscaped.
+- The plugin does not store a WordPress user ID with a vote.
+- Deduplication uses the functional `zwpoll_voted_{poll_id}` cookie and a unique
+  index on `(poll_id, cookie_token)`.
+- IP addresses are hashed with HMAC-SHA256 and the server-side
+  `zw_poll_ip_salt` for rate limiting and auditing.
+- SQL queries use `$wpdb->prepare()` and output is escaped.
 
-Voor gevoeligere polls kunnen deze filters de bescherming aanscherpen:
+For more sensitive polls, use these filters to tighten protection:
 
 ```php
 add_filter( 'zw_poll_rate_limit', function (
@@ -178,38 +184,38 @@ add_filter( 'zw_poll_vote_allowed', function (
         return $allowed;
     }
 
-    // Controleer hier bijvoorbeeld een WAF-challenge of signed edge-header.
+    // Validate a WAF challenge or signed edge header here, for example.
     return $allowed;
 }, 10, 4 );
 ```
 
-`zw_poll_rate_limit` kan een poll alleen verder beperken; de globale limiet
-blijft de bovengrens. Gebruik uitsluitend positieve gehele waarden voor `max` en
-`window`. `zw_poll_vote_allowed` laat alleen exact `true` door; retourneer voor
-een eigen fout een `WP_Error` met expliciete HTTP-status.
+`zw_poll_rate_limit` can only make a poll more restrictive; the global limit
+remains the upper bound. Use positive integers for `max` and `window`.
+`zw_poll_vote_allowed` only allows the exact boolean value `true`. Return a
+`WP_Error` with an explicit HTTP status for custom errors.
 
 ### Reverse proxies
 
-Standaard gebruikt de plugin `REMOTE_ADDR`. Stel alleen een proxy-header in
-wanneer een vertrouwde proxy binnenkomende headers overschrijft. Bij
-`X-Forwarded-For` gebruikt de plugin de laatste waarde; bij proxyketens heeft een
-edgeheader met één waarde of een eigen filter de voorkeur:
+The plugin uses `REMOTE_ADDR` by default. Configure a proxy header only when a
+trusted proxy overwrites incoming headers. For `X-Forwarded-For`, the plugin
+uses the final value. With proxy chains, prefer a single-value edge header or a
+custom filter:
 
 ```php
 add_filter( 'zw_poll_client_ip', function ( string $ip ): string {
-    // Controleer eerst of het verzoek via een vertrouwde proxy kwam.
+    // Verify that the request passed through a trusted proxy first.
     return $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $ip;
 } );
 ```
 
-Ongeldige IP-adressen vallen terug op `REMOTE_ADDR`. Formaatvalidatie maakt een
-client-header niet automatisch betrouwbaar. Een edge-rate-limit op
-`POST /wp-json/zw-poll/v1/vote` blijft aanbevolen.
+Invalid IP addresses fall back to `REMOTE_ADDR`. Syntax validation alone does
+not make a client header trustworthy. An edge rate limit on
+`POST /wp-json/zw-poll/v1/vote` remains recommended.
 
 ## Theming
 
-De neutrale standaardstijl staat in `src/Frontend/style.css` en gebruikt CSS
-custom properties op `.zw-poll`. Voor een eigen accentkleur:
+The neutral default styles in `src/Frontend/style.css` use CSS custom properties
+on `.zw-poll`. To set a custom accent color:
 
 ```css
 .zw-poll {
@@ -217,25 +223,26 @@ custom properties op `.zw-poll`. Voor een eigen accentkleur:
 }
 ```
 
-Kies een kleur met voldoende contrast. De volledige lijst, inclusief tokens voor
-de header en stemknop, staat bovenin `src/Frontend/style.css`.
+Choose a color with sufficient contrast. The full token list, including header
+and vote-button tokens, is documented at the top of
+`src/Frontend/style.css`.
 
-## Release
+## Release process
 
-Start de releaseworkflow handmatig vanaf `main`. De versie komt uit de
-`Version:`-header in [zw-poll.php](zw-poll.php). De workflow voert alle
-kwaliteitscontroles uit en publiceert een zip met controlesom. Alleen
-`zw-poll.php`, `uninstall.php`, `LICENSE`, `README.md`, `src/` en `languages/`
-worden verpakt. Met `force` kan uitsluitend een ontbrekende release voor de
-huidige commit worden hersteld; een bestaande release wordt nooit overschreven.
+Manually start the release workflow from `main`. The version comes from the
+`Version:` header in [zw-poll.php](zw-poll.php). The workflow runs all quality
+checks and publishes a ZIP with its checksum. Only `zw-poll.php`,
+`uninstall.php`, `LICENSE`, `README.md`, `src/`, and `languages/` are packaged.
+The `force` option can recover a missing release for the current commit; an
+existing release is never overwritten.
 
-## Licentie
+## License
 
-ZuidWest Poll is vrije software onder de [GNU General Public License v2.0 of
-nieuwer](LICENSE).
+ZuidWest Poll is free software licensed under the
+[GNU General Public License v2.0 or later](LICENSE).
 
-## Buiten scope
+## Out of scope
 
-Niet voorzien: multi-choice of ranked polls, automatisch sluiten,
-export-UI, e-mailnotificaties, externe embeds, A/B-tests, een Gutenberg-block en
-een formulierfallback zonder JavaScript.
+The plugin does not provide multiple-choice or ranked polls, automatic closing,
+an export UI, email notifications, external embeds, A/B tests, a Gutenberg
+block, or a non-JavaScript form fallback.
