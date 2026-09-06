@@ -53,7 +53,7 @@ msgid "poll"
 msgstr ""
 
 #: src/Admin/ClassicEditor.php:164
-#: src/PostType/PollPostType.php:63
+#: src/PostType/PollPostType.php:65
 msgid "Polls zoeken"
 msgstr ""
 
@@ -82,7 +82,7 @@ msgid "Deze poll bevat stemmen en kan niet permanent verwijderd worden. Verwijde
 msgstr ""
 
 #: src/Admin/DeleteGuard.php:153
-#: src/PostType/PollPostType.php:60
+#: src/PostType/PollPostType.php:62
 msgid "Poll bewerken"
 msgstr ""
 
@@ -492,38 +492,38 @@ msgstr ""
 msgid "Einduitslag"
 msgstr ""
 
-#: src/PostType/PollPostType.php:56
-#: src/PostType/PollPostType.php:66
+#: src/PostType/PollPostType.php:58
+#: src/PostType/PollPostType.php:68
 msgid "Polls"
 msgstr ""
 
-#: src/PostType/PollPostType.php:57
+#: src/PostType/PollPostType.php:59
 #: src/Admin/classic-editor.js:198
 msgid "Poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:58
-#: src/PostType/PollPostType.php:61
+#: src/PostType/PollPostType.php:60
+#: src/PostType/PollPostType.php:63
 msgid "Nieuwe poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:59
+#: src/PostType/PollPostType.php:61
 msgid "Nieuwe poll toevoegen"
 msgstr ""
 
-#: src/PostType/PollPostType.php:62
+#: src/PostType/PollPostType.php:64
 msgid "Poll bekijken"
 msgstr ""
 
-#: src/PostType/PollPostType.php:64
+#: src/PostType/PollPostType.php:66
 msgid "Geen polls gevonden"
 msgstr ""
 
-#: src/PostType/PollPostType.php:65
+#: src/PostType/PollPostType.php:67
 msgid "Geen polls gevonden in de prullenbak"
 msgstr ""
 
-#: src/PostType/PollPostType.php:67
+#: src/PostType/PollPostType.php:69
 msgid "Alle polls"
 msgstr ""
 
