@@ -20,6 +20,7 @@ final class Activation
     public const DB_VERSION = \ZW_POLL_VERSION;
     public const DB_VERSION_OPTION = 'zw_poll_db_version';
     public const TOTAL_VISIBILITY_CURSOR_OPTION = 'zw_poll_total_visibility_cursor';
+    public const TOTAL_VISIBILITY_CUTOFF_OPTION = 'zw_poll_total_visibility_cutoff';
     public const IP_SALT_OPTION = 'zw_poll_ip_salt';
     public const VOTES_TABLE = 'zw_poll_votes';
 
@@ -207,6 +208,7 @@ final class Activation
         }
 
         delete_option(self::TOTAL_VISIBILITY_CURSOR_OPTION);
+        delete_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION);
     }
 
     /**
@@ -222,11 +224,39 @@ final class Activation
         global $wpdb;
 
         $cursor = max(0, (int) get_option(self::TOTAL_VISIBILITY_CURSOR_OPTION, 0));
+        $stored_cutoff = get_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION, null);
+        if ($stored_cutoff === null) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Capture the stable pre-upgrade boundary once.
+            $cutoff = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COALESCE(MAX(ID), 0) FROM {$wpdb->posts} WHERE post_type = %s",
+                PollPostType::POST_TYPE
+            ));
+            if ($wpdb->last_error !== '') {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
+                error_log('zw-poll: failed to determine the total visibility migration cutoff: ' . $wpdb->last_error);
+                return false;
+            }
+
+            if (!add_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION, $cutoff, '', false)) {
+                $stored_cutoff = get_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION, null);
+                if ($stored_cutoff === null) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
+                    error_log('zw-poll: failed to store the total visibility migration cutoff.');
+                    return false;
+                }
+                $cutoff = (int) $stored_cutoff;
+            }
+        } else {
+            $cutoff = (int) $stored_cutoff;
+        }
+        $cutoff = max(0, $cutoff);
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A live, bounded ID cursor avoids offset skips while posts change.
         $poll_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
-            "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d ORDER BY ID ASC LIMIT %d",
+            "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d AND ID <= %d ORDER BY ID ASC LIMIT %d",
             PollPostType::POST_TYPE,
             $cursor,
+            $cutoff,
             self::TOTAL_VISIBILITY_BATCH_SIZE
         )));
         if ($wpdb->last_error !== '') {

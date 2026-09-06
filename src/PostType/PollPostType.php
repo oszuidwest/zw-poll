@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\PostType;
 
+use ZuidWest\Poll\Activation;
+
 /**
  * Defines the poll CPT and validates editor-controlled meta.
  */
@@ -197,14 +199,17 @@ final class PollPostType
      */
     public static function totalVisibility(int $poll_id): string
     {
-        if (
-            !metadata_exists('post', $poll_id, self::META_TOTAL_VISIBILITY)
-            && metadata_exists('post', $poll_id, self::META_HIDE_TOTAL)
-        ) {
+        if (metadata_exists('post', $poll_id, self::META_TOTAL_VISIBILITY)) {
+            return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
+        }
+
+        if (metadata_exists('post', $poll_id, self::META_HIDE_TOTAL)) {
             return self::legacyTotalVisibility($poll_id);
         }
 
-        return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
+        return $poll_id <= (int) get_option(Activation::TOTAL_VISIBILITY_CUTOFF_OPTION, 0)
+            ? self::TOTAL_VISIBILITY_SHOW
+            : self::TOTAL_VISIBILITY_DEFAULT;
     }
 
     /**

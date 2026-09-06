@@ -25,6 +25,7 @@ final class ActivationTest extends TestCase
         Monkey\setUp();
         // Sites without polls make the total visibility migration a no-op.
         Functions\when('update_meta_cache')->justReturn(false);
+        Functions\when('add_option')->justReturn(true);
         Functions\when('delete_option')->justReturn(true);
     }
 
@@ -60,6 +61,8 @@ final class ActivationTest extends TestCase
     ): wpdb
     {
         return new class($indexNonUnique, $pollBatches, $pollQueryError, $pollQueries) extends wpdb {
+            private int $pollCutoff = 0;
+
             /**
              * @param list<string|null> $indexNonUnique Non_unique values.
              * @param list<list<int|string>> $pollBatches Poll ID batches.
@@ -71,6 +74,11 @@ final class ActivationTest extends TestCase
                 private ?\ArrayObject $pollQueries
             ) {
                 $this->prefix = 'wp_';
+                foreach ($pollBatches as $batch) {
+                    foreach ($batch as $poll_id) {
+                        $this->pollCutoff = max($this->pollCutoff, (int) $poll_id);
+                    }
+                }
             }
 
             public function prepare(string $query, mixed ...$args): string
@@ -84,9 +92,16 @@ final class ActivationTest extends TestCase
 
             public function get_var(string $query): mixed
             {
-                return str_contains($query, 'information_schema.STATISTICS')
-                    ? array_shift($this->indexNonUnique)
-                    : null;
+                if (str_contains($query, 'information_schema.STATISTICS')) {
+                    return array_shift($this->indexNonUnique);
+                }
+
+                if (str_contains($query, 'COALESCE(MAX(ID), 0)')) {
+                    $this->last_error = '';
+                    return (string) $this->pollCutoff;
+                }
+
+                return null;
             }
 
             public function get_col(string $query): array
@@ -279,6 +294,15 @@ final class ActivationTest extends TestCase
                 return true;
             }
         );
+        Functions\when('add_option')->alias(
+            static function (string $option, mixed $value) use (&$options): bool {
+                if (array_key_exists($option, $options)) {
+                    return false;
+                }
+                $options[$option] = $value;
+                return true;
+            }
+        );
         Functions\when('delete_option')->alias(
             static function (string $option) use (&$options): bool {
                 unset($options[$option]);
@@ -289,14 +313,16 @@ final class ActivationTest extends TestCase
         Activation::ensureInstalled();
 
         $this->assertSame(100, $options[Activation::TOTAL_VISIBILITY_CURSOR_OPTION]);
+        $this->assertSame(101, $options[Activation::TOTAL_VISIBILITY_CUTOFF_OPTION]);
         $this->assertFalse($options[Activation::DB_VERSION_OPTION]);
 
         Activation::ensureInstalled();
 
         $this->assertSame(Activation::DB_VERSION, $options[Activation::DB_VERSION_OPTION]);
         $this->assertArrayNotHasKey(Activation::TOTAL_VISIBILITY_CURSOR_OPTION, $options);
-        $this->assertStringContainsString('ID > 0 ORDER BY ID ASC LIMIT 100', $queries[0]);
-        $this->assertStringContainsString('ID > 100 ORDER BY ID ASC LIMIT 100', $queries[1]);
+        $this->assertArrayNotHasKey(Activation::TOTAL_VISIBILITY_CUTOFF_OPTION, $options);
+        $this->assertStringContainsString('ID > 0 AND ID <= 101 ORDER BY ID ASC LIMIT 100', $queries[0]);
+        $this->assertStringContainsString('ID > 100 AND ID <= 101 ORDER BY ID ASC LIMIT 100', $queries[1]);
     }
 
     #[Test]
