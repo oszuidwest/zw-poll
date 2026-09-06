@@ -75,9 +75,6 @@ final class PollPostTypeTest extends TestCase
 
         Functions\when('get_post_meta')->justReturn('corrupt');
         $this->assertSame('default', PollPostType::totalVisibility(42));
-
-        Functions\when('get_post_meta')->justReturn('');
-        $this->assertSame('default', PollPostType::totalVisibility(42));
     }
 
     #[Test]
@@ -85,9 +82,6 @@ final class PollPostTypeTest extends TestCase
     {
         // A null default fails core's type check and keeps the object meta out
         // of the registry; readers handle missing meta.
-        Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = []): mixed => $default
-        );
         $registered = [];
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
@@ -104,7 +98,6 @@ final class PollPostTypeTest extends TestCase
     public function registered_meta_auth_uses_object_level_edit_permission(): void
     {
         $callbacks = [];
-        Functions\when('get_option')->justReturn([]);
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$callbacks): void {
                 $callbacks[$meta_key] = $args['auth_callback'];

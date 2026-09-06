@@ -158,9 +158,7 @@ final class Activation
      */
     public static function ensureInstalled(): void
     {
-        $installed = (string) get_option(self::DB_VERSION_OPTION);
-
-        if ($installed === self::DB_VERSION) {
+        if ((string) get_option(self::DB_VERSION_OPTION) === self::DB_VERSION) {
             return;
         }
 
@@ -179,7 +177,7 @@ final class Activation
             return;
         }
 
-        // Autoload this scalar: ensureInstalled() reads it on every request, and
+        // Autoload this scalar: init runs this on every request, and
         // one alloptions read is cheaper than a standalone query without persistent object cache.
         if (!update_option(self::DB_VERSION_OPTION, self::DB_VERSION, true)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.

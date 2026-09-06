@@ -56,11 +56,7 @@ final class ActivationTest extends TestCase
 
             public function get_var(string $query): mixed
             {
-                if (str_contains($query, 'information_schema.STATISTICS')) {
-                    return array_shift($this->indexNonUnique);
-                }
-
-                return null;
+                return array_shift($this->indexNonUnique);
             }
 
             public function get_charset_collate(): string

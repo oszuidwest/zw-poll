@@ -188,7 +188,7 @@ final class PollPostType
     }
 
     /**
-     * Returns the effective per-poll total visibility policy.
+     * Returns the stored per-poll total visibility policy, normalized to a known value.
      *
      * @param int $poll_id Poll post ID.
      */
