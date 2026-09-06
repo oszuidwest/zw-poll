@@ -346,6 +346,11 @@
 	margin: 0.333em 0 0;
 }
 
+/* An open poll below its threshold hides the total and nothing else remains. */
+.zw-poll__results-foot:not(:has(> :not([hidden]))) {
+	display: none;
+}
+
 .zw-poll__final {
 	color: var(--zw-poll-accent-text-color);
 	font-size: 0.8em;

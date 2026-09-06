@@ -57,7 +57,7 @@ final class PollEditFormTest extends TestCase
                 ['id' => 'uuid-1', 'label' => 'Ja'],
                 ['id' => '', 'label' => 'Nee'],
             ],
-            'zw_poll_show_total' => '1',
+            'zw_poll_total_visibility' => PollPostType::TOTAL_VISIBILITY_SHOW,
             'zw_poll_closes_at' => '',
         ], $overrides);
     }
@@ -147,11 +147,10 @@ final class PollEditFormTest extends TestCase
             ]],
             $writes[PollPostType::META_OPTIONS]
         );
-        // A checked "toon totaal" box stores hide_total = false.
-        $this->assertSame([self::POLL_ID, false], $writes[PollPostType::META_HIDE_TOTAL]);
+        $this->assertSame([self::POLL_ID, PollPostType::TOTAL_VISIBILITY_SHOW], $writes[PollPostType::META_TOTAL_VISIBILITY]);
         // The question is the post title and is saved by core, not here.
         $this->assertSame(
-            [PollPostType::META_OPTIONS, PollPostType::META_HIDE_TOTAL, PollPostType::META_CLOSES_AT],
+            [PollPostType::META_OPTIONS, PollPostType::META_TOTAL_VISIBILITY, PollPostType::META_CLOSES_AT],
             array_keys($writes)
         );
     }
@@ -184,8 +183,7 @@ final class PollEditFormTest extends TestCase
     #[Test]
     public function save_hides_the_total_when_the_checkbox_is_unchecked(): void
     {
-        // Unchecked checkbox: the browser submits only the hidden "0" field.
-        $this->submitForm(['zw_poll_show_total' => '0']);
+        $this->submitForm(['zw_poll_total_visibility' => PollPostType::TOTAL_VISIBILITY_HIDE]);
         Functions\when('wp_verify_nonce')->justReturn(1);
         Functions\when('current_user_can')->justReturn(true);
         $writes = [];
@@ -193,7 +191,7 @@ final class PollEditFormTest extends TestCase
 
         (new PollEditForm())->save(self::POLL_ID);
 
-        $this->assertSame([self::POLL_ID, true], $writes[PollPostType::META_HIDE_TOTAL]);
+        $this->assertSame([self::POLL_ID, PollPostType::TOTAL_VISIBILITY_HIDE], $writes[PollPostType::META_TOTAL_VISIBILITY]);
     }
 
     #[Test]
@@ -201,7 +199,7 @@ final class PollEditFormTest extends TestCase
     {
         $this->submitForm();
         // Display box removed by another plugin: even the hidden "0" is gone.
-        unset($_POST['zw_poll_show_total']);
+        unset($_POST['zw_poll_total_visibility']);
         Functions\when('wp_verify_nonce')->justReturn(1);
         Functions\when('current_user_can')->justReturn(true);
         $writes = [];
@@ -210,7 +208,7 @@ final class PollEditFormTest extends TestCase
         (new PollEditForm())->save(self::POLL_ID);
 
         $this->assertArrayHasKey(PollPostType::META_OPTIONS, $writes);
-        $this->assertArrayNotHasKey(PollPostType::META_HIDE_TOTAL, $writes);
+        $this->assertArrayNotHasKey(PollPostType::META_TOTAL_VISIBILITY, $writes);
     }
 
     #[Test]
@@ -251,7 +249,7 @@ final class PollEditFormTest extends TestCase
         (new PollEditForm())->save(self::POLL_ID);
 
         $this->assertArrayNotHasKey(PollPostType::META_OPTIONS, $writes);
-        $this->assertArrayHasKey(PollPostType::META_HIDE_TOTAL, $writes);
+        $this->assertArrayHasKey(PollPostType::META_TOTAL_VISIBILITY, $writes);
     }
 
     #[Test]
@@ -274,11 +272,21 @@ final class PollEditFormTest extends TestCase
     private function renderDisplayBox(bool $hidden): string
     {
         Functions\when('wp_nonce_field')->justReturn('');
+        Functions\when('__')->returnArg();
         Functions\when('esc_html_e')->echoArg();
-        Functions\when('checked')->alias(static function (bool $checked): void {
-            echo $checked ? 'checked="checked"' : '';
+        Functions\when('esc_html')->returnArg();
+        Functions\when('esc_attr')->returnArg();
+        Functions\when('_n')->alias(static fn (string $single, string $plural, int $count): string => $count === 1 ? $single : $plural);
+        Functions\when('number_format_i18n')->alias(static fn (int $number): string => (string) $number);
+        Functions\when('checked')->alias(static function (mixed $checked, mixed $current): void {
+            echo $checked === $current ? 'checked="checked"' : '';
         });
-        Functions\when('get_post_meta')->justReturn($hidden);
+        Functions\when('get_post_meta')->justReturn(
+            $hidden ? PollPostType::TOTAL_VISIBILITY_HIDE : PollPostType::TOTAL_VISIBILITY_SHOW
+        );
+        Functions\when('get_option')->alias(
+            static fn (string $option, mixed $default = []): mixed => $default
+        );
 
         ob_start();
         (new PollEditForm())->renderDisplay($this->pollPost('publish'));
@@ -291,9 +299,8 @@ final class PollEditFormTest extends TestCase
     {
         $html = $this->renderDisplayBox(false);
 
-        // The hidden "0" doubles as the box-was-rendered marker for save().
-        $this->assertStringContainsString('name="zw_poll_show_total" value="0"', $html);
-        $this->assertStringContainsString('name="zw_poll_show_total" value="1"', $html);
+        $this->assertSame(3, substr_count($html, 'name="zw_poll_total_visibility"'));
+        $this->assertStringContainsString('value="show"', $html);
         $this->assertStringContainsString('checked="checked"', $html);
     }
 
@@ -302,8 +309,22 @@ final class PollEditFormTest extends TestCase
     {
         $html = $this->renderDisplayBox(true);
 
-        $this->assertStringContainsString('name="zw_poll_show_total"', $html);
-        $this->assertStringNotContainsString('checked="checked"', $html);
+        $this->assertStringContainsString('value="hide"', $html);
+        $this->assertStringContainsString('checked="checked"', $html);
+    }
+
+    #[Test]
+    public function save_ignores_invalid_total_visibility_values(): void
+    {
+        $this->submitForm(['zw_poll_total_visibility' => 'invalid']);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertArrayNotHasKey(PollPostType::META_TOTAL_VISIBILITY, $writes);
     }
 
     #[Test]

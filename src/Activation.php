@@ -109,19 +109,11 @@ final class Activation
     }
 
     /**
-     * Ensures the current site's database objects are installed.
-     */
-    public static function ensureInstalled(): void
-    {
-        self::installVotesTable();
-    }
-
-    /**
      * Activates the plugin for the current site.
      */
     private static function activateSite(): void
     {
-        self::installVotesTable();
+        self::ensureInstalled();
         Capabilities::grantToDefaultRoles();
         // IpHasher seeds the salt lazily, including installs that bypass activation.
     }
@@ -181,13 +173,14 @@ final class Activation
     }
 
     /**
-     * Creates the votes table for the current site when needed.
+     * Ensures the current site's votes table is installed.
+     *
+     * The version is stored only after the table and its unique cookie index
+     * are verified, so a partial failure retries on the next request.
      */
-    private static function installVotesTable(): void
+    public static function ensureInstalled(): void
     {
-        $installed = (string) get_option(self::DB_VERSION_OPTION);
-
-        if ($installed === self::DB_VERSION) {
+        if ((string) get_option(self::DB_VERSION_OPTION) === self::DB_VERSION) {
             return;
         }
 
@@ -206,7 +199,7 @@ final class Activation
             return;
         }
 
-        // Autoload this scalar: ensureInstalled() reads it on every request, and
+        // Autoload this scalar: init runs this on every request, and
         // one alloptions read is cheaper than a standalone query without persistent object cache.
         if (!update_option(self::DB_VERSION_OPTION, self::DB_VERSION, true)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.

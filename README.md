@@ -71,8 +71,15 @@ removal under **Polls → Settings**. Settings are stored per site in
   `X-Real-IP`. A `zw_poll_client_ip` filter in code takes precedence.
 - Removing data on uninstall is opt-in. By default, the votes table, salt,
   settings, and capabilities are retained.
-- Percentages are always displayed. The total vote count can be toggled per
-  poll and is enabled by default.
+- Percentages are always displayed. The numeric vote total is shown after 100
+  votes by default; administrators can change the site-wide threshold from 0
+  to 1,000,000. Each poll can use that default, always hide the total, or always
+  show it.
+
+The visibility decision is rendered on the server and mirrored by the
+Interactivity API state. Cached pages therefore keep the configured policy,
+while the total appears immediately when a newly submitted vote reaches the
+threshold.
 
 ## WP-CLI and REST API
 

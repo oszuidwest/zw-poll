@@ -50,7 +50,7 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
-    public function register_meta_exposes_hide_total_as_boolean_defaulting_to_shown(): void
+    public function register_meta_exposes_total_visibility_as_an_enum(): void
     {
         $registered = [];
         Functions\when('register_post_meta')->alias(
@@ -61,12 +61,11 @@ final class PollPostTypeTest extends TestCase
 
         $this->sut->registerMeta();
 
-        $args = $registered[PollPostType::META_HIDE_TOTAL];
-        $this->assertSame('boolean', $args['type']);
-        $this->assertFalse($args['default']);
-        $this->assertTrue($args['show_in_rest']);
-        // The REST layer may hand over any JSON scalar; storage stays boolean.
-        $this->assertSame('rest_sanitize_boolean', $args['sanitize_callback']);
+        $args = $registered[PollPostType::META_TOTAL_VISIBILITY];
+        $this->assertSame('string', $args['type']);
+        $this->assertSame(PollPostType::TOTAL_VISIBILITY_DEFAULT, $args['default']);
+        $this->assertSame(PollPostType::totalVisibilityValues(), $args['show_in_rest']['schema']['enum']);
+        $this->assertSame([PollPostType::class, 'sanitizeTotalVisibility'], $args['sanitize_callback']);
     }
 
     #[Test]
@@ -108,18 +107,13 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
-    public function hides_total_casts_the_stored_meta_string(): void
+    public function total_visibility_uses_stored_meta_and_defaults_invalid_values(): void
     {
-        Functions\when('get_post_meta')->justReturn('1');
-        $this->assertTrue(PollPostType::hidesTotal(42));
+        Functions\when('get_post_meta')->justReturn('hide');
+        $this->assertSame('hide', PollPostType::totalVisibility(42));
 
-        // Meta stores booleans as '1'/'' and returns false when missing;
-        // both falsy shapes read as "total shown".
-        Functions\when('get_post_meta')->justReturn('');
-        $this->assertFalse(PollPostType::hidesTotal(42));
-
-        Functions\when('get_post_meta')->justReturn(false);
-        $this->assertFalse(PollPostType::hidesTotal(42));
+        Functions\when('get_post_meta')->justReturn('corrupt');
+        $this->assertSame('default', PollPostType::totalVisibility(42));
     }
 
     #[Test]
@@ -127,9 +121,6 @@ final class PollPostTypeTest extends TestCase
     {
         // A null default fails core's type check and keeps the object meta out
         // of the registry; readers handle missing meta.
-        Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = []): mixed => $default
-        );
         $registered = [];
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
@@ -146,7 +137,6 @@ final class PollPostTypeTest extends TestCase
     public function registered_meta_auth_uses_object_level_edit_permission(): void
     {
         $callbacks = [];
-        Functions\when('get_option')->justReturn([]);
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$callbacks): void {
                 $callbacks[$meta_key] = $args['auth_callback'];

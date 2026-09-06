@@ -8,6 +8,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use ZuidWest\Poll\Frontend\PollRenderer;
 use ZuidWest\Poll\PostType\PollPostType;
+use ZuidWest\Poll\Support\Settings;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WP_Post;
@@ -58,6 +59,9 @@ final class PollRendererTest extends TestCase
             ) . '"'
         );
         Functions\when('wp_unique_id')->justReturn('zw-poll-42-test');
+        Functions\when('get_option')->alias(
+            static fn (string $option, mixed $default = []): mixed => $default
+        );
     }
 
     protected function tearDown(): void
@@ -83,8 +87,8 @@ final class PollRendererTest extends TestCase
      * @param string                                          $question Post title (the poll question).
      * @param mixed                                           $options  Stored poll options.
      * @param array{counts: array<string, int>, total: int}|null $aggregate Stored public aggregate.
-     * @param bool                                                $hide_total Whether the total is hidden for readers.
-     * @param int                                                 $closes_at  Optional closing timestamp.
+     * @param string                                              $total_visibility Per-poll visibility policy.
+     * @param int                                                 $closes_at       Optional closing timestamp.
      */
     private function renderPoll(
         string $status,
@@ -94,7 +98,7 @@ final class PollRendererTest extends TestCase
             ['id' => 'opt-b', 'label' => 'Optie B'],
         ],
         ?array $aggregate = null,
-        bool $hide_total = false,
+        string $total_visibility = PollPostType::TOTAL_VISIBILITY_SHOW,
         int $closes_at = 0
     ): string {
         $poll = $this->poll();
@@ -105,12 +109,12 @@ final class PollRendererTest extends TestCase
         ];
         Functions\when('get_post')->justReturn($poll);
         Functions\when('get_post_meta')->alias(
-            static function (int $post_id, string $key) use ($status, $options, $aggregate, $hide_total, $closes_at): mixed {
+            static function (int $post_id, string $key) use ($status, $options, $aggregate, $total_visibility, $closes_at): mixed {
                 return match ($key) {
                     PollPostType::META_OPTIONS => $options,
                     PollPostType::META_STATUS => $status,
                     PollPostType::META_AGGREGATE => $aggregate,
-                    PollPostType::META_HIDE_TOTAL => $hide_total,
+                    PollPostType::META_TOTAL_VISIBILITY => $total_visibility,
                     PollPostType::META_CLOSES_AT => $closes_at,
                     default => '',
                 };
@@ -134,6 +138,45 @@ final class PollRendererTest extends TestCase
 
         $closed = $this->renderPoll('closed', closes_at: 1784809800);
         $this->assertStringNotContainsString('Stemmen kan tot', $closed);
+    }
+
+    #[Test]
+    public function total_threshold_and_per_poll_overrides_share_server_derived_state(): void
+    {
+        Functions\when('get_option')->alias(
+            static fn (string $option, mixed $default = []): mixed => $option === Settings::OPTION
+                ? ['total_min_votes' => 3]
+                : $default
+        );
+
+        $below = $this->renderPoll(
+            'open',
+            aggregate: ['counts' => ['opt-a' => 1, 'opt-b' => 1], 'total' => 2],
+            total_visibility: PollPostType::TOTAL_VISIBILITY_DEFAULT
+        );
+        $this->assertFalse($this->evaluateDerivedState('showTotalCount', $this->rootContext($below)));
+        $this->assertStringContainsString('data-wp-bind--hidden="!state.showTotalCount"', $below);
+
+        $at_threshold = $this->renderPoll(
+            'open',
+            aggregate: ['counts' => ['opt-a' => 2, 'opt-b' => 1], 'total' => 3],
+            total_visibility: PollPostType::TOTAL_VISIBILITY_DEFAULT
+        );
+        $this->assertTrue($this->evaluateDerivedState('showTotalCount', $this->rootContext($at_threshold)));
+
+        $forced = $this->renderPoll(
+            'open',
+            aggregate: ['counts' => [], 'total' => 0],
+            total_visibility: PollPostType::TOTAL_VISIBILITY_SHOW
+        );
+        $this->assertTrue($this->evaluateDerivedState('showTotalCount', $this->rootContext($forced)));
+
+        $hidden = $this->renderPoll(
+            'closed',
+            total_visibility: PollPostType::TOTAL_VISIBILITY_HIDE
+        );
+        $this->assertStringContainsString('Einduitslag', $hidden);
+        $this->assertStringNotContainsString('class="zw-poll__total"', $hidden);
     }
 
     /**
@@ -282,7 +325,7 @@ final class PollRendererTest extends TestCase
     #[Test]
     public function open_poll_with_hidden_total_omits_the_total_line(): void
     {
-        $html = $this->renderPoll('open', hide_total: true);
+        $html = $this->renderPoll('open', total_visibility: PollPostType::TOTAL_VISIBILITY_HIDE);
         $context = $this->rootContext($html);
 
         $this->assertStringNotContainsString('zw-poll__total', $html);
@@ -297,7 +340,7 @@ final class PollRendererTest extends TestCase
     #[Test]
     public function closed_poll_with_hidden_total_keeps_the_final_label(): void
     {
-        $html = $this->renderPoll('closed', hide_total: true);
+        $html = $this->renderPoll('closed', total_visibility: PollPostType::TOTAL_VISIBILITY_HIDE);
 
         $this->assertStringNotContainsString('zw-poll__total', $html);
         $this->assertStringNotContainsString('Totaal aantal stemmen', $html);

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ZuidWest\Poll\Admin;
 
 use ZuidWest\Poll\PostType\PollPostType;
+use ZuidWest\Poll\Support\Settings;
 use WP_Post;
 
 /**
@@ -171,22 +172,31 @@ final class PollEditForm
     /**
      * Renders the display settings meta box.
      *
-     * The hidden "0" makes the browser always submit the field while this box
-     * renders; a checked checkbox overrides it with "1". A missing field thus
-     * means the box was removed, and save() keeps the stored setting.
-     *
      * @param WP_Post $post Poll post.
      */
     public function renderDisplay(WP_Post $post): void
     {
+        $visibility = PollPostType::totalVisibility($post->ID);
+        $total_min_votes = Settings::get()['total_min_votes'];
         wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
         ?>
-<input type="hidden" name="zw_poll_show_total" value="0">
-<label class="zw-poll-edit-display">
-    <input type="checkbox" name="zw_poll_show_total" value="1" <?php checked(!PollPostType::hidesTotal($post->ID)); ?>>
-    <?php esc_html_e('Totaal aantal stemmen tonen', 'zw-poll'); ?>
-</label>
-<p class="description"><?php esc_html_e('Uitgeschakeld: lezers zien alleen percentages, geen totaal onder de resultaten.', 'zw-poll'); ?></p>
+<fieldset class="zw-poll-edit-display" aria-describedby="zw-poll-total-visibility-description">
+    <legend><?php esc_html_e('Totaal aantal stemmen', 'zw-poll'); ?></legend>
+    <div class="zw-poll-edit-display__options">
+        <?php foreach (self::totalVisibilityLabels() as $value => $label) : ?>
+            <label>
+                <input
+                    type="radio"
+                    name="zw_poll_total_visibility"
+                    value="<?php echo esc_attr($value); ?>"
+                    <?php checked($visibility, $value); ?>
+                >
+                <?php echo esc_html($label); ?>
+            </label>
+        <?php endforeach; ?>
+    </div>
+</fieldset>
+<p id="zw-poll-total-visibility-description" class="description zw-poll-edit-display__description"><?php echo esc_html(self::totalVisibilityDescription($total_min_votes)); ?></p>
         <?php
     }
 
@@ -261,10 +271,13 @@ final class PollEditForm
             update_post_meta($post_id, PollPostType::META_OPTIONS, self::readOptionRows($raw_options));
         }
 
-        // Absent entirely when another plugin removed the display box; keep
-        // the stored setting instead of treating the checkbox as unchecked.
-        if (isset($_POST['zw_poll_show_total'])) {
-            update_post_meta($post_id, PollPostType::META_HIDE_TOTAL, sanitize_key(wp_unslash($_POST['zw_poll_show_total'])) !== '1');
+        // Missing or invalid values preserve storage; this also protects saves
+        // when another plugin removes the display box.
+        if (isset($_POST['zw_poll_total_visibility'])) {
+            $visibility = sanitize_key(wp_unslash($_POST['zw_poll_total_visibility']));
+            if (in_array($visibility, PollPostType::totalVisibilityValues(), true)) {
+                update_post_meta($post_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
+            }
         }
 
         // A rendered datetime-local field submits an empty string when
@@ -277,6 +290,43 @@ final class PollEditForm
                 update_post_meta($post_id, PollPostType::META_CLOSES_AT, $deadline);
             }
         }
+    }
+
+    /**
+     * Returns labels for the total visibility radio group.
+     *
+     * @return array<string, string>
+     */
+    private static function totalVisibilityLabels(): array
+    {
+        return [
+            PollPostType::TOTAL_VISIBILITY_DEFAULT => __('Site-instelling volgen', 'zw-poll'),
+            PollPostType::TOTAL_VISIBILITY_HIDE => __('Altijd verbergen', 'zw-poll'),
+            PollPostType::TOTAL_VISIBILITY_SHOW => __('Altijd tonen', 'zw-poll'),
+        ];
+    }
+
+    /**
+     * Describes the effective site-wide threshold.
+     *
+     * @param int $total_min_votes Configured minimum vote count.
+     */
+    private static function totalVisibilityDescription(int $total_min_votes): string
+    {
+        if ($total_min_votes === 0) {
+            return __('Standaard wordt het aantal stemmen altijd getoond, omdat de drempel op 0 staat.', 'zw-poll');
+        }
+
+        return sprintf(
+            /* translators: %s: configured minimum vote count. */
+            _n(
+                'Standaard wordt het aantal stemmen getoond zodra er %s stem is.',
+                'Standaard wordt het aantal stemmen getoond zodra er %s of meer stemmen zijn.',
+                $total_min_votes,
+                'zw-poll'
+            ),
+            number_format_i18n($total_min_votes)
+        );
     }
 
     /**

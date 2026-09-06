@@ -70,6 +70,21 @@ final class SettingsPage
         }
 
         add_settings_section(
+            'zw_poll_display',
+            __('Weergave', 'zw-poll'),
+            [$this, 'renderDisplaySection'],
+            self::PAGE
+        );
+        add_settings_field(
+            'zw_poll_total_min_votes',
+            __('Minimumaantal stemmen voor zichtbaar totaal', 'zw-poll'),
+            [$this, 'renderTotalMinVotesField'],
+            self::PAGE,
+            'zw_poll_display',
+            ['label_for' => 'zw_poll_total_min_votes']
+        );
+
+        add_settings_section(
             'zw_poll_voting',
             __('Stemmen', 'zw-poll'),
             [$this, 'renderVotingSection'],
@@ -150,6 +165,30 @@ final class SettingsPage
             'Bepaal hoeveel stemmen er per IP-adres binnen een periode zijn toegestaan en welke header het IP-adres van de stemmer levert. De limiet remt misbruik af, maar is geen waterdichte garantie.',
             'zw-poll'
         ) . '</p>';
+    }
+
+    /**
+     * Renders the display section description.
+     */
+    public function renderDisplaySection(): void
+    {
+        echo '<p>' . esc_html__(
+            'Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd bij polls die de site-instelling volgen.',
+            'zw-poll'
+        ) . '</p>';
+    }
+
+    /**
+     * Renders the site-wide total vote threshold.
+     */
+    public function renderTotalMinVotesField(): void
+    {
+        $this->renderNumber(
+            'total_min_votes',
+            Settings::TOTAL_MIN_VOTES_MIN,
+            Settings::TOTAL_MIN_VOTES_MAX,
+            __('Per poll kan hiervan worden afgeweken.', 'zw-poll')
+        );
     }
 
     /**

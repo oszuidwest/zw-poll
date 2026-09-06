@@ -195,13 +195,24 @@
 
 /* Display settings meta box (side column) */
 
-.zw-poll-edit-display label {
-	display: block;
+.zw-poll-edit-display {
+	padding: 0;
+	border: 0;
+	margin: 0;
+}
+
+.zw-poll-edit-display legend {
+	padding: 0;
 	margin: 0 0 8px;
 }
 
-.zw-poll-edit-display label:last-child {
-	margin-bottom: 0;
+.zw-poll-edit-display__options {
+	display: grid;
+	gap: 8px;
+}
+
+.zw-poll-edit-display__description {
+	margin-top: 10px;
 }
 
 /* Shortcode meta box (side column) */

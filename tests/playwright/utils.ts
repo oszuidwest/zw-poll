@@ -39,3 +39,7 @@ export const NO_RICH_EDIT_UA = 'ZwPollNoRichEdit/1.0';
 export const DEMO_PAGE = '/poll-demo/';
 
 export const CLOSED_DEMO_PAGE = '/poll-gesloten-demo/';
+
+export const THRESHOLD_DEMO_PAGE = '/poll-drempel-demo/';
+
+export const CLOSED_THRESHOLD_DEMO_PAGE = '/poll-drempel-gesloten-demo/';

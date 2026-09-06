@@ -49,28 +49,15 @@ final class ActivationTest extends TestCase
     private function wpdb(array $indexNonUnique = []): wpdb
     {
         return new class($indexNonUnique) extends wpdb {
-            /**
-             * @param list<string|null> $indexNonUnique Non_unique values.
-             */
+            /** @param list<string|null> $indexNonUnique Non_unique values. */
             public function __construct(private array $indexNonUnique)
             {
                 $this->prefix = 'wp_';
             }
 
-            public function prepare(string $query, mixed ...$args): string
-            {
-                foreach ($args as $arg) {
-                    $query = (string) preg_replace('/%[ids]/', (string) $arg, $query, 1);
-                }
-
-                return $query;
-            }
-
             public function get_var(string $query): mixed
             {
-                return str_contains($query, 'information_schema.STATISTICS')
-                    ? array_shift($this->indexNonUnique)
-                    : null;
+                return array_shift($this->indexNonUnique);
             }
 
             public function get_charset_collate(): string
