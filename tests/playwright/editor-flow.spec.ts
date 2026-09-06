@@ -78,7 +78,7 @@ test.describe( 'Admin / poll-beheer', () => {
 		await expect( saved ).toHaveCount( 3 );
 		await expect( saved.nth( 2 ) ).toHaveValue( 'Geen mening' );
 
-		await expect( editor.locator( '.notice-warning' ) ).toHaveCount( 0 );
+		await expect( editor.locator( '.notice-warning:visible' ) ).toHaveCount( 0 );
 
 		await expect(
 			editor.locator( '#zw-poll-edit-shortcode-value' )
@@ -96,7 +96,7 @@ test.describe( 'Admin / poll-beheer', () => {
 
 		const editor = await publishAndReopen( page );
 
-		await expect( editor.locator( '.notice-warning' ) ).toContainText(
+		await expect( editor.locator( '.notice-warning:visible' ) ).toContainText(
 			'onvolledig'
 		);
 	} );
@@ -135,7 +135,7 @@ test.describe( 'Admin / poll-beheer', () => {
 		expect( poll.title.raw ).toBe( question );
 
 		await page.goto( `/wp-admin/post.php?post=${ poll.id }&action=edit` );
-		await expect( page.locator( '.notice-warning' ) ).toHaveCount( 0 );
+		await expect( page.locator( '.notice-warning:visible' ) ).toHaveCount( 0 );
 
 		const pageCreated = await page.request.post( '/wp-json/wp/v2/pages', {
 			headers: { 'X-WP-Nonce': nonce ?? '' },

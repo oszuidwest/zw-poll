@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\PostType;
 
+use DateTimeImmutable;
+
 /**
  * Defines the poll CPT and validates editor-controlled meta.
  */
@@ -21,6 +23,7 @@ final class PollPostType
     public const META_PREFIX = '_zw_poll_';
     public const META_OPTIONS = self::META_PREFIX . 'options';
     public const META_STATUS = self::META_PREFIX . 'status';
+    public const META_CLOSES_AT = self::META_PREFIX . 'closes_at';
     public const META_HIDE_TOTAL = self::META_PREFIX . 'hide_total';
     public const META_AGGREGATE = self::META_PREFIX . 'aggregate';
     public const META_VOTE_EPOCH = self::META_PREFIX . 'vote_epoch';
@@ -117,6 +120,15 @@ final class PollPostType
             'auth_callback' => $auth,
         ]);
 
+        register_post_meta(self::POST_TYPE, self::META_CLOSES_AT, [
+            'type' => 'integer',
+            'single' => true,
+            'default' => 0,
+            'show_in_rest' => true,
+            'sanitize_callback' => 'absint',
+            'auth_callback' => $auth,
+        ]);
+
         register_post_meta(self::POST_TYPE, self::META_HIDE_TOTAL, [
             'type' => 'boolean',
             'single' => true,
@@ -151,6 +163,48 @@ final class PollPostType
     public static function status(int $poll_id): string
     {
         return (string) (get_post_meta($poll_id, self::META_STATUS, true) ?: 'open');
+    }
+
+    /**
+     * Returns the configured closing timestamp, or zero without a deadline.
+     *
+     * @param int $poll_id Poll post ID.
+     */
+    public static function closesAt(int $poll_id): int
+    {
+        return absint(get_post_meta($poll_id, self::META_CLOSES_AT, true));
+    }
+
+    /**
+     * Formats a deadline using the site's date, time, and timezone settings.
+     *
+     * @param int $closes_at UTC closing timestamp.
+     */
+    public static function formatClosesAt(int $closes_at): string
+    {
+        if ($closes_at <= 0) {
+            return '';
+        }
+
+        return (string) wp_date(
+            trim((string) get_option('date_format') . ' ' . (string) get_option('time_format')),
+            $closes_at
+        );
+    }
+
+    /**
+     * Parses a site-timezone wall-clock deadline into a UTC timestamp.
+     *
+     * @param string $raw Wall-clock input in Y-m-d\TH:i form.
+     */
+    public static function parseDeadline(string $raw): ?int
+    {
+        $deadline = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $raw, wp_timezone());
+        if (!$deadline instanceof DateTimeImmutable || $deadline->format('Y-m-d\TH:i') !== $raw) {
+            return null;
+        }
+
+        return $deadline->getTimestamp();
     }
 
     /**

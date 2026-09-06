@@ -17,6 +17,7 @@ use ZuidWest\Poll\Admin\PollMetaBoxes;
 use ZuidWest\Poll\Admin\SettingsPage;
 use ZuidWest\Poll\Admin\UsageTracker;
 use ZuidWest\Poll\Cli\Commands;
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Frontend\Assets;
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Rest\AdminController;
@@ -44,6 +45,8 @@ final class Plugin
         add_action('init', [Activation::class, 'ensureInstalled']);
 
         (new PollPostType())->register();
+        $close_sweep = new PollCloseSweep();
+        $close_sweep->register();
         (new Assets())->register();
         (new PollShortcode())->register();
 
@@ -77,7 +80,9 @@ final class Plugin
                 wp_register_script(
                     'zw-poll-admin',
                     ZW_POLL_URL . 'src/Admin/admin.js',
-                    ['clipboard', 'wp-i18n'],
+                    $hook === 'edit.php'
+                        ? ['clipboard', 'wp-i18n']
+                        : ['clipboard', 'wp-date', 'wp-i18n'],
                     ZW_POLL_VERSION,
                     true
                 );
@@ -109,6 +114,6 @@ final class Plugin
         (new UsageTracker())->register();
         (new DeleteGuard($repository))->register();
 
-        Commands::register($cache, $resetter);
+        Commands::register($cache, $resetter, $close_sweep);
     }
 }

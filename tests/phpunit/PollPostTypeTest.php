@@ -6,6 +6,7 @@ namespace ZuidWest\Poll\Tests;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use DateTimeZone;
 use ZuidWest\Poll\PostType\PollPostType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -66,6 +67,44 @@ final class PollPostTypeTest extends TestCase
         $this->assertTrue($args['show_in_rest']);
         // The REST layer may hand over any JSON scalar; storage stays boolean.
         $this->assertSame('rest_sanitize_boolean', $args['sanitize_callback']);
+    }
+
+    #[Test]
+    public function register_meta_exposes_the_closing_deadline(): void
+    {
+        $registered = [];
+        Functions\when('register_post_meta')->alias(
+            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
+                $registered[$meta_key] = $args;
+            }
+        );
+
+        $this->sut->registerMeta();
+
+        $args = $registered[PollPostType::META_CLOSES_AT];
+        $this->assertSame('integer', $args['type']);
+        $this->assertSame(0, $args['default']);
+        $this->assertTrue($args['show_in_rest']);
+        $this->assertSame('absint', $args['sanitize_callback']);
+    }
+
+    #[Test]
+    public function deadline_helpers_use_the_site_timezone_and_reject_invalid_dates(): void
+    {
+        Functions\when('wp_timezone')->justReturn(new DateTimeZone('Europe/Amsterdam'));
+        Functions\when('get_post_meta')->justReturn('1784809800');
+        Functions\when('get_option')->alias(
+            static fn (string $key): string => $key === 'date_format' ? 'd-m-Y' : 'H:i'
+        );
+        Functions\when('wp_date')->alias(
+            static fn (string $format, int $timestamp): string => gmdate($format, $timestamp)
+        );
+
+        $this->assertSame(1784809800, PollPostType::closesAt(42));
+        $this->assertSame(1767223800, PollPostType::parseDeadline('2026-01-01T00:30'));
+        $this->assertNull(PollPostType::parseDeadline('2026-02-30T12:00'));
+        $this->assertSame('23-07-2026 12:30', PollPostType::formatClosesAt(1784809800));
+        $this->assertSame('', PollPostType::formatClosesAt(0));
     }
 
     #[Test]

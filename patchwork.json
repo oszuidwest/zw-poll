@@ -1,3 +1,3 @@
 {
-    "redefinable-internals": ["headers_sent", "error_log", "setcookie"]
+    "redefinable-internals": ["headers_sent", "error_log", "setcookie", "time"]
 }

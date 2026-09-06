@@ -58,6 +58,7 @@ final class PollEditFormTest extends TestCase
                 ['id' => '', 'label' => 'Nee'],
             ],
             'zw_poll_show_total' => '1',
+            'zw_poll_closes_at' => '',
         ], $overrides);
     }
 
@@ -150,9 +151,34 @@ final class PollEditFormTest extends TestCase
         $this->assertSame([self::POLL_ID, false], $writes[PollPostType::META_HIDE_TOTAL]);
         // The question is the post title and is saved by core, not here.
         $this->assertSame(
-            [PollPostType::META_OPTIONS, PollPostType::META_HIDE_TOTAL],
+            [PollPostType::META_OPTIONS, PollPostType::META_HIDE_TOTAL, PollPostType::META_CLOSES_AT],
             array_keys($writes)
         );
+    }
+
+    #[Test]
+    public function save_stores_clears_and_preserves_deadlines_safely(): void
+    {
+        $this->submitForm(['zw_poll_closes_at' => '2026-07-23T14:30']);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        Functions\when('wp_timezone')->justReturn(new \DateTimeZone('Europe/Amsterdam'));
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+        $this->assertSame(1784809800, $writes[PollPostType::META_CLOSES_AT][1]);
+
+        $writes = [];
+        $this->submitForm(['zw_poll_closes_at' => '2026-02-30T14:30']);
+        (new PollEditForm())->save(self::POLL_ID);
+        $this->assertArrayNotHasKey(PollPostType::META_CLOSES_AT, $writes);
+
+        $writes = [];
+        $this->submitForm();
+        unset($_POST['zw_poll_closes_at']);
+        (new PollEditForm())->save(self::POLL_ID);
+        $this->assertArrayNotHasKey(PollPostType::META_CLOSES_AT, $writes);
     }
 
     #[Test]

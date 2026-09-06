@@ -180,6 +180,19 @@
 	color: #d63638;
 }
 
+/* Planning meta box (side column) */
+
+.zw-poll-edit-planning label,
+.zw-poll-edit-planning__field {
+	display: block;
+	width: 100%;
+}
+
+.zw-poll-edit-planning label {
+	margin-bottom: 4px;
+	font-weight: 600;
+}
+
 /* Display settings meta box (side column) */
 
 .zw-poll-edit-display label {

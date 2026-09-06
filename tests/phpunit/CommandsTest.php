@@ -7,6 +7,7 @@ namespace ZuidWest\Poll\Tests;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use ZuidWest\Poll\Cli\Commands;
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Vote\AggregateCache;
 use ZuidWest\Poll\Vote\PollReset;
@@ -62,7 +63,7 @@ final class CommandsTest extends TestCase
         $repository = new VoteRepository($db);
         $cache = new AggregateCache($repository);
 
-        return new Commands($cache, new PollReset($repository, $cache));
+        return new Commands($cache, new PollReset($repository, $cache), new PollCloseSweep());
     }
 
     private function poll(): WP_Post

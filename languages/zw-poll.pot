@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-06T12:01:38+00:00\n"
+"POT-Creation-Date: 2026-09-06T12:19:32+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -53,7 +53,7 @@ msgid "poll"
 msgstr ""
 
 #: src/Admin/ClassicEditor.php:164
-#: src/PostType/PollPostType.php:59
+#: src/PostType/PollPostType.php:62
 msgid "Polls zoeken"
 msgstr ""
 
@@ -82,7 +82,7 @@ msgid "Deze poll bevat stemmen en kan niet permanent verwijderd worden. Verwijde
 msgstr ""
 
 #: src/Admin/DeleteGuard.php:153
-#: src/PostType/PollPostType.php:56
+#: src/PostType/PollPostType.php:59
 msgid "Poll bewerken"
 msgstr ""
 
@@ -120,7 +120,7 @@ msgstr ""
 
 #: src/Admin/PollAdminColumns.php:67
 #: src/Admin/PollMetaBoxes.php:98
-#: src/Frontend/PollRenderer.php:180
+#: src/Frontend/PollRenderer.php:181
 #: src/Admin/classic-editor.js:202
 msgid "Gesloten"
 msgstr ""
@@ -167,63 +167,79 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/PollEditForm.php:45
-#: src/Admin/PollEditForm.php:132
+#: src/Admin/PollEditForm.php:140
 msgid "Antwoorden"
 msgstr ""
 
 #: src/Admin/PollEditForm.php:53
+msgid "Planning"
+msgstr ""
+
+#: src/Admin/PollEditForm.php:61
 msgid "Weergave"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:70
+#: src/Admin/PollEditForm.php:78
 msgid "Vraag aan de lezer"
 msgstr ""
 
 #. translators: %d: minimum number of answers.
-#: src/Admin/PollEditForm.php:102
+#: src/Admin/PollEditForm.php:110
 #, php-format
 msgid "Deze poll is onvolledig en wordt niet aan lezers getoond. Geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:139
+#: src/Admin/PollEditForm.php:147
 msgid "Antwoord toevoegen"
 msgstr ""
 
 #. translators: 1: minimum number of answers, 2: maximum number of answers, 3: maximum answer length.
-#: src/Admin/PollEditForm.php:145
+#: src/Admin/PollEditForm.php:153
 #, php-format
 msgid "Min. %1$d antwoorden, max. %2$d antwoorden, max. %3$d tekens per antwoord."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:179
+#: src/Admin/PollEditForm.php:187
 msgid "Totaal aantal stemmen tonen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:181
+#: src/Admin/PollEditForm.php:189
 msgid "Uitgeschakeld: lezers zien alleen percentages, geen totaal onder de resultaten."
 msgstr ""
 
+#: src/Admin/PollEditForm.php:206
+msgid "Einddatum"
+msgstr ""
+
+#: src/Admin/PollEditForm.php:217
+msgid "Datum en tijd gebruiken de tijdzone van deze site."
+msgstr ""
+
+#: src/Admin/PollEditForm.php:220
+msgid "Deze datum is al verstreken. De poll sluit bij de eerstvolgende controle."
+msgstr ""
+
 #. translators: %d: answer number.
-#: src/Admin/PollEditForm.php:263
+#: src/Admin/PollEditForm.php:317
 #: src/Admin/admin.js:130
 #, php-format,js-format
 msgid "Antwoord %d"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:276
+#: src/Admin/PollEditForm.php:330
 msgid "Omhoog"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:277
+#: src/Admin/PollEditForm.php:331
 msgid "Omlaag"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:278
+#: src/Admin/PollEditForm.php:332
 msgid "Antwoord verwijderen"
 msgstr ""
 
 #: src/Admin/PollMetaBoxes.php:48
-#: src/Frontend/PollRenderer.php:222
+#: src/Frontend/PollRenderer.php:234
 msgid "Resultaten"
 msgstr ""
 
@@ -261,7 +277,7 @@ msgstr[1] ""
 
 #. translators: %s: total number of votes.
 #: src/Admin/PollMetaBoxes.php:167
-#: src/Frontend/PollRenderer.php:76
+#: src/Frontend/PollRenderer.php:77
 #, php-format
 msgid "Totaal aantal stemmen: %s"
 msgstr ""
@@ -365,32 +381,44 @@ msgid "Geen (REMOTE_ADDR)"
 msgstr ""
 
 #. translators: 1: poll ID, 2: total votes, 3: number of options.
-#: src/Cli/Commands.php:73
+#: src/Cli/Commands.php:77
 #, php-format
 msgid "Aggregaat herbouwd voor poll %1$d: %2$d stemmen over %3$d opties."
 msgstr ""
 
-#: src/Cli/Commands.php:136
+#: src/Cli/Commands.php:141
 #: src/Admin/classic-editor.js:62
 msgid "Geen polls gevonden."
 msgstr ""
 
-#. translators: 1: poll ID, 2: poll title.
+#. translators: %d: number of expired polls closed.
 #: src/Cli/Commands.php:171
+#, php-format
+msgid "%d verlopen poll gesloten."
+msgid_plural "%d verlopen polls gesloten."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: poll ID, 2: poll title.
+#: src/Cli/Commands.php:203
 #, php-format
 msgid "Alle stemmen voor poll %1$d (%2$s) verwijderen?"
 msgstr ""
 
 #. translators: 1: number of deleted votes, 2: poll ID.
-#: src/Cli/Commands.php:182
+#: src/Cli/Commands.php:214
 #, php-format
 msgid "%1$d stemmen verwijderd voor poll %2$d."
 msgstr ""
 
 #. translators: %d: the post ID that was supplied.
-#: src/Cli/Commands.php:201
+#: src/Cli/Commands.php:233
 #, php-format
 msgid "Geen poll gevonden met ID %d."
+msgstr ""
+
+#: src/Cron/PollCloseSweep.php:46
+msgid "Elke vijf minuten"
 msgstr ""
 
 #: src/Frontend/PollRenderer.php:46
@@ -403,94 +431,100 @@ msgstr ""
 msgid "Poll onvolledig: geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:84
+#: src/Frontend/PollRenderer.php:85
 msgid "Even rustig aan — probeer over een minuutje opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:85
+#: src/Frontend/PollRenderer.php:86
 msgid "Deze poll bestaat niet meer."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:86
+#: src/Frontend/PollRenderer.php:87
 #: src/Rest/VoteController.php:139
 msgid "Deze poll is gesloten."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:87
+#: src/Frontend/PollRenderer.php:88
 msgid "Kies eerst een optie."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:88
+#: src/Frontend/PollRenderer.php:89
 #: src/Rest/VoteController.php:205
 msgid "Je hebt al gestemd op deze poll."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:89
+#: src/Frontend/PollRenderer.php:90
 #: src/Rest/VoteController.php:106
 msgid "Stemmen vanaf deze pagina is niet toegestaan."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:90
+#: src/Frontend/PollRenderer.php:91
 #: src/Rest/VoteController.php:161
 msgid "Stemmen op deze poll is niet toegestaan."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:91
+#: src/Frontend/PollRenderer.php:92
 msgid "Stem niet opgeslagen. Probeer het later opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:92
+#: src/Frontend/PollRenderer.php:93
 msgid "Er ging iets mis. Probeer het later opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:188
+#: src/Frontend/PollRenderer.php:189
 msgid "Kies een optie"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:213
+#: src/Frontend/PollRenderer.php:214
 msgid "Stem"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:262
+#. translators: %s: poll closing date and time.
+#: src/Frontend/PollRenderer.php:222
+#, php-format
+msgid "Stemmen kan tot %s"
+msgstr ""
+
+#: src/Frontend/PollRenderer.php:274
 msgid "Gestemd"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:280
+#: src/Frontend/PollRenderer.php:292
 msgid "Einduitslag"
 msgstr ""
 
-#: src/PostType/PollPostType.php:52
-#: src/PostType/PollPostType.php:62
+#: src/PostType/PollPostType.php:55
+#: src/PostType/PollPostType.php:65
 msgid "Polls"
 msgstr ""
 
-#: src/PostType/PollPostType.php:53
+#: src/PostType/PollPostType.php:56
 #: src/Admin/classic-editor.js:198
 msgid "Poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:54
 #: src/PostType/PollPostType.php:57
+#: src/PostType/PollPostType.php:60
 msgid "Nieuwe poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:55
+#: src/PostType/PollPostType.php:58
 msgid "Nieuwe poll toevoegen"
 msgstr ""
 
-#: src/PostType/PollPostType.php:58
+#: src/PostType/PollPostType.php:61
 msgid "Poll bekijken"
 msgstr ""
 
-#: src/PostType/PollPostType.php:60
+#: src/PostType/PollPostType.php:63
 msgid "Geen polls gevonden"
 msgstr ""
 
-#: src/PostType/PollPostType.php:61
+#: src/PostType/PollPostType.php:64
 msgid "Geen polls gevonden in de prullenbak"
 msgstr ""
 
-#: src/PostType/PollPostType.php:63
+#: src/PostType/PollPostType.php:66
 msgid "Alle polls"
 msgstr ""
 

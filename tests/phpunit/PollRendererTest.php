@@ -84,6 +84,7 @@ final class PollRendererTest extends TestCase
      * @param mixed                                           $options  Stored poll options.
      * @param array{counts: array<string, int>, total: int}|null $aggregate Stored public aggregate.
      * @param bool                                                $hide_total Whether the total is hidden for readers.
+     * @param int                                                 $closes_at  Optional closing timestamp.
      */
     private function renderPoll(
         string $status,
@@ -93,7 +94,8 @@ final class PollRendererTest extends TestCase
             ['id' => 'opt-b', 'label' => 'Optie B'],
         ],
         ?array $aggregate = null,
-        bool $hide_total = false
+        bool $hide_total = false,
+        int $closes_at = 0
     ): string {
         $poll = $this->poll();
         $poll->post_title = $question;
@@ -103,18 +105,35 @@ final class PollRendererTest extends TestCase
         ];
         Functions\when('get_post')->justReturn($poll);
         Functions\when('get_post_meta')->alias(
-            static function (int $post_id, string $key) use ($status, $options, $aggregate, $hide_total): mixed {
+            static function (int $post_id, string $key) use ($status, $options, $aggregate, $hide_total, $closes_at): mixed {
                 return match ($key) {
                     PollPostType::META_OPTIONS => $options,
                     PollPostType::META_STATUS => $status,
                     PollPostType::META_AGGREGATE => $aggregate,
                     PollPostType::META_HIDE_TOTAL => $hide_total,
+                    PollPostType::META_CLOSES_AT => $closes_at,
                     default => '',
                 };
             }
         );
 
         return PollRenderer::render(self::POLL_ID);
+    }
+
+    #[Test]
+    public function open_poll_displays_its_deadline_but_closed_poll_does_not(): void
+    {
+        Functions\when('get_option')->alias(
+            static fn (string $key): string => $key === 'date_format' ? 'd-m-Y' : 'H:i'
+        );
+        Functions\when('wp_date')->justReturn('23-07-2026 14:30');
+
+        $open = $this->renderPoll('open', closes_at: 1784809800);
+        $this->assertStringContainsString('Stemmen kan tot 23-07-2026 14:30', $open);
+        $this->assertStringContainsString('zw-poll__deadline', $open);
+
+        $closed = $this->renderPoll('closed', closes_at: 1784809800);
+        $this->assertStringNotContainsString('Stemmen kan tot', $closed);
     }
 
     /**

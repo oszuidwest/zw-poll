@@ -211,4 +211,29 @@
 
 		refresh();
 	} );
+
+	// datetime-local is a wall-clock value in the WordPress site timezone.
+	document
+		.querySelectorAll( '.zw-poll-edit-planning__field' )
+		.forEach( ( field ) => {
+			const warning = field
+				.closest( '.inside' )
+				?.querySelector( '.zw-poll-edit-planning__warning' );
+			if ( ! warning || ! window.wp?.date?.getDate ) {
+				return;
+			}
+
+			const refreshWarning = () => {
+				const selected = field.value
+					? window.wp.date.getDate( field.value )
+					: null;
+				warning.hidden =
+					! selected ||
+					Number.isNaN( selected.getTime() ) ||
+					selected.getTime() >= Date.now();
+			};
+
+			field.addEventListener( 'input', refreshWarning );
+			refreshWarning();
+		} );
 } )();

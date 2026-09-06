@@ -44,6 +44,7 @@ if (file_exists($zw_poll_autoload)) {
 }
 
 register_activation_hook(__FILE__, [\ZuidWest\Poll\Activation::class, 'activate']);
+register_deactivation_hook(__FILE__, [\ZuidWest\Poll\Cron\PollCloseSweep::class, 'deactivate']);
 
 add_action('init', static function (): void {
     load_plugin_textdomain('zw-poll', false, dirname(plugin_basename(__FILE__)) . '/languages');

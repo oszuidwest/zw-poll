@@ -222,6 +222,13 @@
 	gap: 0.5em;
 }
 
+.zw-poll__deadline {
+	margin: 10px 0 0;
+	font-size: 0.875rem;
+	color: var(--zw-poll-meta-color);
+	text-align: center;
+}
+
 .zw-poll button {
 	min-height: var(--zw-poll-control-height);
 	cursor: pointer;

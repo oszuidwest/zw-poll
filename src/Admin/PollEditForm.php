@@ -49,6 +49,14 @@ final class PollEditForm
             'high'
         );
         add_meta_box(
+            'zw-poll-planning',
+            __('Planning', 'zw-poll'),
+            [$this, 'renderPlanning'],
+            PollPostType::POST_TYPE,
+            'side',
+            'default'
+        );
+        add_meta_box(
             'zw-poll-display',
             __('Weergave', 'zw-poll'),
             [$this, 'renderDisplay'],
@@ -183,6 +191,38 @@ final class PollEditForm
     }
 
     /**
+     * Renders the poll closing deadline in the site timezone.
+     *
+     * @param WP_Post $post Poll post.
+     */
+    public function renderPlanning(WP_Post $post): void
+    {
+        $closes_at = PollPostType::closesAt($post->ID);
+        $value = $closes_at > 0 ? (string) wp_date('Y-m-d\TH:i', $closes_at) : '';
+
+        wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
+        ?>
+<p class="zw-poll-edit-planning">
+    <label for="zw-poll-closes-at"><?php esc_html_e('Einddatum', 'zw-poll'); ?></label>
+    <input
+        type="datetime-local"
+        id="zw-poll-closes-at"
+        name="zw_poll_closes_at"
+        class="zw-poll-edit-planning__field"
+        step="60"
+        value="<?php echo esc_attr($value); ?>"
+    >
+</p>
+<p class="description">
+    <?php esc_html_e('Datum en tijd gebruiken de tijdzone van deze site.', 'zw-poll'); ?>
+</p>
+<div class="notice notice-warning notice-alt inline zw-poll-edit-planning__warning" role="status" hidden>
+    <p><?php esc_html_e('Deze datum is al verstreken. De poll sluit bij de eerstvolgende controle.', 'zw-poll'); ?></p>
+</div>
+        <?php
+    }
+
+    /**
      * Persists the classic form fields.
      *
      * REST saves never carry this nonce; they
@@ -222,6 +262,20 @@ final class PollEditForm
         // the stored setting instead of treating the checkbox as unchecked.
         if (isset($_POST['zw_poll_show_total'])) {
             update_post_meta($post_id, PollPostType::META_HIDE_TOTAL, sanitize_key(wp_unslash($_POST['zw_poll_show_total'])) !== '1');
+        }
+
+        // A rendered datetime-local field submits an empty string when
+        // cleared. An absent key means the planning box was removed.
+        if (isset($_POST['zw_poll_closes_at'])) {
+            $raw_closes_at = sanitize_text_field(wp_unslash($_POST['zw_poll_closes_at']));
+            if ($raw_closes_at === '') {
+                update_post_meta($post_id, PollPostType::META_CLOSES_AT, 0);
+            } else {
+                $deadline = PollPostType::parseDeadline($raw_closes_at);
+                if ($deadline !== null) {
+                    update_post_meta($post_id, PollPostType::META_CLOSES_AT, $deadline);
+                }
+            }
         }
     }
 

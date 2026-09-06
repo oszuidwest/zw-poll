@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\Cli;
 
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Vote\AggregateCache;
 use ZuidWest\Poll\Vote\PollReset;
@@ -26,10 +27,12 @@ final class Commands
      *
      * @param AggregateCache $cache    Aggregate cache service.
      * @param PollReset      $resetter Vote reset service.
+     * @param PollCloseSweep $sweep    Expired-poll close service.
      */
     public function __construct(
         private readonly AggregateCache $cache,
         private readonly PollReset $resetter,
+        private readonly PollCloseSweep $sweep,
     ) {}
 
     /**
@@ -37,13 +40,14 @@ final class Commands
      *
      * @param AggregateCache $cache    Aggregate cache service.
      * @param PollReset      $resetter Vote reset service.
+     * @param PollCloseSweep $sweep    Expired-poll close service.
      */
-    public static function register(AggregateCache $cache, PollReset $resetter): void
+    public static function register(AggregateCache $cache, PollReset $resetter, PollCloseSweep $sweep): void
     {
         if (!defined('WP_CLI') || !WP_CLI) {
             return;
         }
-        WP_CLI::add_command('zw-poll', new self($cache, $resetter));
+        WP_CLI::add_command('zw-poll', new self($cache, $resetter, $sweep));
     }
 
     /**
@@ -129,6 +133,7 @@ final class Commands
                 'status' => PollPostType::status($poll->ID),
                 'votes' => $aggregate['total'],
                 'updated' => $aggregate['updated_at'],
+                'closes_at' => PollPostType::formatClosesAt(PollPostType::closesAt($poll->ID)),
             ];
         }
 
@@ -138,7 +143,34 @@ final class Commands
             return;
         }
 
-        WP_CLI\Utils\format_items($format, $rows, ['id', 'title', 'status', 'votes', 'updated']);
+        WP_CLI\Utils\format_items(
+            $format,
+            $rows,
+            ['id', 'title', 'status', 'votes', 'updated', 'closes_at']
+        );
+    }
+
+    /**
+     * Closes published polls whose configured deadline has passed.
+     *
+     * Uses the same idempotent sweep as WP-Cron. A system cron may invoke
+     * this command more frequently when precise closing is required.
+     *
+     * ## EXAMPLES
+     *
+     *     wp zw-poll close-expired
+     *
+     * @subcommand close-expired
+     */
+    public function close_expired(): void
+    {
+        $closed = $this->sweep->sweep();
+
+        WP_CLI::success(sprintf(
+            /* translators: %d: number of expired polls closed. */
+            _n('%d verlopen poll gesloten.', '%d verlopen polls gesloten.', $closed, 'zw-poll'),
+            $closed
+        ));
     }
 
     /**

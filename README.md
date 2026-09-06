@@ -78,12 +78,23 @@ removal under **Polls → Settings**. Settings are stored per site in
 
 ```bash
 wp zw-poll list
+wp zw-poll close-expired
 wp zw-poll rebuild <poll_id>
 wp zw-poll reset <poll_id> --yes
 ```
 
-Use `rebuild` after manual database changes or to restore the aggregate cache
-from the votes table.
+Editors can set an end date and time for each poll in the **Planning** meta box.
+Input and display use the WordPress site timezone; storage uses a UTC timestamp.
+An idempotent WP-Cron sweep runs every five minutes and closes published, open
+polls after their deadline. Drafts, trashed polls, polls without a deadline,
+and polls already closed are left unchanged.
+
+WP-Cron is request-driven, so a vote may still be accepted between the deadline
+and the next sweep. Sites that need more precise closing can run
+`wp zw-poll close-expired` from system cron. Consumers can listen to
+`zw_poll_closed` to purge caches or perform other follow-up work; the action
+receives the poll ID and its tracked content IDs. Use `rebuild` after manual
+database changes or to restore the aggregate cache from the votes table.
 
 REST endpoints:
 
