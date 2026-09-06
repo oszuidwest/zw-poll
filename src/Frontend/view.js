@@ -1,5 +1,7 @@
 import { store, getContext } from '@wordpress/interactivity';
 
+const __ = window.wp?.i18n?.__ || ( ( text ) => text );
+
 // One page-load token makes retries and double-submits share a dedup key.
 const generateToken = () => {
 	const bytes = new Uint8Array( 16 );
@@ -54,10 +56,29 @@ const currentVotedOptionIdFromCookie = ( ctx ) => {
 	);
 };
 
-// PHP passes script-module translations through Interactivity API state.
+const errorMessages = {
+	rate_limited: __(
+		'Even rustig aan — probeer over een minuutje opnieuw.',
+		'zw-poll'
+	),
+	poll_not_found: __( 'Deze poll bestaat niet meer.', 'zw-poll' ),
+	poll_closed: __( 'Deze poll is gesloten.', 'zw-poll' ),
+	invalid_option: __( 'Kies eerst een optie.', 'zw-poll' ),
+	already_voted: __( 'Je hebt al gestemd op deze poll.', 'zw-poll' ),
+	invalid_origin: __(
+		'Stemmen vanaf deze pagina is niet toegestaan.',
+		'zw-poll'
+	),
+	vote_forbidden: __( 'Stemmen op deze poll is niet toegestaan.', 'zw-poll' ),
+	insert_failed: __(
+		'Stem niet opgeslagen. Probeer het later opnieuw.',
+		'zw-poll'
+	),
+	default: __( 'Er ging iets mis. Probeer het later opnieuw.', 'zw-poll' ),
+};
+
 const errorMessage = ( code, fallback = '' ) => {
-	const errors = state.i18n?.errors || {};
-	return errors[ code ] || fallback || errors.default || '';
+	return errorMessages[ code ] || fallback || errorMessages.default;
 };
 
 // Voting hides the focused submit; move focus to revealed live results.
@@ -98,7 +119,8 @@ const { state } = store( 'zw-poll', {
 		get totalText() {
 			const ctx = getContext();
 			const n = ctx.total || 0;
-			const template = state.i18n?.total || '%s';
+			/* translators: %s: total number of votes. */
+			const template = __( 'Totaal aantal stemmen: %s', 'zw-poll' );
 			return template.replace( '%s', formatNumber( n ) );
 		},
 		get isVotedOption() {

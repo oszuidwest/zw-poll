@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-06T21:29:35+00:00\n"
+"POT-Creation-Date: 2026-09-06T22:09:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -120,7 +120,7 @@ msgstr ""
 
 #: src/Admin/PollAdminColumns.php:65
 #: src/Admin/PollMetaBoxes.php:96
-#: src/Frontend/PollRenderer.php:207
+#: src/Frontend/PollRenderer.php:192
 #: src/Admin/classic-editor.js:202
 msgid "Gesloten"
 msgstr ""
@@ -273,7 +273,7 @@ msgid "Afbeelding verwijderen"
 msgstr ""
 
 #: src/Admin/PollMetaBoxes.php:46
-#: src/Frontend/PollRenderer.php:264
+#: src/Frontend/PollRenderer.php:249
 msgid "Resultaten"
 msgstr ""
 
@@ -312,7 +312,8 @@ msgstr[1] ""
 #. translators: %s: total number of votes.
 #: src/Admin/PollMetaBoxes.php:165
 #: src/Frontend/PollRenderer.php:96
-#, php-format
+#: src/Frontend/view.js:123
+#, php-format,js-format
 msgid "Totaal aantal stemmen: %s"
 msgstr ""
 
@@ -477,65 +478,25 @@ msgstr ""
 msgid "Poll onvolledig: geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:104
-msgid "Even rustig aan — probeer over een minuutje opnieuw."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:105
-msgid "Deze poll bestaat niet meer."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:106
-#: src/Rest/VoteController.php:133
-msgid "Deze poll is gesloten."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:107
-msgid "Kies eerst een optie."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:108
-#: src/Rest/VoteController.php:197
-msgid "Je hebt al gestemd op deze poll."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:109
-#: src/Rest/VoteController.php:100
-msgid "Stemmen vanaf deze pagina is niet toegestaan."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:110
-#: src/Rest/VoteController.php:155
-msgid "Stemmen op deze poll is niet toegestaan."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:111
-msgid "Stem niet opgeslagen. Probeer het later opnieuw."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:112
-msgid "Er ging iets mis. Probeer het later opnieuw."
-msgstr ""
-
-#: src/Frontend/PollRenderer.php:215
+#: src/Frontend/PollRenderer.php:200
 msgid "Kies een optie"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:244
+#: src/Frontend/PollRenderer.php:229
 msgid "Stem"
 msgstr ""
 
 #. translators: %s: poll closing date and time.
-#: src/Frontend/PollRenderer.php:252
+#: src/Frontend/PollRenderer.php:237
 #, php-format
 msgid "Stemmen kan tot %s"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:308
+#: src/Frontend/PollRenderer.php:293
 msgid "Gestemd"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:326
+#: src/Frontend/PollRenderer.php:311
 msgid "Einduitslag"
 msgstr ""
 
@@ -579,16 +540,36 @@ msgstr ""
 msgid "Poll bestaat niet."
 msgstr ""
 
+#: src/Rest/VoteController.php:100
+#: src/Frontend/view.js:68
+msgid "Stemmen vanaf deze pagina is niet toegestaan."
+msgstr ""
+
 #: src/Rest/VoteController.php:113
 msgid "Te veel verzoeken. Probeer het later opnieuw."
+msgstr ""
+
+#: src/Rest/VoteController.php:133
+#: src/Frontend/view.js:65
+msgid "Deze poll is gesloten."
 msgstr ""
 
 #: src/Rest/VoteController.php:142
 msgid "Onbekende optie."
 msgstr ""
 
+#: src/Rest/VoteController.php:155
+#: src/Frontend/view.js:72
+msgid "Stemmen op deze poll is niet toegestaan."
+msgstr ""
+
 #: src/Rest/VoteController.php:177
 msgid "Stem niet opgeslagen."
+msgstr ""
+
+#: src/Rest/VoteController.php:197
+#: src/Frontend/view.js:67
+msgid "Je hebt al gestemd op deze poll."
 msgstr ""
 
 #: src/Rest/VoteController.php:217
@@ -691,4 +672,24 @@ msgstr ""
 
 #: src/Admin/classic-editor.js:270
 msgid "Poll laden mislukt."
+msgstr ""
+
+#: src/Frontend/view.js:60
+msgid "Even rustig aan — probeer over een minuutje opnieuw."
+msgstr ""
+
+#: src/Frontend/view.js:64
+msgid "Deze poll bestaat niet meer."
+msgstr ""
+
+#: src/Frontend/view.js:66
+msgid "Kies eerst een optie."
+msgstr ""
+
+#: src/Frontend/view.js:73
+msgid "Stem niet opgeslagen. Probeer het later opnieuw."
+msgstr ""
+
+#: src/Frontend/view.js:77
+msgid "Er ging iets mis. Probeer het later opnieuw."
 msgstr ""

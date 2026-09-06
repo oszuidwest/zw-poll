@@ -134,6 +134,14 @@ npm run lint       # JavaScript and CSS linting
 npm run make-pot   # Update languages/zw-poll.pot
 ```
 
+The POT command extracts translatable strings from both PHP and JavaScript.
+The frontend module registers the `zw-poll` text domain with WordPress' native
+Script Modules API. Bundled translation JSON files placed in `languages/` are
+included in release ZIPs; generate them from translated PO files with
+`wp i18n make-json languages --no-purge`. WordPress.org language packs remain
+supported because core falls back to `wp-content/languages/plugins` when a
+matching bundled catalog is absent.
+
 Start Playground in a separate terminal before running the end-to-end tests:
 
 ```bash

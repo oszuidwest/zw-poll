@@ -42,6 +42,11 @@ final class Assets
             [['id' => '@wordpress/interactivity', 'import' => 'static']],
             ZW_POLL_VERSION
         );
+        wp_set_script_module_translations(
+            self::MODULE_ID,
+            'zw-poll',
+            ZW_POLL_DIR . 'languages'
+        );
     }
 
     /** Enqueues the frontend assets for a rendered poll. */

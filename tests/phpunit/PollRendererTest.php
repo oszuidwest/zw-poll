@@ -183,6 +183,7 @@ final class PollRendererTest extends TestCase
         );
         $this->assertStringContainsString('Einduitslag', $hidden);
         $this->assertStringNotContainsString('class="zw-poll__total"', $hidden);
+        $this->assertArrayNotHasKey('i18n', $this->interactivityState);
     }
 
     /**
