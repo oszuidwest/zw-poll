@@ -9,6 +9,7 @@
         "lint": "npm run lint:js && npm run lint:css",
         "lint:js": "wp-scripts lint-js \"src/**/*.js\"",
         "lint:css": "wp-scripts lint-style \"src/**/*.css\"",
+        "security:production": "npm audit --omit=dev --audit-level=high",
         "security": "node scripts/npm-audit.mjs",
         "playground": "wp-playground-cli server --port=9400 --workers=1 --mount=./:/wordpress/wp-content/plugins/zw-poll --blueprint=./playground/blueprint.json",
         "test:e2e": "playwright test",

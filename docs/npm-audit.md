@@ -16,7 +16,12 @@ The audit wrapper accepts this advisory only while the dependency remains indire
 
 ## Tracking
 
-`npm run security` runs on relevant pull requests and pushes, on manual dispatch, and every Monday at 06:24 UTC. Remove this exception as soon as `extract-zip` or the upstream Puppeteer dependency chain publishes a compatible fix.
+The dedicated dependency-security workflow runs on relevant pull requests and
+pushes, on manual dispatch, and every Monday at 06:24 UTC. It first runs
+`npm run security:production`, which has no exceptions, and then audits all
+development tooling with `npm run security`. Remove the documented exception as
+soon as `extract-zip` or the upstream Puppeteer dependency chain publishes a
+compatible fix.
 
 ## Non-blocking upstream constraints
 

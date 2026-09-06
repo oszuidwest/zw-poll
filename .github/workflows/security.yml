@@ -1,23 +1,25 @@
 ---
-name: JS Quality
+name: Dependency security
 
 on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/lint-js.yml'
-      - 'src/**/*.js'
-      - 'src/**/*.css'
+      - '.github/workflows/security.yml'
       - 'package.json'
       - 'package-lock.json'
+      - 'scripts/npm-audit.mjs'
+      - 'docs/npm-audit.md'
   pull_request:
     paths:
-      - '.github/workflows/lint-js.yml'
-      - 'src/**/*.js'
-      - 'src/**/*.css'
+      - '.github/workflows/security.yml'
       - 'package.json'
       - 'package-lock.json'
+      - 'scripts/npm-audit.mjs'
+      - 'docs/npm-audit.md'
   workflow_dispatch:
+  schedule:
+    - cron: '24 6 * * 1'
 
 permissions:
   contents: read
@@ -27,10 +29,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  npm-audit:
+    name: npm audit
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -40,4 +42,9 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run lint
+
+      - name: Audit shipped dependencies
+        run: npm run security:production
+
+      - name: Audit development tooling
+        run: npm run security

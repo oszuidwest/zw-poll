@@ -126,6 +126,7 @@ jobs:
           composer validate --strict --no-check-publish
           composer security
           composer quality
+          npm run security:production
           npm run security
           npm run lint
 
