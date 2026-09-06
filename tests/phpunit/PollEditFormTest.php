@@ -424,6 +424,7 @@ final class PollEditFormTest extends TestCase
     #[Test]
     public function options_box_round_trips_images_and_renders_media_controls(): void
     {
+        $tooltips = [];
         Functions\when('wp_nonce_field')->justReturn('');
         Functions\when('__')->returnArg();
         Functions\when('esc_html')->returnArg();
@@ -438,6 +439,16 @@ final class PollEditFormTest extends TestCase
         Functions\when('wp_get_attachment_image')->justReturn(
             '<img class="zw-poll-edit-option__thumbnail" src="image.jpg" alt="">'
         );
+        Functions\when('wp_get_tooltip')->alias(
+            static function (string $content, array $args) use (&$tooltips): string {
+                $tooltips[] = [
+                    'content' => $content,
+                    'id' => $args['id'] ?? '',
+                    'button' => $args['button'] ?? '',
+                ];
+                return sprintf('<span id="%s">%s</span>', $args['id'], $args['button']);
+            }
+        );
 
         ob_start();
         (new PollEditForm())->renderOptions($this->pollPost('publish'));
@@ -449,6 +460,33 @@ final class PollEditFormTest extends TestCase
         $this->assertStringContainsString('name="zw_poll_options[1][imageId]"', $html);
         $this->assertStringContainsString('Afbeelding kiezen', $html);
         $this->assertStringContainsString('name="zw_poll_options[__INDEX__][imageId]"', $html);
+
+        $expected = [];
+        foreach (['0', '1', '__INDEX__'] as $index) {
+            foreach ([
+                ['move-up', 'Omhoog'],
+                ['move-down', 'Omlaag'],
+                ['remove', 'Antwoord verwijderen'],
+            ] as [$action, $label]) {
+                $expected[] = [
+                    'content' => $label,
+                    'id' => sprintf('zw-poll-option-%s-%s-tooltip', $index, $action),
+                    'class' => sprintf('zw-poll-edit-option__%s', $action),
+                ];
+            }
+        }
+
+        $this->assertCount(9, $tooltips);
+        $this->assertCount(9, array_unique(array_column($tooltips, 'id')));
+        foreach ($expected as $offset => $tooltip) {
+            $this->assertSame($tooltip['content'], $tooltips[$offset]['content']);
+            $this->assertSame($tooltip['id'], $tooltips[$offset]['id']);
+            $this->assertStringContainsString($tooltip['class'], $tooltips[$offset]['button']);
+            $this->assertStringContainsString(
+                sprintf('aria-label="%s"', $tooltip['content']),
+                $tooltips[$offset]['button']
+            );
+        }
     }
 
     #[Test]

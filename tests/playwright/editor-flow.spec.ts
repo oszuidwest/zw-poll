@@ -138,6 +138,66 @@ test.describe( 'Admin / poll-beheer', () => {
 		);
 	} );
 
+	test( 'optieknoppen tonen unieke tooltips en blijven met het toetsenbord bedienbaar', async ( {
+		page,
+	} ) => {
+		await startNewPoll( page, 'Zijn de optieknoppen toegankelijk?', [
+			'Eerste',
+			'Tweede',
+		] );
+		const rows = page.locator(
+			'.zw-poll-edit-options__list .zw-poll-edit-option'
+		);
+
+		const firstDown = rows
+			.first()
+			.getByRole( 'button', { name: 'Omlaag' } );
+		await firstDown.hover();
+		await expect(
+			rows.first().getByRole( 'tooltip', { name: 'Omlaag' } )
+		).toBeVisible();
+
+		await rows.nth( 1 ).getByRole( 'button', { name: 'Omhoog' } ).focus();
+		await expect(
+			rows.nth( 1 ).getByRole( 'tooltip', { name: 'Omhoog' } )
+		).toBeVisible();
+
+		await page.locator( '.zw-poll-edit-options__add' ).click();
+		await rows.nth( 2 ).locator( '.zw-poll-edit-option__label' ).fill( 'Derde' );
+		const tooltipIds = await rows.locator( '[id]' ).evaluateAll( ( elements ) =>
+			elements.map( ( element ) => element.id )
+		);
+		expect( tooltipIds.some( ( id ) => id.includes( '__INDEX__' ) ) ).toBe(
+			false
+		);
+		expect( new Set( tooltipIds ).size ).toBe( tooltipIds.length );
+
+		const dynamicRemove = rows
+			.nth( 2 )
+			.getByRole( 'button', { name: 'Antwoord verwijderen' } );
+		await dynamicRemove.focus();
+		await expect(
+			rows
+				.nth( 2 )
+				.getByRole( 'tooltip', { name: 'Antwoord verwijderen' } )
+		).toBeVisible();
+
+		await firstDown.press( 'Enter' );
+		expect(
+			await rows
+				.locator( '.zw-poll-edit-option__label' )
+				.evaluateAll( ( inputs ) =>
+					inputs.map( ( input ) => ( input as HTMLInputElement ).value )
+				)
+		).toEqual( [ 'Tweede', 'Eerste', 'Derde' ] );
+
+		await dynamicRemove.press( 'Enter' );
+		await expect( rows ).toHaveCount( 2 );
+		await expect(
+			rows.last().locator( '.zw-poll-edit-option__label' )
+		).toBeFocused();
+	} );
+
 	test( 'bewerken behoudt bestaande option-IDs', async ( { page } ) => {
 		// Votes are keyed by option ID: a save that regenerates IDs would
 		// silently orphan cast votes. Use a fresh poll so the test does not

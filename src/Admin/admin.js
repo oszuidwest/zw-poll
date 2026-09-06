@@ -6,6 +6,37 @@
 	const sprintf = i18n
 		? i18n.sprintf
 		: ( s, ...args ) => s.replace( /%d/, args[ 0 ] );
+	let tooltipOpenTimeout;
+
+	// Core initializes tooltips present at page load. Repeater rows are cloned
+	// later, so attach the same hover/focus behavior to those native tooltips.
+	const initializeTooltip = ( tooltip ) => {
+		const trigger = tooltip.querySelector( '.wp-tooltip__toggle' );
+		const bubble = tooltip.querySelector( '.wp-tooltip__bubble' );
+		if ( ! trigger || ! bubble ) {
+			return;
+		}
+
+		const show = () => {
+			clearTimeout( tooltipOpenTimeout );
+			tooltipOpenTimeout = setTimeout( () => {
+				if ( ! bubble.matches( ':popover-open' ) ) {
+					bubble.showPopover( { source: trigger } );
+				}
+			}, 300 );
+		};
+		const hide = () => {
+			clearTimeout( tooltipOpenTimeout );
+			if ( bubble.matches( ':popover-open' ) ) {
+				bubble.hidePopover();
+			}
+		};
+
+		trigger.addEventListener( 'mouseenter', show );
+		trigger.addEventListener( 'focus', show );
+		trigger.addEventListener( 'mouseleave', hide );
+		trigger.addEventListener( 'blur', hide );
+	};
 
 	async function runButtonAction(
 		btn,
@@ -169,14 +200,18 @@
 				return;
 			}
 			const row = template.content.firstElementChild.cloneNode( true );
+			const rowIndex = String( nextIndex );
 			row.querySelectorAll( 'input[name]' ).forEach( ( input ) => {
-				input.name = input.name.replace(
-					'__INDEX__',
-					String( nextIndex )
-				);
+				input.name = input.name.replace( '__INDEX__', rowIndex );
+			} );
+			row.querySelectorAll( '[id]' ).forEach( ( element ) => {
+				element.id = element.id.replace( '__INDEX__', rowIndex );
 			} );
 			nextIndex++;
 			list.append( row );
+			row.querySelectorAll( '.wp-is-tooltip' ).forEach(
+				initializeTooltip
+			);
 			refresh();
 			row.querySelector( '.zw-poll-edit-option__label' ).focus();
 		} );

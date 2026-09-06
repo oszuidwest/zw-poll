@@ -372,9 +372,26 @@ final class PollEditForm
         aria-label="<?php echo esc_attr($option_name); ?>"
         placeholder="<?php echo esc_attr($option_name); ?>"
     >
-    <button type="button" class="button-link zw-poll-edit-option__move-up" aria-label="<?php esc_attr_e('Omhoog', 'zw-poll'); ?>">&uarr;</button>
-    <button type="button" class="button-link zw-poll-edit-option__move-down" aria-label="<?php esc_attr_e('Omlaag', 'zw-poll'); ?>">&darr;</button>
-    <button type="button" class="button-link zw-poll-edit-option__remove" aria-label="<?php esc_attr_e('Antwoord verwijderen', 'zw-poll'); ?>">&times;</button>
+    <?php
+    $controls = [
+        ['move-up', __('Omhoog', 'zw-poll'), '&uarr;'],
+        ['move-down', __('Omlaag', 'zw-poll'), '&darr;'],
+        ['remove', __('Antwoord verwijderen', 'zw-poll'), '&times;'],
+    ];
+    foreach ($controls as [$action, $control_label, $icon]) {
+        $button = sprintf(
+            '<button type="button" class="button-link zw-poll-edit-option__%1$s" aria-label="%2$s">%3$s</button>',
+            esc_attr($action),
+            esc_attr($control_label),
+            $icon
+        );
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the tooltip and processes the controlled button markup.
+        echo wp_get_tooltip($control_label, [
+            'id' => sprintf('zw-poll-option-%s-%s-tooltip', $index, $action),
+            'button' => $button,
+        ]);
+    }
+    ?>
     <div class="zw-poll-edit-option__image">
         <?php // No whitespace inside the span: admin.css hides an :empty preview. ?>
         <span class="zw-poll-edit-option__preview"><?php
