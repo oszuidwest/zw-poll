@@ -11,7 +11,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use wpdb;
 use ZuidWest\Poll\Activation;
-use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
@@ -23,10 +22,6 @@ final class ActivationTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
-        // Sites without polls make the total visibility migration a no-op.
-        Functions\when('update_meta_cache')->justReturn(false);
-        Functions\when('add_option')->justReturn(true);
-        Functions\when('delete_option')->justReturn(true);
     }
 
     protected function tearDown(): void
@@ -48,37 +43,15 @@ final class ActivationTest extends TestCase
     /**
      * Builds a wpdb fake with queued unique-index probe results.
      *
-     * @param list<string|null>       $indexNonUnique Non_unique values; 0 means unique.
-     * @param list<list<int|string>>  $pollBatches    Poll IDs returned by successive migration queries.
-     * @param string                  $pollQueryError Database error exposed by migration queries.
-     * @param \ArrayObject<int, string>|null $pollQueries Captured migration queries.
+     * @param list<string|null> $indexNonUnique Non_unique values; 0 means unique.
      */
-    private function wpdb(
-        array $indexNonUnique = [],
-        array $pollBatches = [],
-        string $pollQueryError = '',
-        ?\ArrayObject $pollQueries = null
-    ): wpdb
+    private function wpdb(array $indexNonUnique = []): wpdb
     {
-        return new class($indexNonUnique, $pollBatches, $pollQueryError, $pollQueries) extends wpdb {
-            private int $pollCutoff = 0;
-
-            /**
-             * @param list<string|null> $indexNonUnique Non_unique values.
-             * @param list<list<int|string>> $pollBatches Poll ID batches.
-             */
-            public function __construct(
-                private array $indexNonUnique,
-                private array $pollBatches,
-                private string $pollQueryError,
-                private ?\ArrayObject $pollQueries
-            ) {
+        return new class($indexNonUnique) extends wpdb {
+            /** @param list<string|null> $indexNonUnique Non_unique values. */
+            public function __construct(private array $indexNonUnique)
+            {
                 $this->prefix = 'wp_';
-                foreach ($pollBatches as $batch) {
-                    foreach ($batch as $poll_id) {
-                        $this->pollCutoff = max($this->pollCutoff, (int) $poll_id);
-                    }
-                }
             }
 
             public function prepare(string $query, mixed ...$args): string
@@ -96,20 +69,7 @@ final class ActivationTest extends TestCase
                     return array_shift($this->indexNonUnique);
                 }
 
-                if (str_contains($query, 'COALESCE(MAX(ID), 0)')) {
-                    $this->last_error = '';
-                    return (string) $this->pollCutoff;
-                }
-
                 return null;
-            }
-
-            public function get_col(string $query): array
-            {
-                $this->pollQueries?->append($query);
-                $this->last_error = $this->pollQueryError;
-
-                return array_shift($this->pollBatches) ?? [];
             }
 
             public function get_charset_collate(): string
@@ -188,190 +148,6 @@ final class ActivationTest extends TestCase
             ->once()
             ->with(\Mockery::on(
                 static fn (string $message): bool => str_contains($message, 'failed to store database version')
-            ))
-            ->andReturn(true);
-
-        Activation::ensureInstalled();
-
-        $this->addToAssertionCount(1);
-    }
-
-    #[Test]
-    public function upgrade_migrates_the_legacy_total_toggle_across_all_statuses_before_storing_the_version(): void
-    {
-        $GLOBALS['wpdb'] = $this->wpdb(['0'], [[11, 12, 13, 14, 15]]);
-        $this->mockDbVersion(false);
-        Functions\when('dbDelta')->justReturn([]);
-        $legacy = [11 => '1', 12 => '', 14 => '1'];
-        $stored = [14 => 'show', 15 => 'corrupt'];
-        $deleted = [];
-        Functions\when('metadata_exists')->alias(
-            static fn (string $type, int $id, string $key): bool => match ($key) {
-                PollPostType::META_TOTAL_VISIBILITY => array_key_exists($id, $stored),
-                PollPostType::META_HIDE_TOTAL => array_key_exists($id, $legacy),
-                default => false,
-            }
-        );
-        Functions\when('get_post_meta')->alias(
-            static fn (int $id, string $key): mixed => $key === PollPostType::META_TOTAL_VISIBILITY
-                ? ($stored[$id] ?? '')
-                : ($legacy[$id] ?? '')
-        );
-        Functions\when('update_post_meta')->alias(
-            static function (int $id, string $key, string $value) use (&$stored): int {
-                $stored[$id] = $value;
-                return $id;
-            }
-        );
-        Functions\when('delete_post_meta')->alias(
-            static function (int $id, string $key) use (&$deleted): bool {
-                $deleted[] = [$id, $key];
-                return true;
-            }
-        );
-        Functions\expect('update_option')
-            ->once()
-            ->with(Activation::DB_VERSION_OPTION, Activation::DB_VERSION, true)
-            ->andReturn(true);
-
-        Activation::ensureInstalled();
-
-        // Existing rows are left alone; the read path normalizes corrupt values.
-        $this->assertSame([
-            14 => 'show',
-            15 => 'corrupt',
-            11 => 'hide',
-            12 => 'show',
-            13 => 'show',
-        ], $stored);
-        $this->assertSame([
-            [11, PollPostType::META_HIDE_TOTAL],
-            [12, PollPostType::META_HIDE_TOTAL],
-            [14, PollPostType::META_HIDE_TOTAL],
-        ], $deleted);
-    }
-
-    #[Test]
-    public function failed_total_visibility_write_keeps_legacy_meta_and_retries_later(): void
-    {
-        $GLOBALS['wpdb'] = $this->wpdb(['0'], [[42]]);
-        $this->mockDbVersion(false);
-        Functions\when('dbDelta')->justReturn([]);
-        Functions\when('metadata_exists')->justReturn(false);
-        Functions\when('get_post_meta')->justReturn('');
-        Functions\when('update_post_meta')->justReturn(false);
-        Functions\expect('delete_post_meta')->never();
-        Functions\expect('update_option')->never();
-        Functions\expect('error_log')
-            ->once()
-            ->with(\Mockery::on(
-                static fn (string $message): bool => str_contains($message, 'total visibility migration')
-            ))
-            ->andReturn(true);
-
-        Activation::ensureInstalled();
-
-        $this->addToAssertionCount(1);
-    }
-
-    #[Test]
-    public function failed_legacy_meta_deletion_does_not_store_the_database_version(): void
-    {
-        $GLOBALS['wpdb'] = $this->wpdb(['0'], [[42]]);
-        $this->mockDbVersion(false);
-        Functions\when('dbDelta')->justReturn([]);
-        Functions\when('metadata_exists')->alias(
-            static fn (string $type, int $id, string $key): bool => $key === PollPostType::META_HIDE_TOTAL
-        );
-        Functions\when('get_post_meta')->justReturn('1');
-        Functions\when('update_post_meta')->justReturn(42);
-        Functions\expect('delete_post_meta')
-            ->once()
-            ->with(42, PollPostType::META_HIDE_TOTAL)
-            ->andReturn(false);
-        Functions\expect('update_option')->never();
-        Functions\expect('error_log')
-            ->once()
-            ->with(\Mockery::on(
-                static fn (string $message): bool => str_contains($message, 'total visibility migration')
-            ))
-            ->andReturn(true);
-
-        Activation::ensureInstalled();
-
-        $this->addToAssertionCount(1);
-    }
-
-    #[Test]
-    public function migration_resumes_from_a_persisted_id_cursor_before_storing_the_version(): void
-    {
-        $queries = new \ArrayObject();
-        $GLOBALS['wpdb'] = $this->wpdb(
-            ['0', '0'],
-            [range(1, 100), [101]],
-            pollQueries: $queries
-        );
-        Functions\when('dbDelta')->justReturn([]);
-        Functions\when('metadata_exists')->justReturn(true);
-        Functions\when('delete_post_meta')->justReturn(true);
-        $options = [
-            Activation::DB_VERSION_OPTION => false,
-            Activation::TOTAL_VISIBILITY_CURSOR_OPTION => 0,
-        ];
-        Functions\when('get_option')->alias(
-            static function (string $option, mixed $default = false) use (&$options): mixed {
-                return $options[$option] ?? $default;
-            }
-        );
-        Functions\when('update_option')->alias(
-            static function (string $option, mixed $value) use (&$options): bool {
-                $options[$option] = $value;
-                return true;
-            }
-        );
-        Functions\when('add_option')->alias(
-            static function (string $option, mixed $value) use (&$options): bool {
-                if (array_key_exists($option, $options)) {
-                    return false;
-                }
-                $options[$option] = $value;
-                return true;
-            }
-        );
-        Functions\when('delete_option')->alias(
-            static function (string $option) use (&$options): bool {
-                unset($options[$option]);
-                return true;
-            }
-        );
-
-        Activation::ensureInstalled();
-
-        $this->assertSame(100, $options[Activation::TOTAL_VISIBILITY_CURSOR_OPTION]);
-        $this->assertSame(101, $options[Activation::TOTAL_VISIBILITY_CUTOFF_OPTION]);
-        $this->assertFalse($options[Activation::DB_VERSION_OPTION]);
-
-        Activation::ensureInstalled();
-
-        $this->assertSame(Activation::DB_VERSION, $options[Activation::DB_VERSION_OPTION]);
-        $this->assertArrayNotHasKey(Activation::TOTAL_VISIBILITY_CURSOR_OPTION, $options);
-        $this->assertArrayNotHasKey(Activation::TOTAL_VISIBILITY_CUTOFF_OPTION, $options);
-        $this->assertStringContainsString('ID > 0 AND ID <= 101 ORDER BY ID ASC LIMIT 100', $queries[0]);
-        $this->assertStringContainsString('ID > 100 AND ID <= 101 ORDER BY ID ASC LIMIT 100', $queries[1]);
-    }
-
-    #[Test]
-    public function migration_query_failure_does_not_store_the_version(): void
-    {
-        $GLOBALS['wpdb'] = $this->wpdb(['0'], [[]], 'database unavailable');
-        $this->mockDbVersion(false);
-        Functions\when('dbDelta')->justReturn([]);
-        Functions\expect('update_option')->never();
-        Functions\expect('error_log')
-            ->once()
-            ->with(\Mockery::on(
-                static fn (string $message): bool => str_contains($message, 'migration query failed')
-                    && str_contains($message, 'database unavailable')
             ))
             ->andReturn(true);
 
