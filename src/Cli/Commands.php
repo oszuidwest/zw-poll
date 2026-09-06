@@ -17,8 +17,7 @@ use WP_CLI;
 use WP_Post;
 
 /**
- * `wp zw-poll` maintenance commands over the same cache/reset services
- * used by REST, keeping web and CLI behavior aligned.
+ * Reuses runtime services for `wp zw-poll` maintenance commands.
  */
 final class Commands
 {

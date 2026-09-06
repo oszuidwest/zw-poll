@@ -11,11 +11,15 @@ test( 'the editor stores an expired deadline and keeps warning about it', async 
 	] );
 
 	const warning = page.locator( '.zw-poll-edit-planning__warning' );
+	const deadline = page.locator( '#zw-poll-closes-at' );
 	await expect( warning ).toBeHidden();
-	await page.locator( '#zw-poll-closes-at' ).fill( '2020-01-01T12:00' );
+	const currentMinute = await deadline.getAttribute( 'data-now' );
+	expect( currentMinute ).not.toBeNull();
+	await deadline.fill( currentMinute ?? '' );
+	await expect( warning ).toBeVisible();
+	await deadline.fill( '2020-01-01T12:00' );
 	await expect( warning ).toBeVisible();
 
-	// The stored UTC timestamp renders back as the same site wall-clock value.
 	const editor = await publishAndReopen( page );
 	await expect( editor.locator( '#zw-poll-closes-at' ) ).toHaveValue(
 		'2020-01-01T12:00'

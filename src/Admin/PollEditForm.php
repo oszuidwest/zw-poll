@@ -14,9 +14,7 @@ use ZuidWest\Poll\Support\Settings;
 use WP_Post;
 
 /**
- * Lets editors manage poll options from the classic edit screen, so polls remain
- * fully usable on classic-editor sites. The question itself is the post title,
- * which core saves.
+ * Manages poll fields on the classic edit screen; core saves the question as the title.
  */
 final class PollEditForm
 {
@@ -83,9 +81,7 @@ final class PollEditForm
     /**
      * Warns when a published poll is not renderable for readers.
      *
-     * Uses the same displayability predicate as the frontend gate
-     * (PollPostType::isComplete), so the warning and the render path
-     * can never drift apart.
+     * Shares PollPostType::isComplete() with frontend rendering.
      */
     public function renderIncompleteNotice(): void
     {
@@ -203,9 +199,6 @@ final class PollEditForm
     /**
      * Renders the poll closing deadline in the site timezone.
      *
-     * The field value and data-now share the site wall-clock format, so
-     * admin.js can flag a past deadline with a plain string comparison.
-     *
      * @param WP_Post $post Poll post.
      */
     public function renderPlanning(WP_Post $post): void
@@ -237,15 +230,16 @@ final class PollEditForm
     /**
      * Persists the classic form fields.
      *
-     * REST saves never carry this nonce; they
-     * return early here and keep their own meta payload authoritative. The
-     * question is not handled here: it is the post title, which core saves.
+     * REST requests omit this nonce, leaving their meta payload authoritative.
+     * Core saves the question as the post title.
      *
      * @param int $post_id Poll post ID.
      */
     public function save(int $post_id): void
     {
-        $nonce = isset($_POST[self::NONCE_FIELD]) ? sanitize_key(wp_unslash($_POST[self::NONCE_FIELD])) : '';
+        $nonce = isset($_POST[self::NONCE_FIELD]) && is_string($_POST[self::NONCE_FIELD])
+            ? sanitize_key(wp_unslash($_POST[self::NONCE_FIELD]))
+            : '';
         if ($nonce === '' || !wp_verify_nonce($nonce, self::NONCE_ACTION)) {
             return;
         }
@@ -256,13 +250,9 @@ final class PollEditForm
             return;
         }
 
-        // A rendered options box always submits this key (rows are padded to
-        // the minimum and every row carries hidden inputs), so an absent key
-        // means another plugin removed the box: keep the stored options
-        // instead of wiping them.
+        // Preserve options when another plugin removes the meta box.
         if (isset($_POST['zw_poll_options'])) {
-            // The registered meta sanitizer (sanitizeOptions) runs inside
-            // update_post_meta and stays authoritative for both editor paths.
+            // update_post_meta() also applies PollPostType::sanitizeOptions().
             $raw_options = is_array($_POST['zw_poll_options'])
                 // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Rows sanitized field-by-field in readOptionRows().
                 ? wp_unslash($_POST['zw_poll_options'])
@@ -270,20 +260,16 @@ final class PollEditForm
             update_post_meta($post_id, PollPostType::META_OPTIONS, self::readOptionRows($raw_options));
         }
 
-        // Missing or invalid values preserve storage; this also protects saves
-        // when another plugin removes the display box.
-        if (isset($_POST['zw_poll_total_visibility'])) {
+        // Missing or invalid input preserves existing meta.
+        if (isset($_POST['zw_poll_total_visibility']) && is_string($_POST['zw_poll_total_visibility'])) {
             $visibility = sanitize_key(wp_unslash($_POST['zw_poll_total_visibility']));
             if (in_array($visibility, PollPostType::totalVisibilityValues(), true)) {
                 update_post_meta($post_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
             }
         }
 
-        // A rendered datetime-local field submits an empty string when
-        // cleared; an absent key means the planning box was removed.
-        // Unparseable input keeps the stored deadline. "No deadline" is a
-        // missing row, as PollCloseSweep::onStatusMeta leaves it.
-        if (isset($_POST['zw_poll_closes_at'])) {
+        // Empty input clears the deadline; absent or invalid input preserves it.
+        if (isset($_POST['zw_poll_closes_at']) && is_string($_POST['zw_poll_closes_at'])) {
             $raw_closes_at = sanitize_text_field(wp_unslash($_POST['zw_poll_closes_at']));
             if ($raw_closes_at === '') {
                 delete_post_meta($post_id, PollPostType::META_CLOSES_AT);

@@ -9,10 +9,6 @@ export async function login( page: Page ): Promise< void > {
 	await expect( page ).toHaveURL( /wp-admin/ );
 }
 
-/**
- * Opens the classic new-poll form and fills the question and answer labels.
- * The title is the reader-facing question; there is no separate field.
- */
 export async function startNewPoll(
 	page: Page,
 	question: string,
@@ -29,11 +25,8 @@ export async function startNewPoll(
 /**
  * Publishes or updates a poll and reopens its edit screen in a fresh page.
  *
- * After the classic publish redirect chain, headless Chromium stops
- * producing animation frames for the page, which wedges every later
- * Playwright click on its actionability (stability) checks — even across
- * goto/reload. Only a new page gets a healthy renderer again, so callers
- * must continue on the returned page.
+ * A fresh page avoids missing animation frames after the classic publish
+ * redirect, which otherwise block later Chromium actionability checks.
  */
 export async function publishAndReopen( page: Page ): Promise< Page > {
 	await page.click( '#publish' );

@@ -212,10 +212,7 @@
 		refresh();
 	} );
 
-	// Planning meta box: warn when the deadline is already in the past. The
-	// field value and data-now are both site wall-clock "YYYY-MM-DDTHH:mm"
-	// strings rendered by PHP, so they compare lexicographically without any
-	// timezone conversion in the browser.
+	// Site-local YYYY-MM-DDTHH:mm values compare lexicographically.
 	const deadline = document.getElementById( 'zw-poll-closes-at' );
 	const deadlineWarning = document.querySelector(
 		'.zw-poll-edit-planning__warning'
@@ -223,7 +220,7 @@
 	if ( deadline && deadlineWarning ) {
 		const refreshWarning = () => {
 			deadlineWarning.hidden = ! (
-				deadline.value && deadline.value < deadline.dataset.now
+				deadline.value && deadline.value <= deadline.dataset.now
 			);
 		};
 		deadline.addEventListener( 'input', refreshWarning );

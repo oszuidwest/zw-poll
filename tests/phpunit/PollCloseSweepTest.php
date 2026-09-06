@@ -87,12 +87,7 @@ final class PollCloseSweepTest extends TestCase
             static function (array $args) use (&$query): array {
                 $query = $args;
 
-                $first = new \WP_Post();
-                $first->ID = 11;
-                $second = new \WP_Post();
-                $second->ID = 12;
-
-                return [$first, $second];
+                return [11, 12];
             }
         );
         Functions\when('update_post_meta')->alias(
@@ -107,6 +102,8 @@ final class PollCloseSweepTest extends TestCase
         $this->assertSame(PollPostType::POST_TYPE, $query['post_type']);
         $this->assertSame('publish', $query['post_status']);
         $this->assertSame(-1, $query['posts_per_page']);
+        $this->assertSame('ids', $query['fields']);
+        $this->assertSame('none', $query['orderby']);
 
         $meta_query = $query['meta_query'];
         $this->assertSame('AND', $meta_query['relation']);

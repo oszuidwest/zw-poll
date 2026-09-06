@@ -13,7 +13,7 @@ use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
- * Installs the votes table and plugin capabilities, and clears scheduled events on deactivation.
+ * Manages per-site activation and deactivation.
  */
 final class Activation
 {
@@ -49,14 +49,16 @@ final class Activation
      */
     public static function deactivate(bool $network_wide = false): void
     {
-        self::forEachSite($network_wide, static fn () => wp_clear_scheduled_hook(PollCloseSweep::EVENT));
+        self::forEachSite($network_wide, static function (): void {
+            wp_clear_scheduled_hook(PollCloseSweep::EVENT);
+        });
     }
 
     /**
-     * Runs a callback once per site for network-wide (de)activation, or once for the current site.
+     * Runs a callback for each affected site.
      *
-     * @param bool     $network_wide Whether the hook fired network-wide.
-     * @param callable $callback     Per-site work.
+     * @param bool             $network_wide Whether the hook fired network-wide.
+     * @param callable(): void $callback     Per-site callback.
      */
     private static function forEachSite(bool $network_wide, callable $callback): void
     {

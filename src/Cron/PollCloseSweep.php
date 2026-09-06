@@ -13,7 +13,7 @@ use ZuidWest\Poll\Admin\UsageTracker;
 use ZuidWest\Poll\PostType\PollPostType;
 
 /**
- * Owns the recurring close sweep and the effects of poll status changes.
+ * Coordinates close sweeps and poll status side effects.
  */
 final class PollCloseSweep
 {
@@ -28,13 +28,13 @@ final class PollCloseSweep
         add_filter('cron_schedules', [$this, 'addSchedule']);
         add_action('init', [$this, 'schedule']);
         add_action(self::EVENT, [$this, 'runScheduledSweep']);
-        // A first status write on a poll without a status row fires added_post_meta, not updated_post_meta.
+        // New status rows fire added_post_meta, not updated_post_meta.
         add_action('added_post_meta', [$this, 'onStatusMeta'], 10, 4);
         add_action('updated_post_meta', [$this, 'onStatusMeta'], 10, 4);
     }
 
     /**
-     * Adds the hardcoded five-minute recurrence.
+     * Adds the five-minute recurrence.
      *
      * @param array<string, array{interval: int, display: string}> $schedules Registered schedules.
      * @return array<string, array{interval: int, display: string}>
@@ -60,7 +60,7 @@ final class PollCloseSweep
     }
 
     /**
-     * Runs the sweep as an action callback; phpstan-wordpress requires action callbacks to return void.
+     * Adapts the integer-returning sweep to a void action callback.
      */
     public function runScheduledSweep(): void
     {
@@ -78,6 +78,8 @@ final class PollCloseSweep
             'post_type' => PollPostType::POST_TYPE,
             'post_status' => 'publish',
             'posts_per_page' => -1,
+            'fields' => 'ids',
+            'orderby' => 'none',
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Poll deadlines and status use core post meta by design.
             'meta_query' => [
                 'relation' => 'AND',
@@ -103,8 +105,8 @@ final class PollCloseSweep
         ]);
 
         $closed = 0;
-        foreach ($polls as $poll) {
-            if (update_post_meta($poll->ID, PollPostType::META_STATUS, 'closed') !== false) {
+        foreach ($polls as $poll_id) {
+            if (update_post_meta((int) $poll_id, PollPostType::META_STATUS, 'closed') !== false) {
                 ++$closed;
             }
         }
@@ -113,10 +115,7 @@ final class PollCloseSweep
     }
 
     /**
-     * Applies status-change effects shared by REST, admin, CLI, bulk, and cron writes.
-     *
-     * Closing announces the poll to cache purgers and other consumers. Opening
-     * drops an expired deadline so the next sweep does not close the poll again.
+     * Publishes close events and removes expired deadlines on reopen.
      *
      * @param int    $meta_id  Meta row ID.
      * @param int    $poll_id  Post ID.

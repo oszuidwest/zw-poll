@@ -37,7 +37,6 @@ final class PollPostType
     public const MAX_QUESTION_LEN = 200;
     public const MAX_OPTION_LEN = 280;
 
-    // Wire format of the deadline field: what a datetime-local input submits and displays.
     public const DEADLINE_INPUT_FORMAT = 'Y-m-d\TH:i';
 
     /**
@@ -187,7 +186,7 @@ final class PollPostType
     }
 
     /**
-     * Formats a deadline in the site timezone, or returns '' without a deadline.
+     * Formats a UTC deadline in the site timezone; zero returns an empty string.
      *
      * @param int         $closes_at UTC closing timestamp.
      * @param string|null $format    PHP date format; defaults to the site's date and time format.
@@ -204,9 +203,9 @@ final class PollPostType
     }
 
     /**
-     * Parses a site-timezone wall-clock deadline into a UTC timestamp.
+     * Parses datetime-local input in the site timezone.
      *
-     * @param string $raw Wall-clock input in DEADLINE_INPUT_FORMAT form.
+     * @param string $raw Submitted datetime-local value.
      */
     public static function parseDeadline(string $raw): ?int
     {

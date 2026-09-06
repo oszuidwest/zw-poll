@@ -83,12 +83,12 @@ final class PollRendererTest extends TestCase
     /**
      * Render a published poll with controlled content.
      *
-     * @param string                                          $status   Poll status.
-     * @param string                                          $question Post title (the poll question).
-     * @param mixed                                           $options  Stored poll options.
+     * @param string                                              $status           Poll status.
+     * @param string                                              $question         Post title (the poll question).
+     * @param mixed                                               $options          Stored poll options.
      * @param array{counts: array<string, int>, total: int}|null $aggregate Stored public aggregate.
      * @param string                                              $total_visibility Per-poll visibility policy.
-     * @param int                                                 $closes_at       Optional closing timestamp.
+     * @param int                                                 $closes_at        Optional closing timestamp.
      */
     private function renderPoll(
         string $status,
@@ -127,9 +127,12 @@ final class PollRendererTest extends TestCase
     #[Test]
     public function open_poll_displays_its_deadline_but_closed_poll_does_not(): void
     {
-        // Real string formats: the setUp default returns an array for unknown options.
         Functions\when('get_option')->alias(
-            static fn (string $key): string => $key === 'date_format' ? 'd-m-Y' : 'H:i'
+            static fn (string $key, mixed $default = false): mixed => match ($key) {
+                'date_format' => 'd-m-Y',
+                'time_format' => 'H:i',
+                default => $default,
+            }
         );
         Functions\when('wp_date')->justReturn('23-07-2026 14:30');
 

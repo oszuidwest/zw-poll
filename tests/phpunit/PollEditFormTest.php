@@ -89,6 +89,18 @@ final class PollEditFormTest extends TestCase
     }
 
     #[Test]
+    public function save_ignores_a_non_string_nonce(): void
+    {
+        $this->submitForm(['zw_poll_edit_form_nonce' => ['nonce123']]);
+        Functions\expect('wp_verify_nonce')->never();
+        Functions\expect('update_post_meta')->never();
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
     public function save_ignores_users_without_edit_capability(): void
     {
         $this->submitForm();
@@ -170,11 +182,6 @@ final class PollEditFormTest extends TestCase
         ];
     }
 
-    /**
-     * @param string|null $submitted Submitted field value, or null when the field is absent.
-     * @param int|null    $written   Expected meta write, or null when nothing is written.
-     * @param bool        $deleted   Whether the stored deadline is removed.
-     */
     #[Test]
     #[DataProvider('deadlineSubmissions')]
     public function save_handles_deadline_input(?string $submitted, ?int $written, bool $deleted): void
@@ -204,6 +211,23 @@ final class PollEditFormTest extends TestCase
             return;
         }
         $this->assertSame([self::POLL_ID, $written], $writes[PollPostType::META_CLOSES_AT]);
+    }
+
+    #[Test]
+    public function save_ignores_non_string_optional_fields(): void
+    {
+        $this->submitForm([
+            'zw_poll_total_visibility' => ['show'],
+            'zw_poll_closes_at' => ['2026-07-23T14:30'],
+        ]);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame([PollPostType::META_OPTIONS], array_keys($writes));
     }
 
     #[Test]

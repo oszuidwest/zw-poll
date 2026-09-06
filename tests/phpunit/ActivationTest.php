@@ -15,7 +15,7 @@ use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
- * Covers installation, schema validation, and multisite provisioning.
+ * Covers installation, multisite provisioning, and cron cleanup.
  */
 final class ActivationTest extends TestCase
 {
@@ -324,11 +324,7 @@ final class ActivationTest extends TestCase
         $this->assertSame([2, 5], $switched_sites);
     }
 
-    /**
-     * Records every site ID passed to switch_to_blog().
-     *
-     * @param list<int> $switched_sites Captured site IDs.
-     */
+    /** @param list<int> $switched_sites */
     private function captureSwitchedSites(array &$switched_sites): void
     {
         Functions\when('switch_to_blog')->alias(static function (int $site_id) use (&$switched_sites): void {

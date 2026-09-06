@@ -151,7 +151,8 @@ through `Plugin::boot()`. Its main components are:
   `Shortcode\PollShortcode`.
 - Frontend: `Frontend\PollRenderer`, `Frontend\Assets`,
   `src/Frontend/view.js`, and `src/Frontend/style.css`.
-- Admin and CLI: the classes under `Admin\` and `Cli\Commands`.
+- Admin, cron, and CLI: the classes under `Admin\`, `Cron\PollCloseSweep`, and
+  `Cli\Commands`.
 
 Polls are stored as `zw_poll` posts. Votes are stored in
 `{$wpdb->prefix}zw_poll_votes`; `_zw_poll_aggregate` holds cached counts per
@@ -261,6 +262,6 @@ ZuidWest Poll is free software licensed under the
 
 ## Out of scope
 
-The plugin does not provide multiple-choice or ranked polls, automatic closing,
-an export UI, email notifications, external embeds, A/B tests, a Gutenberg
-block, or a non-JavaScript form fallback.
+The plugin does not provide multiple-choice or ranked polls, an export UI,
+email notifications, external embeds, A/B tests, a Gutenberg block, or a
+non-JavaScript form fallback.
