@@ -54,7 +54,7 @@ const currentVotedOptionIdFromCookie = ( ctx ) => {
 	);
 };
 
-// WordPress 6.9 has no script-module translations; PHP passes strings through state.
+// PHP passes script-module translations through Interactivity API state.
 const errorMessage = ( code, fallback = '' ) => {
 	const errors = state.i18n?.errors || {};
 	return errors[ code ] || fallback || errors.default || '';

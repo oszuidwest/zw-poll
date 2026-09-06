@@ -82,7 +82,7 @@ final class PollRenderer
         /* translators: %s: total number of votes. */
         $total_label = __('Totaal aantal stemmen: %s', 'zw-poll');
 
-        // WordPress 6.9 cannot load text domains for script modules; pass strings through state.
+        // Pass script-module translations through Interactivity API state.
         wp_interactivity_state('zw-poll', [
             'restUrl' => esc_url_raw(VoteController::voteUrl()),
             'cookiePrefix' => VoteController::COOKIE_PREFIX,
