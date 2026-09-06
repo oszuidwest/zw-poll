@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use wpdb;
 use ZuidWest\Poll\Activation;
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
@@ -309,6 +310,39 @@ final class ActivationTest extends TestCase
             $this->assertSame([123], $switched_sites);
             $this->assertSame(1, $restored);
         }
+    }
+
+    #[Test]
+    public function deactivation_clears_the_current_site_close_event(): void
+    {
+        Functions\when('is_multisite')->justReturn(false);
+        Functions\expect('switch_to_blog')->never();
+        Functions\expect('wp_clear_scheduled_hook')
+            ->once()
+            ->with(PollCloseSweep::EVENT);
+
+        Activation::deactivate();
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function network_deactivation_clears_the_close_event_on_every_site(): void
+    {
+        $switched_sites = [];
+        Functions\when('is_multisite')->justReturn(true);
+        Functions\when('get_sites')->justReturn([2, 5]);
+        Functions\when('switch_to_blog')->alias(static function (int $site_id) use (&$switched_sites): void {
+            $switched_sites[] = $site_id;
+        });
+        Functions\expect('restore_current_blog')->twice();
+        Functions\expect('wp_clear_scheduled_hook')
+            ->twice()
+            ->with(PollCloseSweep::EVENT);
+
+        Activation::deactivate(true);
+
+        $this->assertSame([2, 5], $switched_sites);
     }
 
     private function role(): object

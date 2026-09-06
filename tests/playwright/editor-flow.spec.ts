@@ -1,24 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
-import { login } from './utils';
-
-/**
- * Publishes or updates a poll and reopens its edit screen in a fresh page.
- *
- * After the classic publish redirect chain, headless Chromium stops
- * producing animation frames for the page, which wedges every later
- * Playwright click on its actionability (stability) checks — even across
- * goto/reload. Only a new page gets a healthy renderer again, so callers
- * must continue on the returned page.
- */
-async function publishAndReopen( page: Page ): Promise< Page > {
-	await page.click( '#publish' );
-	await page.waitForURL( /post\.php\?post=\d+&action=edit/ );
-	const postId = new URL( page.url() ).searchParams.get( 'post' );
-	const fresh = await page.context().newPage();
-	await page.close();
-	await fresh.goto( `/wp-admin/post.php?post=${ postId }&action=edit` );
-	return fresh;
-}
+import { test, expect } from '@playwright/test';
+import { login, publishAndReopen } from './utils';
 
 /**
  * Covers the custom poll admin surface against the seeded demo poll.

@@ -80,9 +80,7 @@ final class Plugin
                 wp_register_script(
                     'zw-poll-admin',
                     ZW_POLL_URL . 'src/Admin/admin.js',
-                    $hook === 'edit.php'
-                        ? ['clipboard', 'wp-i18n']
-                        : ['clipboard', 'wp-date', 'wp-i18n'],
+                    ['clipboard', 'wp-i18n'],
                     ZW_POLL_VERSION,
                     true
                 );

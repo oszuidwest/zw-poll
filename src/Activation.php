@@ -9,10 +9,11 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll;
 
+use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
- * Installs the votes table and plugin capabilities.
+ * Installs the votes table and plugin capabilities, and clears scheduled events on deactivation.
  */
 final class Activation
 {
@@ -38,18 +39,39 @@ final class Activation
      */
     public static function activate(bool $network_wide = false): void
     {
-        if ($network_wide && is_multisite()) {
-            foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $site_id) {
-                switch_to_blog((int) $site_id);
-                try {
-                    self::activateSite();
-                } finally {
-                    restore_current_blog();
-                }
-            }
+        self::forEachSite($network_wide, static fn () => self::activateSite());
+    }
+
+    /**
+     * Clears the plugin's scheduled events for the current site or network.
+     *
+     * @param bool $network_wide Whether deactivation is network-wide.
+     */
+    public static function deactivate(bool $network_wide = false): void
+    {
+        self::forEachSite($network_wide, static fn () => wp_clear_scheduled_hook(PollCloseSweep::EVENT));
+    }
+
+    /**
+     * Runs a callback once per site for network-wide (de)activation, or once for the current site.
+     *
+     * @param bool     $network_wide Whether the hook fired network-wide.
+     * @param callable $callback     Per-site work.
+     */
+    private static function forEachSite(bool $network_wide, callable $callback): void
+    {
+        if (!$network_wide || !is_multisite()) {
+            $callback();
             return;
         }
-        self::activateSite();
+        foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $site_id) {
+            switch_to_blog((int) $site_id);
+            try {
+                $callback();
+            } finally {
+                restore_current_blog();
+            }
+        }
     }
 
     /**

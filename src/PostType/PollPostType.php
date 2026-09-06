@@ -34,6 +34,9 @@ final class PollPostType
     public const MAX_QUESTION_LEN = 200;
     public const MAX_OPTION_LEN = 280;
 
+    // Wire format of the deadline field: what a datetime-local input submits and displays.
+    public const DEADLINE_INPUT_FORMAT = 'Y-m-d\TH:i';
+
     /**
      * Registers post-type and meta hooks.
      */
@@ -195,12 +198,12 @@ final class PollPostType
     /**
      * Parses a site-timezone wall-clock deadline into a UTC timestamp.
      *
-     * @param string $raw Wall-clock input in Y-m-d\TH:i form.
+     * @param string $raw Wall-clock input in DEADLINE_INPUT_FORMAT form.
      */
     public static function parseDeadline(string $raw): ?int
     {
-        $deadline = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $raw, wp_timezone());
-        if (!$deadline instanceof DateTimeImmutable || $deadline->format('Y-m-d\TH:i') !== $raw) {
+        $deadline = DateTimeImmutable::createFromFormat('!' . self::DEADLINE_INPUT_FORMAT, $raw, wp_timezone());
+        if (!$deadline instanceof DateTimeImmutable || $deadline->format(self::DEADLINE_INPUT_FORMAT) !== $raw) {
             return null;
         }
 

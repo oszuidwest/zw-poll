@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-06T12:19:32+00:00\n"
+"POT-Creation-Date: 2026-09-06T13:06:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -53,7 +53,7 @@ msgid "poll"
 msgstr ""
 
 #: src/Admin/ClassicEditor.php:164
-#: src/PostType/PollPostType.php:62
+#: src/PostType/PollPostType.php:65
 msgid "Polls zoeken"
 msgstr ""
 
@@ -82,7 +82,7 @@ msgid "Deze poll bevat stemmen en kan niet permanent verwijderd worden. Verwijde
 msgstr ""
 
 #: src/Admin/DeleteGuard.php:153
-#: src/PostType/PollPostType.php:59
+#: src/PostType/PollPostType.php:62
 msgid "Poll bewerken"
 msgstr ""
 
@@ -207,15 +207,15 @@ msgstr ""
 msgid "Uitgeschakeld: lezers zien alleen percentages, geen totaal onder de resultaten."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:206
+#: src/Admin/PollEditForm.php:209
 msgid "Einddatum"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:217
+#: src/Admin/PollEditForm.php:220
 msgid "Datum en tijd gebruiken de tijdzone van deze site."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:220
+#: src/Admin/PollEditForm.php:223
 msgid "Deze datum is al verstreken. De poll sluit bij de eerstvolgende controle."
 msgstr ""
 
@@ -417,7 +417,7 @@ msgstr ""
 msgid "Geen poll gevonden met ID %d."
 msgstr ""
 
-#: src/Cron/PollCloseSweep.php:46
+#: src/Cron/PollCloseSweep.php:47
 msgid "Elke vijf minuten"
 msgstr ""
 
@@ -493,38 +493,38 @@ msgstr ""
 msgid "Einduitslag"
 msgstr ""
 
-#: src/PostType/PollPostType.php:55
-#: src/PostType/PollPostType.php:65
+#: src/PostType/PollPostType.php:58
+#: src/PostType/PollPostType.php:68
 msgid "Polls"
 msgstr ""
 
-#: src/PostType/PollPostType.php:56
+#: src/PostType/PollPostType.php:59
 #: src/Admin/classic-editor.js:198
 msgid "Poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:57
 #: src/PostType/PollPostType.php:60
+#: src/PostType/PollPostType.php:63
 msgid "Nieuwe poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:58
+#: src/PostType/PollPostType.php:61
 msgid "Nieuwe poll toevoegen"
 msgstr ""
 
-#: src/PostType/PollPostType.php:61
+#: src/PostType/PollPostType.php:64
 msgid "Poll bekijken"
 msgstr ""
 
-#: src/PostType/PollPostType.php:63
+#: src/PostType/PollPostType.php:66
 msgid "Geen polls gevonden"
 msgstr ""
 
-#: src/PostType/PollPostType.php:64
+#: src/PostType/PollPostType.php:67
 msgid "Geen polls gevonden in de prullenbak"
 msgstr ""
 
-#: src/PostType/PollPostType.php:66
+#: src/PostType/PollPostType.php:69
 msgid "Alle polls"
 msgstr ""
 

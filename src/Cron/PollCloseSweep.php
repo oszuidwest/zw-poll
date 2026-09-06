@@ -13,24 +13,25 @@ use ZuidWest\Poll\Admin\UsageTracker;
 use ZuidWest\Poll\PostType\PollPostType;
 
 /**
- * Owns the recurring close sweep and poll-status transition effects.
+ * Owns the recurring close sweep and the effects of poll status changes.
  */
 final class PollCloseSweep
 {
     public const EVENT = 'zw_poll_close_expired';
     public const SCHEDULE = 'zw_poll_five_minutes';
-    public const INTERVAL = 300;
+    public const INTERVAL = 5 * MINUTE_IN_SECONDS;
 
     /**
-     * Registers cron and status-transition hooks.
+     * Registers cron and status-change hooks.
      */
     public function register(): void
     {
         add_filter('cron_schedules', [$this, 'addSchedule']);
         add_action('init', [$this, 'schedule']);
         add_action(self::EVENT, [$this, 'runScheduledSweep']);
-        add_action('added_post_meta', [$this, 'statusMetaAdded'], 10, 4);
-        add_action('updated_post_meta', [$this, 'statusMetaUpdated'], 10, 4);
+        // A first status write on a poll without a status row fires added_post_meta, not updated_post_meta.
+        add_action('added_post_meta', [$this, 'onStatusMeta'], 10, 4);
+        add_action('updated_post_meta', [$this, 'onStatusMeta'], 10, 4);
     }
 
     /**
@@ -60,7 +61,7 @@ final class PollCloseSweep
     }
 
     /**
-     * Runs the sweep as a void WordPress action callback.
+     * Runs the sweep as an action callback; phpstan-wordpress requires action callbacks to return void.
      */
     public function runScheduledSweep(): void
     {
@@ -78,7 +79,6 @@ final class PollCloseSweep
             'post_type' => PollPostType::POST_TYPE,
             'post_status' => 'publish',
             'posts_per_page' => -1,
-            'no_found_rows' => true,
             'suppress_filters' => false,
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Poll deadlines and status use core post meta by design.
             'meta_query' => [
@@ -115,77 +115,29 @@ final class PollCloseSweep
     }
 
     /**
-     * Handles a newly created status meta row.
+     * Applies status-change effects shared by REST, admin, CLI, bulk, and cron writes.
      *
-     * @param int    $meta_id   Meta row ID.
-     * @param int    $object_id Post ID.
-     * @param string $meta_key  Meta key.
-     * @param mixed  $value     New value.
-     */
-    public function statusMetaAdded(int $meta_id, int $object_id, string $meta_key, mixed $value): void
-    {
-        if ($value === 'closed') {
-            $this->handleStatusTransition($object_id, $meta_key, 'closed');
-        }
-    }
-
-    /**
-     * Handles a changed status meta row.
+     * Closing announces the poll to cache purgers and other consumers. Opening
+     * drops an expired deadline so the next sweep does not close the poll again.
      *
-     * @param int    $meta_id   Meta row ID.
-     * @param int    $object_id Post ID.
-     * @param string $meta_key  Meta key.
-     * @param mixed  $value     New value.
+     * @param int    $meta_id  Meta row ID.
+     * @param int    $poll_id  Post ID.
+     * @param string $meta_key Meta key.
+     * @param mixed  $value    New value.
      */
-    public function statusMetaUpdated(int $meta_id, int $object_id, string $meta_key, mixed $value): void
-    {
-        if ($value === 'open' || $value === 'closed') {
-            $this->handleStatusTransition($object_id, $meta_key, $value);
-        }
-    }
-
-    /**
-     * Clears close events for one site or every site during network deactivation.
-     *
-     * @param bool $network_wide Whether the plugin is network-deactivated.
-     */
-    public static function deactivate(bool $network_wide = false): void
-    {
-        if ($network_wide && is_multisite()) {
-            foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $site_id) {
-                switch_to_blog((int) $site_id);
-                try {
-                    wp_clear_scheduled_hook(self::EVENT);
-                } finally {
-                    restore_current_blog();
-                }
-            }
-            return;
-        }
-
-        wp_clear_scheduled_hook(self::EVENT);
-    }
-
-    /**
-     * Applies effects shared by REST, admin, CLI, bulk, and cron writes.
-     *
-     * @param int    $poll_id Poll post ID.
-     * @param string $meta_key Changed meta key.
-     * @param string $status New poll status.
-     */
-    private function handleStatusTransition(int $poll_id, string $meta_key, string $status): void
+    public function onStatusMeta(int $meta_id, int $poll_id, string $meta_key, mixed $value): void
     {
         if ($meta_key !== PollPostType::META_STATUS || get_post_type($poll_id) !== PollPostType::POST_TYPE) {
             return;
         }
 
-        if ($status === 'closed') {
+        if ($value === 'closed') {
             do_action('zw_poll_closed', $poll_id, UsageTracker::getUsage($poll_id));
             return;
         }
 
         $closes_at = PollPostType::closesAt($poll_id);
-        if ($closes_at > 0 && $closes_at <= time()) {
+        if ($value === 'open' && $closes_at > 0 && $closes_at <= time()) {
             delete_post_meta($poll_id, PollPostType::META_CLOSES_AT);
         }
     }

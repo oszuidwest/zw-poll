@@ -212,28 +212,21 @@
 		refresh();
 	} );
 
-	// datetime-local is a wall-clock value in the WordPress site timezone.
-	document
-		.querySelectorAll( '.zw-poll-edit-planning__field' )
-		.forEach( ( field ) => {
-			const warning = field
-				.closest( '.inside' )
-				?.querySelector( '.zw-poll-edit-planning__warning' );
-			if ( ! warning || ! window.wp?.date?.getDate ) {
-				return;
-			}
-
-			const refreshWarning = () => {
-				const selected = field.value
-					? window.wp.date.getDate( field.value )
-					: null;
-				warning.hidden =
-					! selected ||
-					Number.isNaN( selected.getTime() ) ||
-					selected.getTime() >= Date.now();
-			};
-
-			field.addEventListener( 'input', refreshWarning );
-			refreshWarning();
-		} );
+	// Planning meta box: warn when the deadline is already in the past. The
+	// field value and data-now are both site wall-clock "YYYY-MM-DDTHH:mm"
+	// strings rendered by PHP, so they compare lexicographically without any
+	// timezone conversion in the browser.
+	const deadline = document.getElementById( 'zw-poll-closes-at' );
+	const deadlineWarning = document.querySelector(
+		'.zw-poll-edit-planning__warning'
+	);
+	if ( deadline && deadlineWarning ) {
+		const refreshWarning = () => {
+			deadlineWarning.hidden = ! (
+				deadline.value && deadline.value < deadline.dataset.now
+			);
+		};
+		deadline.addEventListener( 'input', refreshWarning );
+		refreshWarning();
+	}
 } )();
