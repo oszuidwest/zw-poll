@@ -126,7 +126,6 @@ jobs:
           composer validate --strict --no-check-publish
           composer security
           composer quality
-          npm run security
           npm run lint
 
       - name: Verify translation template

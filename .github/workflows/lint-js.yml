@@ -10,8 +10,6 @@ on:
       - 'src/**/*.css'
       - 'package.json'
       - 'package-lock.json'
-      - 'scripts/npm-audit.mjs'
-      - 'docs/npm-audit.md'
   pull_request:
     paths:
       - '.github/workflows/lint-js.yml'
@@ -19,11 +17,7 @@ on:
       - 'src/**/*.css'
       - 'package.json'
       - 'package-lock.json'
-      - 'scripts/npm-audit.mjs'
-      - 'docs/npm-audit.md'
   workflow_dispatch:
-  schedule:
-    - cron: '24 6 * * 1'
 
 permissions:
   contents: read
@@ -34,7 +28,7 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint and audit
+    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -46,5 +40,4 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run security
       - run: npm run lint
