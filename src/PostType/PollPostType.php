@@ -194,9 +194,7 @@ final class PollPostType
      */
     public static function totalVisibility(int $poll_id): string
     {
-        return self::sanitizeTotalVisibility(
-            get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true)
-        );
+        return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
     }
 
     /**

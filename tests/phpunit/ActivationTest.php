@@ -54,15 +54,6 @@ final class ActivationTest extends TestCase
                 $this->prefix = 'wp_';
             }
 
-            public function prepare(string $query, mixed ...$args): string
-            {
-                foreach ($args as $arg) {
-                    $query = (string) preg_replace('/%[ids]/', (string) $arg, $query, 1);
-                }
-
-                return $query;
-            }
-
             public function get_var(string $query): mixed
             {
                 if (str_contains($query, 'information_schema.STATISTICS')) {

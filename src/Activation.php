@@ -87,19 +87,11 @@ final class Activation
     }
 
     /**
-     * Ensures the current site's database objects are installed.
-     */
-    public static function ensureInstalled(): void
-    {
-        self::installVotesTable();
-    }
-
-    /**
      * Activates the plugin for the current site.
      */
     private static function activateSite(): void
     {
-        self::installVotesTable();
+        self::ensureInstalled();
         Capabilities::grantToDefaultRoles();
         // IpHasher seeds the salt lazily, including installs that bypass activation.
     }
@@ -159,9 +151,12 @@ final class Activation
     }
 
     /**
-     * Creates the votes table for the current site when needed.
+     * Ensures the current site's votes table is installed.
+     *
+     * The version is stored only after the table and its unique cookie index
+     * are verified, so a partial failure retries on the next request.
      */
-    private static function installVotesTable(): void
+    public static function ensureInstalled(): void
     {
         $installed = (string) get_option(self::DB_VERSION_OPTION);
 

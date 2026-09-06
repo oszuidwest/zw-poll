@@ -59,7 +59,6 @@ final class PollRendererTest extends TestCase
             ) . '"'
         );
         Functions\when('wp_unique_id')->justReturn('zw-poll-42-test');
-        Functions\when('metadata_exists')->justReturn(true);
         Functions\when('get_option')->alias(
             static fn (string $option, mixed $default = []): mixed => $default
         );
