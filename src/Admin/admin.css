@@ -182,13 +182,8 @@
 
 /* Planning meta box (side column) */
 
-.zw-poll-edit-planning label,
-.zw-poll-edit-planning__field {
-	display: block;
-	width: 100%;
-}
-
 .zw-poll-edit-planning label {
+	display: block;
 	margin-bottom: 4px;
 	font-weight: 600;
 }

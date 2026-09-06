@@ -1,15 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { login, publishAndReopen } from './utils';
+import { login, publishAndReopen, startNewPoll } from './utils';
 
 test( 'the editor stores an expired deadline and keeps warning about it', async ( {
 	page,
 } ) => {
 	await login( page );
-	await page.goto( '/wp-admin/post-new.php?post_type=zw_poll' );
-
-	await page.fill( '#title', 'Poll met verstreken einddatum' );
-	await page.locator( '[name="zw_poll_options[0][label]"]' ).fill( 'Ja' );
-	await page.locator( '[name="zw_poll_options[1][label]"]' ).fill( 'Nee' );
+	await startNewPoll( page, 'Poll met verstreken einddatum', [
+		'Ja',
+		'Nee',
+	] );
 
 	const warning = page.locator( '.zw-poll-edit-planning__warning' );
 	await expect( warning ).toBeHidden();

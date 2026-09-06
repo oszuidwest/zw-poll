@@ -105,7 +105,7 @@ final class PollEditForm
         }
 
         printf(
-            '<div class="notice notice-warning"><p>%s</p></div>',
+            '<div class="notice notice-warning zw-poll-incomplete-notice"><p>%s</p></div>',
             esc_html(sprintf(
                 /* translators: %d: minimum number of answers. */
                 __(
@@ -210,8 +210,7 @@ final class PollEditForm
      */
     public function renderPlanning(WP_Post $post): void
     {
-        $closes_at = PollPostType::closesAt($post->ID);
-        $value = $closes_at > 0 ? (string) wp_date(PollPostType::DEADLINE_INPUT_FORMAT, $closes_at) : '';
+        $value = PollPostType::formatClosesAt(PollPostType::closesAt($post->ID), PollPostType::DEADLINE_INPUT_FORMAT);
 
         wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
         ?>
@@ -221,7 +220,7 @@ final class PollEditForm
         type="datetime-local"
         id="zw-poll-closes-at"
         name="zw_poll_closes_at"
-        class="zw-poll-edit-planning__field"
+        class="widefat"
         value="<?php echo esc_attr($value); ?>"
         data-now="<?php echo esc_attr((string) wp_date(PollPostType::DEADLINE_INPUT_FORMAT)); ?>"
     >
@@ -281,12 +280,14 @@ final class PollEditForm
         }
 
         // A rendered datetime-local field submits an empty string when
-        // cleared (stored as 0); an absent key means the planning box was
-        // removed. Unparseable input keeps the stored deadline.
+        // cleared; an absent key means the planning box was removed.
+        // Unparseable input keeps the stored deadline. "No deadline" is a
+        // missing row, as PollCloseSweep::onStatusMeta leaves it.
         if (isset($_POST['zw_poll_closes_at'])) {
             $raw_closes_at = sanitize_text_field(wp_unslash($_POST['zw_poll_closes_at']));
-            $deadline = $raw_closes_at === '' ? 0 : PollPostType::parseDeadline($raw_closes_at);
-            if ($deadline !== null) {
+            if ($raw_closes_at === '') {
+                delete_post_meta($post_id, PollPostType::META_CLOSES_AT);
+            } elseif (($deadline = PollPostType::parseDeadline($raw_closes_at)) !== null) {
                 update_post_meta($post_id, PollPostType::META_CLOSES_AT, $deadline);
             }
         }

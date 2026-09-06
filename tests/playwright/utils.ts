@@ -10,6 +10,23 @@ export async function login( page: Page ): Promise< void > {
 }
 
 /**
+ * Opens the classic new-poll form and fills the question and answer labels.
+ * The title is the reader-facing question; there is no separate field.
+ */
+export async function startNewPoll(
+	page: Page,
+	question: string,
+	labels: string[]
+): Promise< void > {
+	await page.goto( '/wp-admin/post-new.php?post_type=zw_poll' );
+	await page.fill( '#title', question );
+	const fields = page.locator( '.zw-poll-edit-option__label' );
+	for ( let i = 0; i < labels.length; i++ ) {
+		await fields.nth( i ).fill( labels[ i ] );
+	}
+}
+
+/**
  * Publishes or updates a poll and reopens its edit screen in a fresh page.
  *
  * After the classic publish redirect chain, headless Chromium stops

@@ -18,8 +18,7 @@ use ZuidWest\Poll\PostType\PollPostType;
 final class PollCloseSweep
 {
     public const EVENT = 'zw_poll_close_expired';
-    public const SCHEDULE = 'zw_poll_five_minutes';
-    public const INTERVAL = 5 * MINUTE_IN_SECONDS;
+    private const SCHEDULE = 'zw_poll_five_minutes';
 
     /**
      * Registers cron and status-change hooks.
@@ -43,7 +42,7 @@ final class PollCloseSweep
     public function addSchedule(array $schedules): array
     {
         $schedules[self::SCHEDULE] = [
-            'interval' => self::INTERVAL,
+            'interval' => 5 * MINUTE_IN_SECONDS,
             'display' => __('Elke vijf minuten', 'zw-poll'),
         ];
 
@@ -79,7 +78,6 @@ final class PollCloseSweep
             'post_type' => PollPostType::POST_TYPE,
             'post_status' => 'publish',
             'posts_per_page' => -1,
-            'suppress_filters' => false,
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Poll deadlines and status use core post meta by design.
             'meta_query' => [
                 'relation' => 'AND',

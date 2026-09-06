@@ -8,6 +8,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use ZuidWest\Poll\Admin\PollEditForm;
 use ZuidWest\Poll\PostType\PollPostType;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -35,6 +36,7 @@ final class PollEditFormTest extends TestCase
         );
         Functions\when('wp_is_post_revision')->justReturn(false);
         Functions\when('wp_is_post_autosave')->justReturn(false);
+        Functions\when('delete_post_meta')->justReturn(true);
     }
 
     protected function tearDown(): void
@@ -150,34 +152,58 @@ final class PollEditFormTest extends TestCase
         $this->assertSame([self::POLL_ID, PollPostType::TOTAL_VISIBILITY_SHOW], $writes[PollPostType::META_TOTAL_VISIBILITY]);
         // The question is the post title and is saved by core, not here.
         $this->assertSame(
-            [PollPostType::META_OPTIONS, PollPostType::META_TOTAL_VISIBILITY, PollPostType::META_CLOSES_AT],
+            [PollPostType::META_OPTIONS, PollPostType::META_TOTAL_VISIBILITY],
             array_keys($writes)
         );
     }
 
-    #[Test]
-    public function save_stores_clears_and_preserves_deadlines_safely(): void
+    /**
+     * @return array<string, array{string|null, int|null, bool}>
+     */
+    public static function deadlineSubmissions(): array
     {
-        $this->submitForm(['zw_poll_closes_at' => '2026-07-23T14:30']);
+        return [
+            'valid site-timezone input is stored as a UTC timestamp' => ['2026-07-23T14:30', 1784809800, false],
+            'cleared field removes the stored deadline' => ['', null, true],
+            'invalid date keeps the stored deadline' => ['2026-02-30T14:30', null, false],
+            'missing field (box removed) keeps the stored deadline' => [null, null, false],
+        ];
+    }
+
+    /**
+     * @param string|null $submitted Submitted field value, or null when the field is absent.
+     * @param int|null    $written   Expected meta write, or null when nothing is written.
+     * @param bool        $deleted   Whether the stored deadline is removed.
+     */
+    #[Test]
+    #[DataProvider('deadlineSubmissions')]
+    public function save_handles_deadline_input(?string $submitted, ?int $written, bool $deleted): void
+    {
+        $this->submitForm(['zw_poll_closes_at' => $submitted]);
+        if ($submitted === null) {
+            unset($_POST['zw_poll_closes_at']);
+        }
         Functions\when('wp_verify_nonce')->justReturn(1);
         Functions\when('current_user_can')->justReturn(true);
         Functions\when('wp_timezone')->justReturn(new \DateTimeZone('Europe/Amsterdam'));
+        $deletes = [];
+        Functions\when('delete_post_meta')->alias(
+            static function (int $post_id, string $key) use (&$deletes): bool {
+                $deletes[] = [$post_id, $key];
+                return true;
+            }
+        );
         $writes = [];
         $this->captureMetaWrites($writes);
 
         (new PollEditForm())->save(self::POLL_ID);
-        $this->assertSame(1784809800, $writes[PollPostType::META_CLOSES_AT][1]);
 
-        $writes = [];
-        $this->submitForm(['zw_poll_closes_at' => '2026-02-30T14:30']);
-        (new PollEditForm())->save(self::POLL_ID);
-        $this->assertArrayNotHasKey(PollPostType::META_CLOSES_AT, $writes);
-
-        $writes = [];
-        $this->submitForm();
-        unset($_POST['zw_poll_closes_at']);
-        (new PollEditForm())->save(self::POLL_ID);
-        $this->assertArrayNotHasKey(PollPostType::META_CLOSES_AT, $writes);
+        $this->assertSame($deleted ? [[self::POLL_ID, PollPostType::META_CLOSES_AT]] : [], $deletes);
+        if ($written === null) {
+            $this->assertArrayNotHasKey(PollPostType::META_CLOSES_AT, $writes);
+            return;
+        }
+        $this->assertSame([self::POLL_ID, $written], $writes[PollPostType::META_CLOSES_AT]);
     }
 
     #[Test]

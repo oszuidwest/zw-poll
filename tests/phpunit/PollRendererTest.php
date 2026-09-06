@@ -127,6 +127,7 @@ final class PollRendererTest extends TestCase
     #[Test]
     public function open_poll_displays_its_deadline_but_closed_poll_does_not(): void
     {
+        // Real string formats: the setUp default returns an array for unknown options.
         Functions\when('get_option')->alias(
             static fn (string $key): string => $key === 'date_format' ? 'd-m-Y' : 'H:i'
         );

@@ -224,8 +224,8 @@
 
 .zw-poll__deadline {
 	margin: 10px 0 0;
-	font-size: 0.875rem;
 	color: var(--zw-poll-meta-color);
+	font-size: 0.8em;
 	text-align: center;
 }
 

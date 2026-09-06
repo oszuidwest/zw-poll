@@ -187,20 +187,20 @@ final class PollPostType
     }
 
     /**
-     * Formats a deadline using the site's date, time, and timezone settings.
+     * Formats a deadline in the site timezone, or returns '' without a deadline.
      *
-     * @param int $closes_at UTC closing timestamp.
+     * @param int         $closes_at UTC closing timestamp.
+     * @param string|null $format    PHP date format; defaults to the site's date and time format.
      */
-    public static function formatClosesAt(int $closes_at): string
+    public static function formatClosesAt(int $closes_at, ?string $format = null): string
     {
         if ($closes_at <= 0) {
             return '';
         }
 
-        return (string) wp_date(
-            trim((string) get_option('date_format') . ' ' . (string) get_option('time_format')),
-            $closes_at
-        );
+        $format ??= trim((string) get_option('date_format') . ' ' . (string) get_option('time_format'));
+
+        return (string) wp_date($format, $closes_at);
     }
 
     /**
@@ -211,7 +211,7 @@ final class PollPostType
     public static function parseDeadline(string $raw): ?int
     {
         $deadline = DateTimeImmutable::createFromFormat('!' . self::DEADLINE_INPUT_FORMAT, $raw, wp_timezone());
-        if (!$deadline instanceof DateTimeImmutable || $deadline->format(self::DEADLINE_INPUT_FORMAT) !== $raw) {
+        if ($deadline === false || $deadline->format(self::DEADLINE_INPUT_FORMAT) !== $raw) {
             return null;
         }
 

@@ -51,8 +51,8 @@ final class PollCloseSweepTest extends TestCase
     {
         $schedules = $this->sut->addSchedule([]);
 
-        $this->assertSame(300, $schedules[PollCloseSweep::SCHEDULE]['interval']);
-        $this->assertSame('Elke vijf minuten', $schedules[PollCloseSweep::SCHEDULE]['display']);
+        $this->assertSame(300, $schedules['zw_poll_five_minutes']['interval']);
+        $this->assertSame('Elke vijf minuten', $schedules['zw_poll_five_minutes']['display']);
     }
 
     #[Test]
@@ -61,7 +61,7 @@ final class PollCloseSweepTest extends TestCase
         Functions\when('wp_next_scheduled')->justReturn(false);
         Functions\expect('wp_schedule_event')
             ->once()
-            ->with(self::NOW, PollCloseSweep::SCHEDULE, PollCloseSweep::EVENT);
+            ->with(self::NOW, 'zw_poll_five_minutes', PollCloseSweep::EVENT);
 
         $this->sut->schedule();
 

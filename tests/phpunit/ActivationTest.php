@@ -187,9 +187,7 @@ final class ActivationTest extends TestCase
             ->once()
             ->with(Activation::DB_VERSION_OPTION, Activation::DB_VERSION, true)
             ->andReturn(true);
-        Functions\when('switch_to_blog')->alias(static function (int $site_id) use (&$switched_sites): void {
-            $switched_sites[] = $site_id;
-        });
+        $this->captureSwitchedSites($switched_sites);
         Functions\when('restore_current_blog')->alias(static function () use (&$restored): void {
             $restored++;
         });
@@ -246,9 +244,7 @@ final class ActivationTest extends TestCase
         Functions\when('plugin_basename')->returnArg();
         Functions\when('is_plugin_active_for_network')->justReturn(true);
         $this->mockDbVersion(Activation::DB_VERSION);
-        Functions\when('switch_to_blog')->alias(static function (int $site_id) use (&$switched_sites): void {
-            $switched_sites[] = $site_id;
-        });
+        $this->captureSwitchedSites($switched_sites);
         Functions\when('restore_current_blog')->alias(static function () use (&$restored): void {
             $restored++;
         });
@@ -279,9 +275,7 @@ final class ActivationTest extends TestCase
         Functions\when('is_multisite')->justReturn(true);
         Functions\when('get_sites')->justReturn([123]);
         $this->mockDbVersion(Activation::DB_VERSION);
-        Functions\when('switch_to_blog')->alias(static function (int $site_id) use (&$switched_sites): void {
-            $switched_sites[] = $site_id;
-        });
+        $this->captureSwitchedSites($switched_sites);
         Functions\when('restore_current_blog')->alias(static function () use (&$restored): void {
             $restored++;
         });
@@ -319,9 +313,7 @@ final class ActivationTest extends TestCase
         $switched_sites = [];
         Functions\when('is_multisite')->justReturn(true);
         Functions\when('get_sites')->justReturn([2, 5]);
-        Functions\when('switch_to_blog')->alias(static function (int $site_id) use (&$switched_sites): void {
-            $switched_sites[] = $site_id;
-        });
+        $this->captureSwitchedSites($switched_sites);
         Functions\expect('restore_current_blog')->twice();
         Functions\expect('wp_clear_scheduled_hook')
             ->twice()
@@ -330,6 +322,18 @@ final class ActivationTest extends TestCase
         Activation::deactivate(true);
 
         $this->assertSame([2, 5], $switched_sites);
+    }
+
+    /**
+     * Records every site ID passed to switch_to_blog().
+     *
+     * @param list<int> $switched_sites Captured site IDs.
+     */
+    private function captureSwitchedSites(array &$switched_sites): void
+    {
+        Functions\when('switch_to_blog')->alias(static function (int $site_id) use (&$switched_sites): void {
+            $switched_sites[] = $site_id;
+        });
     }
 
     private function role(): object
