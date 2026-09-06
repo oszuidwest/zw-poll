@@ -131,7 +131,6 @@ composer lint      # PHPCS/WPCS
 composer lint:fix  # PHPCBF
 composer security  # Composer audit
 npm run lint       # JavaScript and CSS linting
-npm run security   # npm audit; fails on high or critical advisories
 npm run make-pot   # Update languages/zw-poll.pot
 ```
 
