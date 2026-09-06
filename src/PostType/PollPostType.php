@@ -39,9 +39,7 @@ final class PollPostType
 
     public const DEADLINE_INPUT_FORMAT = 'Y-m-d\TH:i';
 
-    /**
-     * Registers post-type and meta hooks.
-     */
+    /** Registers post-type and meta hooks. */
     public function register(): void
     {
         add_action('init', [$this, 'registerPostType']);
@@ -50,9 +48,7 @@ final class PollPostType
         add_filter('wp_insert_post_data', [$this, 'capTitleLength']);
     }
 
-    /**
-     * Registers the private editorial poll post type.
-     */
+    /** Registers the private editorial poll post type. */
     public function registerPostType(): void
     {
         register_post_type(self::POST_TYPE, [
@@ -87,9 +83,7 @@ final class PollPostType
         ]);
     }
 
-    /**
-     * Registers REST-enabled poll meta fields.
-     */
+    /** Registers REST-enabled poll meta fields. */
     public function registerMeta(): void
     {
         $auth = static fn (bool $allowed, string $meta_key, int $post_id): bool => current_user_can('edit_post', $post_id);
@@ -256,9 +250,6 @@ final class PollPostType
     /**
      * Returns valid option rows for a poll.
      *
-     * Re-validates at every read boundary because stored meta may predate
-     * sanitizeOptions(); callers only receive valid rows.
-     *
      * @param int $poll_id Poll post ID.
      * @return array<int, array{id: string, label: string}>
      */
@@ -300,9 +291,6 @@ final class PollPostType
     /**
      * Checks whether a question and options make a poll renderable.
      *
-     * Single displayability predicate: the frontend gate (PollRenderer) and
-     * the classic form's incomplete-poll warning must never drift apart.
-     *
      * @param string                                       $question Poll question.
      * @param array<int, array{id: string, label: string}> $options  Valid option rows.
      */
@@ -325,10 +313,10 @@ final class PollPostType
         $out = [];
         $used_ids = [];
         foreach ($value as $opt) {
-            if (!is_array($opt) || !isset($opt['label'])) {
+            if (!is_array($opt) || !isset($opt['label']) || !is_string($opt['label'])) {
                 continue;
             }
-            $label = mb_substr(trim(sanitize_text_field((string) $opt['label'])), 0, self::MAX_OPTION_LEN);
+            $label = mb_substr(trim(sanitize_text_field($opt['label'])), 0, self::MAX_OPTION_LEN);
             if ($label === '') {
                 continue;
             }
@@ -346,11 +334,6 @@ final class PollPostType
 
     /**
      * Caps poll titles on every save path.
-     *
-     * The title is the reader-facing question. Core's own title handling is
-     * allowed to keep editorial text intact, including literal comparison
-     * signs; this filter only enforces the plugin's length limit across quick
-     * edit, REST, CLI, and classic-editor saves.
      *
      * @param array<string, mixed> $data Slashed post data about to be saved.
      * @return array<string, mixed>

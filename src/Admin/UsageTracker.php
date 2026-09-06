@@ -21,9 +21,7 @@ final class UsageTracker
     public const USAGE_META = PollPostType::META_PREFIX . 'usage';
     public const REFERENCED_META = PollPostType::META_PREFIX . 'in_post';
 
-    /**
-     * Registers usage tracking hooks.
-     */
+    /** Registers usage tracking hooks. */
     public function register(): void
     {
         add_action('save_post', [$this, 'trackOnSave'], 10, 2);
@@ -152,8 +150,6 @@ final class UsageTracker
 
     /**
      * Extracts poll IDs from saved shortcodes.
-     *
-     * Public for direct unit coverage; production uses save_post.
      *
      * @param string $content Saved post content.
      * @return array<int, int>

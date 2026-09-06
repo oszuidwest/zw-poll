@@ -19,9 +19,6 @@ final class IpHasher
     /**
      * Hashes the client IP with the per-site salt.
      *
-     * Used only for audit/rate-limit; cookie tokens handle dedup. User-agent is
-     * omitted because clients can rotate it to bypass the limiter.
-     *
      * @param string $ip Client IP address.
      */
     public function hash(string $ip): string
@@ -29,12 +26,7 @@ final class IpHasher
         return hash_hmac('sha256', $ip, self::salt());
     }
 
-    /**
-     * Returns the per-site IP salt, creating it on first use.
-     *
-     * Lazy seeding covers installs that bypass activation and prevents reversible
-     * unsalted hashes across the small IPv4 space.
-     */
+    /** Returns the per-site IP salt, creating it on first use. */
     private static function salt(): string
     {
         $salt = (string) get_option(Activation::IP_SALT_OPTION, '');

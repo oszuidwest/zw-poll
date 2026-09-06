@@ -9,11 +9,9 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\Vote;
 
-/**
- * Shared reset sequence for REST and WP-CLI.
- *
- * Vote rows, vote epoch, and aggregate must move together.
- */
+use WP_Error;
+
+/** Coordinates the reset sequence shared by REST and WP-CLI. */
 final class PollReset
 {
     /**
@@ -31,11 +29,19 @@ final class PollReset
      * Deletes votes, invalidates stale cookies, and rebuilds the aggregate.
      *
      * @param int $poll_id Poll post ID.
-     * @return array{deleted: int, aggregate: array{counts: array<string, int>, total: int, updated_at: string}}
+     * @return array{deleted: int, aggregate: array{counts: array<string, int>, total: int, updated_at: string}}|WP_Error
      */
-    public function reset(int $poll_id): array
+    public function reset(int $poll_id): array|WP_Error
     {
         $deleted = $this->repository->deleteAllForPoll($poll_id);
+        if ($deleted === false) {
+            return new WP_Error(
+                'vote_delete_failed',
+                __('Stemmen konden niet worden verwijderd.', 'zw-poll'),
+                ['status' => 500]
+            );
+        }
+
         VoteEpoch::increment($poll_id);
         $aggregate = $this->cache->rebuild($poll_id);
 

@@ -29,17 +29,13 @@ final class AdminController
      */
     public function __construct(private readonly PollReset $resetter) {}
 
-    /**
-     * Registers REST hooks.
-     */
+    /** Registers REST hooks. */
     public function register(): void
     {
         add_action('rest_api_init', [$this, 'registerRoutes']);
     }
 
-    /**
-     * Registers admin maintenance routes.
-     */
+    /** Registers admin maintenance routes. */
     public function registerRoutes(): void
     {
         register_rest_route(VoteController::NAMESPACE, '/poll/(?P<id>\d+)/reset', [
@@ -103,6 +99,9 @@ final class AdminController
         }
 
         $result = $this->resetter->reset((int) $poll->ID);
+        if ($result instanceof WP_Error) {
+            return $result;
+        }
 
         return new WP_REST_Response([
             'ok' => true,

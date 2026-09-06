@@ -22,9 +22,7 @@ final class Activation
     public const IP_SALT_OPTION = 'zw_poll_ip_salt';
     public const VOTES_TABLE = 'zw_poll_votes';
 
-    /**
-     * Registers runtime lifecycle hooks.
-     */
+    /** Registers runtime lifecycle hooks. */
     public static function registerHooks(): void
     {
         if (is_multisite()) {
@@ -110,9 +108,7 @@ final class Activation
         }
     }
 
-    /**
-     * Activates the plugin for the current site.
-     */
+    /** Activates the plugin for the current site. */
     private static function activateSite(): void
     {
         self::ensureInstalled();
@@ -120,9 +116,7 @@ final class Activation
         // IpHasher seeds the salt lazily, including installs that bypass activation.
     }
 
-    /**
-     * Checks whether this plugin is network-active.
-     */
+    /** Checks whether this plugin is network-active. */
     private static function isNetworkActive(): bool
     {
         if (!function_exists('is_plugin_active_for_network')) {
@@ -148,10 +142,6 @@ final class Activation
     /**
      * Returns the canonical dbDelta() statement for the votes table.
      *
-     * The statement follows the dbDelta() rules: lowercase types, two spaces
-     * after PRIMARY KEY, one column/index per line, no backticks. Deduplication
-     * is based on the anonymous cookie token.
-     *
      * @param string $table Fully-qualified votes table name.
      */
     private static function votesTableSchema(string $table): string
@@ -160,6 +150,7 @@ final class Activation
 
         $charset_collate = $wpdb->get_charset_collate();
 
+        // Keep this formatting compatible with dbDelta's strict SQL parser.
         return "CREATE TABLE {$table} (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   poll_id bigint(20) unsigned NOT NULL,
@@ -174,12 +165,7 @@ final class Activation
 ) {$charset_collate};";
     }
 
-    /**
-     * Ensures the current site's votes table is installed.
-     *
-     * The version is stored only after the table and its unique cookie index
-     * are verified, so a partial failure retries on the next request.
-     */
+    /** Ensures the current site's votes table is installed. */
     public static function ensureInstalled(): void
     {
         if ((string) get_option(self::DB_VERSION_OPTION) === self::DB_VERSION) {
@@ -190,6 +176,7 @@ final class Activation
         $table = $wpdb->prefix . self::VOTES_TABLE;
         self::createVotesTable($table);
 
+        // Store the version only after the schema is complete, so partial installs retry.
         if (!self::cookieIndexIsUnique($table)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.
             error_log(sprintf(

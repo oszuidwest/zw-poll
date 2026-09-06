@@ -31,9 +31,7 @@ final class ClassicEditor
      */
     private bool $picker_required = false;
 
-    /**
-     * Registers classic editor hooks.
-     */
+    /** Registers classic editor hooks. */
     public function register(): void
     {
         add_action('wp_enqueue_editor', [$this, 'enqueueAssets']);
@@ -68,11 +66,6 @@ final class ClassicEditor
     /**
      * Adds the poll insert button to the TinyMCE toolbar.
      *
-     * Teeny editors cannot get this button: core never applies
-     * mce_external_plugins for them, so the plugin JS would not load. When
-     * Quicktags is enabled, their insertion path is the Text-tab Quicktags
-     * button.
-     *
      * @param array<int, string> $buttons TinyMCE toolbar buttons.
      * @return array<int, string>
      */
@@ -91,10 +84,6 @@ final class ClassicEditor
     /**
      * Marks the picker as required for Text/Quicktags-only editor instances.
      *
-     * Core applies this filter while each `wp_editor()` instance is rendered,
-     * before `admin_footer`. The later `wp_enqueue_editor` action is too late
-     * to decide whether the shared dialog markup must be printed.
-     *
      * @param array<string, mixed> $settings  Quicktags settings.
      * @param string               $editor_id WordPress editor instance ID.
      * @return array<string, mixed>
@@ -104,6 +93,7 @@ final class ClassicEditor
         unset($editor_id);
 
         if (current_user_can('edit_zw_polls')) {
+            // This filter runs before admin_footer, where the shared dialog is printed.
             $this->picker_required = true;
         }
 
@@ -148,9 +138,7 @@ final class ClassicEditor
         ]);
     }
 
-    /**
-     * Renders the poll picker dialog markup once per screen.
-     */
+    /** Renders the poll picker dialog markup once per screen. */
     public function renderPickerDialog(): void
     {
         if (!$this->picker_required) {

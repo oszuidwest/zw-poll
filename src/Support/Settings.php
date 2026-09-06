@@ -76,8 +76,6 @@ final class Settings
     /**
      * Returns the settings for the current site.
      *
-     * WordPress caches options per request; no local memoization needed.
-     *
      * @return SettingsArray
      */
     public static function get(): array
@@ -99,15 +97,13 @@ final class Settings
     /**
      * Sanitizes settings before storage through the Settings API.
      *
-     * Settings are registered for manage_options; keeping admin-only values for
-     * non-admin callers is defense-in-depth for direct or third-party saves.
-     *
      * @param mixed $raw Raw settings value from the Settings API.
      * @return SettingsArray
      */
     public static function sanitizeForSave(mixed $raw): array
     {
         $settings = self::sanitizeInternal($raw, true);
+        // Preserve privileged values if a third party bypasses options.php.
         if (current_user_can('manage_options')) {
             return $settings;
         }

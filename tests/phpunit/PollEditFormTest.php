@@ -316,6 +316,28 @@ final class PollEditFormTest extends TestCase
         $this->assertSame([], $writes[PollPostType::META_OPTIONS][1]);
     }
 
+    #[Test]
+    public function save_rejects_nested_option_values_without_casting_them(): void
+    {
+        $this->submitForm([
+            'zw_poll_options' => [
+                ['id' => ['nested'], 'label' => ['nested']],
+                ['id' => 'valid-id', 'label' => 'Valid label'],
+            ],
+        ]);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame([
+            ['id' => '', 'label' => ''],
+            ['id' => 'valid-id', 'label' => 'Valid label'],
+        ], $writes[PollPostType::META_OPTIONS][1]);
+    }
+
     /**
      * Render the display meta box with a controlled stored hide flag.
      */
