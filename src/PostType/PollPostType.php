@@ -332,7 +332,7 @@ final class PollPostType
     }
 
     /**
-     * Checks whether every option has an existing image attachment.
+     * Checks whether every option has a non-trashed image attachment.
      *
      * @param array<int, array{id: string, label: string, imageId: int}> $options Valid option rows.
      */
@@ -345,7 +345,7 @@ final class PollPostType
 
         _prime_post_caches($image_ids, false);
         foreach ($image_ids as $image_id) {
-            if (!wp_attachment_is_image($image_id)) {
+            if (get_post_status($image_id) === 'trash' || !wp_attachment_is_image($image_id)) {
                 return false;
             }
         }

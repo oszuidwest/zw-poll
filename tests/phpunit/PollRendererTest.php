@@ -60,6 +60,7 @@ final class PollRendererTest extends TestCase
         );
         Functions\when('wp_unique_id')->justReturn('zw-poll-42-test');
         Functions\when('_prime_post_caches')->justReturn(null);
+        Functions\when('get_post_status')->justReturn('inherit');
         Functions\when('get_option')->alias(
             static fn (string $option, mixed $default = []): mixed => $default
         );
@@ -251,6 +252,22 @@ final class PollRendererTest extends TestCase
             $this->assertStringNotContainsString('zw-poll--images', $html);
             $this->assertStringNotContainsString('zw-poll__media', $html);
         }
+    }
+
+    #[Test]
+    public function trashed_image_falls_back_to_the_text_layout(): void
+    {
+        Functions\when('get_post_status')->alias(static fn (int $id): string => $id === 102 ? 'trash' : 'inherit');
+        Functions\when('wp_attachment_is_image')->justReturn(true);
+        Functions\expect('wp_get_attachment_image')->never();
+
+        $html = $this->renderPoll('open', options: [
+            ['id' => 'opt-a', 'label' => 'A', 'imageId' => 101],
+            ['id' => 'opt-b', 'label' => 'B', 'imageId' => 102],
+        ]);
+
+        $this->assertStringNotContainsString('zw-poll--images', $html);
+        $this->assertStringNotContainsString('zw-poll__media', $html);
     }
 
     /**
