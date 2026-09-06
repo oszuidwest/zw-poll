@@ -83,11 +83,12 @@ final class PollRendererTest extends TestCase
     /**
      * Render a published poll with controlled content.
      *
-     * @param string                                          $status   Poll status.
-     * @param string                                          $question Post title (the poll question).
-     * @param mixed                                           $options  Stored poll options.
+     * @param string                                              $status           Poll status.
+     * @param string                                              $question         Post title (the poll question).
+     * @param mixed                                               $options          Stored poll options.
      * @param array{counts: array<string, int>, total: int}|null $aggregate Stored public aggregate.
      * @param string                                              $total_visibility Per-poll visibility policy.
+     * @param int                                                 $closes_at        Optional closing timestamp.
      */
     private function renderPoll(
         string $status,
@@ -97,7 +98,8 @@ final class PollRendererTest extends TestCase
             ['id' => 'opt-b', 'label' => 'Optie B'],
         ],
         ?array $aggregate = null,
-        string $total_visibility = PollPostType::TOTAL_VISIBILITY_SHOW
+        string $total_visibility = PollPostType::TOTAL_VISIBILITY_SHOW,
+        int $closes_at = 0
     ): string {
         $poll = $this->poll();
         $poll->post_title = $question;
@@ -107,18 +109,39 @@ final class PollRendererTest extends TestCase
         ];
         Functions\when('get_post')->justReturn($poll);
         Functions\when('get_post_meta')->alias(
-            static function (int $post_id, string $key) use ($status, $options, $aggregate, $total_visibility): mixed {
+            static function (int $post_id, string $key) use ($status, $options, $aggregate, $total_visibility, $closes_at): mixed {
                 return match ($key) {
                     PollPostType::META_OPTIONS => $options,
                     PollPostType::META_STATUS => $status,
                     PollPostType::META_AGGREGATE => $aggregate,
                     PollPostType::META_TOTAL_VISIBILITY => $total_visibility,
+                    PollPostType::META_CLOSES_AT => $closes_at,
                     default => '',
                 };
             }
         );
 
         return PollRenderer::render(self::POLL_ID);
+    }
+
+    #[Test]
+    public function open_poll_displays_its_deadline_but_closed_poll_does_not(): void
+    {
+        Functions\when('get_option')->alias(
+            static fn (string $key, mixed $default = false): mixed => match ($key) {
+                'date_format' => 'd-m-Y',
+                'time_format' => 'H:i',
+                default => $default,
+            }
+        );
+        Functions\when('wp_date')->justReturn('23-07-2026 14:30');
+
+        $open = $this->renderPoll('open', closes_at: 1784809800);
+        $this->assertStringContainsString('Stemmen kan tot 23-07-2026 14:30', $open);
+        $this->assertStringContainsString('zw-poll__deadline', $open);
+
+        $closed = $this->renderPoll('closed', closes_at: 1784809800);
+        $this->assertStringNotContainsString('Stemmen kan tot', $closed);
     }
 
     #[Test]

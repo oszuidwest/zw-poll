@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\PostType;
 
+use DateTimeImmutable;
+
 /**
  * Defines the poll CPT and validates editor-controlled meta.
  */
@@ -21,6 +23,7 @@ final class PollPostType
     public const META_PREFIX = '_zw_poll_';
     public const META_OPTIONS = self::META_PREFIX . 'options';
     public const META_STATUS = self::META_PREFIX . 'status';
+    public const META_CLOSES_AT = self::META_PREFIX . 'closes_at';
     public const META_TOTAL_VISIBILITY = self::META_PREFIX . 'total_visibility';
     public const TOTAL_VISIBILITY_DEFAULT = 'default';
     public const TOTAL_VISIBILITY_HIDE = 'hide';
@@ -33,6 +36,8 @@ final class PollPostType
     public const MAX_OPTIONS = 10;
     public const MAX_QUESTION_LEN = 200;
     public const MAX_OPTION_LEN = 280;
+
+    public const DEADLINE_INPUT_FORMAT = 'Y-m-d\TH:i';
 
     /**
      * Registers post-type and meta hooks.
@@ -120,6 +125,15 @@ final class PollPostType
             'auth_callback' => $auth,
         ]);
 
+        register_post_meta(self::POST_TYPE, self::META_CLOSES_AT, [
+            'type' => 'integer',
+            'single' => true,
+            'default' => 0,
+            'show_in_rest' => true,
+            'sanitize_callback' => 'absint',
+            'auth_callback' => $auth,
+        ]);
+
         register_post_meta(self::POST_TYPE, self::META_TOTAL_VISIBILITY, [
             'type' => 'string',
             'single' => true,
@@ -159,6 +173,48 @@ final class PollPostType
     public static function status(int $poll_id): string
     {
         return (string) (get_post_meta($poll_id, self::META_STATUS, true) ?: 'open');
+    }
+
+    /**
+     * Returns the configured closing timestamp, or zero without a deadline.
+     *
+     * @param int $poll_id Poll post ID.
+     */
+    public static function closesAt(int $poll_id): int
+    {
+        return absint(get_post_meta($poll_id, self::META_CLOSES_AT, true));
+    }
+
+    /**
+     * Formats a UTC deadline in the site timezone; zero returns an empty string.
+     *
+     * @param int         $closes_at UTC closing timestamp.
+     * @param string|null $format    PHP date format; defaults to the site's date and time format.
+     */
+    public static function formatClosesAt(int $closes_at, ?string $format = null): string
+    {
+        if ($closes_at <= 0) {
+            return '';
+        }
+
+        $format ??= trim((string) get_option('date_format') . ' ' . (string) get_option('time_format'));
+
+        return (string) wp_date($format, $closes_at);
+    }
+
+    /**
+     * Parses datetime-local input in the site timezone.
+     *
+     * @param string $raw Submitted datetime-local value.
+     */
+    public static function parseDeadline(string $raw): ?int
+    {
+        $deadline = DateTimeImmutable::createFromFormat('!' . self::DEADLINE_INPUT_FORMAT, $raw, wp_timezone());
+        if ($deadline === false || $deadline->format(self::DEADLINE_INPUT_FORMAT) !== $raw) {
+            return null;
+        }
+
+        return $deadline->getTimestamp();
     }
 
     /**

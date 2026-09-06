@@ -85,12 +85,23 @@ threshold.
 
 ```bash
 wp zw-poll list
+wp zw-poll close-expired
 wp zw-poll rebuild <poll_id>
 wp zw-poll reset <poll_id> --yes
 ```
 
-Use `rebuild` after manual database changes or to restore the aggregate cache
-from the votes table.
+Editors can set an end date and time for each poll in the **Planning** meta box.
+Input and display use the WordPress site timezone; storage uses a UTC timestamp.
+An idempotent WP-Cron sweep runs every five minutes and closes published, open
+polls after their deadline. Drafts, trashed polls, polls without a deadline,
+and polls already closed are left unchanged.
+
+WP-Cron is request-driven, so a vote may still be accepted between the deadline
+and the next sweep. Sites that need more precise closing can run
+`wp zw-poll close-expired` from system cron. Consumers can listen to
+`zw_poll_closed` to purge caches or perform other follow-up work; the action
+receives the poll ID and its tracked content IDs. Use `rebuild` after manual
+database changes or to restore the aggregate cache from the votes table.
 
 REST endpoints:
 
@@ -140,7 +151,8 @@ through `Plugin::boot()`. Its main components are:
   `Shortcode\PollShortcode`.
 - Frontend: `Frontend\PollRenderer`, `Frontend\Assets`,
   `src/Frontend/view.js`, and `src/Frontend/style.css`.
-- Admin and CLI: the classes under `Admin\` and `Cli\Commands`.
+- Admin, cron, and CLI: the classes under `Admin\`, `Cron\PollCloseSweep`, and
+  `Cli\Commands`.
 
 Polls are stored as `zw_poll` posts. Votes are stored in
 `{$wpdb->prefix}zw_poll_votes`; `_zw_poll_aggregate` holds cached counts per
@@ -250,6 +262,6 @@ ZuidWest Poll is free software licensed under the
 
 ## Out of scope
 
-The plugin does not provide multiple-choice or ranked polls, automatic closing,
-an export UI, email notifications, external embeds, A/B tests, a Gutenberg
-block, or a non-JavaScript form fallback.
+The plugin does not provide multiple-choice or ranked polls, an export UI,
+email notifications, external embeds, A/B tests, a Gutenberg block, or a
+non-JavaScript form fallback.

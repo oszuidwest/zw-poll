@@ -68,6 +68,7 @@ final class PollRenderer
         $counts = $aggregate['counts'];
         $total = $aggregate['total'];
         $is_closed = (PollPostType::status($poll_id) !== 'open');
+        $deadline = $is_closed ? '' : PollPostType::formatClosesAt(PollPostType::closesAt($poll_id));
         // Presentation-only: totals/counts stay in context so view.js can
         // update percentage bars after a vote; page caches may hold this flag
         // until the rendered page refreshes.
@@ -224,6 +225,17 @@ final class PollRenderer
                 <?php esc_html_e('Stem', 'zw-poll'); ?>
             </button>
         </div>
+        <?php if ($deadline !== '') : ?>
+            <p class="zw-poll__deadline">
+                <?php
+                echo esc_html(sprintf(
+                    /* translators: %s: poll closing date and time. */
+                    __('Stemmen kan tot %s', 'zw-poll'),
+                    $deadline
+                ));
+                ?>
+            </p>
+        <?php endif; ?>
     </div>
 
     <div

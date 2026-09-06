@@ -8,6 +8,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use ZuidWest\Poll\Admin\PollEditForm;
 use ZuidWest\Poll\PostType\PollPostType;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -35,6 +36,7 @@ final class PollEditFormTest extends TestCase
         );
         Functions\when('wp_is_post_revision')->justReturn(false);
         Functions\when('wp_is_post_autosave')->justReturn(false);
+        Functions\when('delete_post_meta')->justReturn(true);
     }
 
     protected function tearDown(): void
@@ -58,6 +60,7 @@ final class PollEditFormTest extends TestCase
                 ['id' => '', 'label' => 'Nee'],
             ],
             'zw_poll_total_visibility' => PollPostType::TOTAL_VISIBILITY_SHOW,
+            'zw_poll_closes_at' => '',
         ], $overrides);
     }
 
@@ -78,6 +81,18 @@ final class PollEditFormTest extends TestCase
     {
         $this->submitForm();
         Functions\when('wp_verify_nonce')->justReturn(false);
+        Functions\expect('update_post_meta')->never();
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function save_ignores_a_non_string_nonce(): void
+    {
+        $this->submitForm(['zw_poll_edit_form_nonce' => ['nonce123']]);
+        Functions\expect('wp_verify_nonce')->never();
         Functions\expect('update_post_meta')->never();
 
         (new PollEditForm())->save(self::POLL_ID);
@@ -152,6 +167,67 @@ final class PollEditFormTest extends TestCase
             [PollPostType::META_OPTIONS, PollPostType::META_TOTAL_VISIBILITY],
             array_keys($writes)
         );
+    }
+
+    /**
+     * @return array<string, array{string|null, int|null, bool}>
+     */
+    public static function deadlineSubmissions(): array
+    {
+        return [
+            'valid site-timezone input is stored as a UTC timestamp' => ['2026-07-23T14:30', 1784809800, false],
+            'cleared field removes the stored deadline' => ['', null, true],
+            'invalid date keeps the stored deadline' => ['2026-02-30T14:30', null, false],
+            'missing field (box removed) keeps the stored deadline' => [null, null, false],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('deadlineSubmissions')]
+    public function save_handles_deadline_input(?string $submitted, ?int $written, bool $deleted): void
+    {
+        $this->submitForm(['zw_poll_closes_at' => $submitted]);
+        if ($submitted === null) {
+            unset($_POST['zw_poll_closes_at']);
+        }
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        Functions\when('wp_timezone')->justReturn(new \DateTimeZone('Europe/Amsterdam'));
+        $deletes = [];
+        Functions\when('delete_post_meta')->alias(
+            static function (int $post_id, string $key) use (&$deletes): bool {
+                $deletes[] = [$post_id, $key];
+                return true;
+            }
+        );
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame($deleted ? [[self::POLL_ID, PollPostType::META_CLOSES_AT]] : [], $deletes);
+        if ($written === null) {
+            $this->assertArrayNotHasKey(PollPostType::META_CLOSES_AT, $writes);
+            return;
+        }
+        $this->assertSame([self::POLL_ID, $written], $writes[PollPostType::META_CLOSES_AT]);
+    }
+
+    #[Test]
+    public function save_ignores_non_string_optional_fields(): void
+    {
+        $this->submitForm([
+            'zw_poll_total_visibility' => ['show'],
+            'zw_poll_closes_at' => ['2026-07-23T14:30'],
+        ]);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame([PollPostType::META_OPTIONS], array_keys($writes));
     }
 
     #[Test]

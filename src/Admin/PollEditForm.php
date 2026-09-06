@@ -14,9 +14,7 @@ use ZuidWest\Poll\Support\Settings;
 use WP_Post;
 
 /**
- * Lets editors manage poll options from the classic edit screen, so polls remain
- * fully usable on classic-editor sites. The question itself is the post title,
- * which core saves.
+ * Manages poll fields on the classic edit screen; core saves the question as the title.
  */
 final class PollEditForm
 {
@@ -50,6 +48,14 @@ final class PollEditForm
             'high'
         );
         add_meta_box(
+            'zw-poll-planning',
+            __('Planning', 'zw-poll'),
+            [$this, 'renderPlanning'],
+            PollPostType::POST_TYPE,
+            'side',
+            'default'
+        );
+        add_meta_box(
             'zw-poll-display',
             __('Weergave', 'zw-poll'),
             [$this, 'renderDisplay'],
@@ -75,9 +81,7 @@ final class PollEditForm
     /**
      * Warns when a published poll is not renderable for readers.
      *
-     * Uses the same displayability predicate as the frontend gate
-     * (PollPostType::isComplete), so the warning and the render path
-     * can never drift apart.
+     * Shares PollPostType::isComplete() with frontend rendering.
      */
     public function renderIncompleteNotice(): void
     {
@@ -97,7 +101,7 @@ final class PollEditForm
         }
 
         printf(
-            '<div class="notice notice-warning"><p>%s</p></div>',
+            '<div class="notice notice-warning zw-poll-incomplete-notice"><p>%s</p></div>',
             esc_html(sprintf(
                 /* translators: %d: minimum number of answers. */
                 __(
@@ -193,17 +197,49 @@ final class PollEditForm
     }
 
     /**
+     * Renders the poll closing deadline in the site timezone.
+     *
+     * @param WP_Post $post Poll post.
+     */
+    public function renderPlanning(WP_Post $post): void
+    {
+        $value = PollPostType::formatClosesAt(PollPostType::closesAt($post->ID), PollPostType::DEADLINE_INPUT_FORMAT);
+
+        wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
+        ?>
+<p class="zw-poll-edit-planning">
+    <label for="zw-poll-closes-at"><?php esc_html_e('Einddatum', 'zw-poll'); ?></label>
+    <input
+        type="datetime-local"
+        id="zw-poll-closes-at"
+        name="zw_poll_closes_at"
+        class="widefat"
+        value="<?php echo esc_attr($value); ?>"
+        data-now="<?php echo esc_attr((string) wp_date(PollPostType::DEADLINE_INPUT_FORMAT)); ?>"
+    >
+</p>
+<p class="description">
+    <?php esc_html_e('Datum en tijd gebruiken de tijdzone van deze site.', 'zw-poll'); ?>
+</p>
+<div class="notice notice-warning notice-alt inline zw-poll-edit-planning__warning" role="status" hidden>
+    <p><?php esc_html_e('Deze datum is al verstreken. De poll sluit bij de eerstvolgende controle.', 'zw-poll'); ?></p>
+</div>
+        <?php
+    }
+
+    /**
      * Persists the classic form fields.
      *
-     * REST saves never carry this nonce; they
-     * return early here and keep their own meta payload authoritative. The
-     * question is not handled here: it is the post title, which core saves.
+     * REST requests omit this nonce, leaving their meta payload authoritative.
+     * Core saves the question as the post title.
      *
      * @param int $post_id Poll post ID.
      */
     public function save(int $post_id): void
     {
-        $nonce = isset($_POST[self::NONCE_FIELD]) ? sanitize_key(wp_unslash($_POST[self::NONCE_FIELD])) : '';
+        $nonce = isset($_POST[self::NONCE_FIELD]) && is_string($_POST[self::NONCE_FIELD])
+            ? sanitize_key(wp_unslash($_POST[self::NONCE_FIELD]))
+            : '';
         if ($nonce === '' || !wp_verify_nonce($nonce, self::NONCE_ACTION)) {
             return;
         }
@@ -214,13 +250,9 @@ final class PollEditForm
             return;
         }
 
-        // A rendered options box always submits this key (rows are padded to
-        // the minimum and every row carries hidden inputs), so an absent key
-        // means another plugin removed the box: keep the stored options
-        // instead of wiping them.
+        // Preserve options when another plugin removes the meta box.
         if (isset($_POST['zw_poll_options'])) {
-            // The registered meta sanitizer (sanitizeOptions) runs inside
-            // update_post_meta and stays authoritative for both editor paths.
+            // update_post_meta() also applies PollPostType::sanitizeOptions().
             $raw_options = is_array($_POST['zw_poll_options'])
                 // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Rows sanitized field-by-field in readOptionRows().
                 ? wp_unslash($_POST['zw_poll_options'])
@@ -228,12 +260,21 @@ final class PollEditForm
             update_post_meta($post_id, PollPostType::META_OPTIONS, self::readOptionRows($raw_options));
         }
 
-        // Missing or invalid values preserve storage; this also protects saves
-        // when another plugin removes the display box.
-        if (isset($_POST['zw_poll_total_visibility'])) {
+        // Missing or invalid input preserves existing meta.
+        if (isset($_POST['zw_poll_total_visibility']) && is_string($_POST['zw_poll_total_visibility'])) {
             $visibility = sanitize_key(wp_unslash($_POST['zw_poll_total_visibility']));
             if (in_array($visibility, PollPostType::totalVisibilityValues(), true)) {
                 update_post_meta($post_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
+            }
+        }
+
+        // Empty input clears the deadline; absent or invalid input preserves it.
+        if (isset($_POST['zw_poll_closes_at']) && is_string($_POST['zw_poll_closes_at'])) {
+            $raw_closes_at = sanitize_text_field(wp_unslash($_POST['zw_poll_closes_at']));
+            if ($raw_closes_at === '') {
+                delete_post_meta($post_id, PollPostType::META_CLOSES_AT);
+            } elseif (($deadline = PollPostType::parseDeadline($raw_closes_at)) !== null) {
+                update_post_meta($post_id, PollPostType::META_CLOSES_AT, $deadline);
             }
         }
     }
