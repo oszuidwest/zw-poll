@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { CLOSED_DEMO_PAGE, DEMO_PAGE } from './utils';
+import {
+	CLOSED_DEMO_PAGE,
+	CLOSED_THRESHOLD_DEMO_PAGE,
+	DEMO_PAGE,
+} from './utils';
 
 /**
  * Server rendering contract: WordPress processes the Interactivity directives
@@ -62,5 +66,16 @@ test.describe( 'Server-rendering zonder JavaScript', () => {
 
 		const fill = results.locator( '.zw-poll__bar-fill' ).first();
 		await expect( fill ).toHaveAttribute( 'style', /width:\s*60%/ );
+	} );
+
+	test( 'gesloten poll onder de drempel verbergt het numerieke totaal', async ( {
+		page,
+	} ) => {
+		await page.goto( CLOSED_THRESHOLD_DEMO_PAGE );
+
+		const results = page.locator( '.zw-poll__results' );
+		await expect( results ).toBeVisible();
+		await expect( results.locator( '.zw-poll__bar-value' ) ).toHaveCount( 2 );
+		await expect( results.locator( '.zw-poll__total' ) ).toBeHidden();
 	} );
 } );

@@ -37,6 +37,8 @@ $zw_poll_cleanup = static function (): void {
     }
 
     delete_option(\ZuidWest\Poll\Activation::DB_VERSION_OPTION);
+    delete_option(\ZuidWest\Poll\Activation::TOTAL_VISIBILITY_CURSOR_OPTION);
+    delete_option(\ZuidWest\Poll\Activation::TOTAL_VISIBILITY_CUTOFF_OPTION);
     delete_option(\ZuidWest\Poll\Activation::IP_SALT_OPTION);
     delete_option(\ZuidWest\Poll\Support\Settings::OPTION);
 

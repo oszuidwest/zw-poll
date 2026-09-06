@@ -6,6 +6,7 @@ namespace ZuidWest\Poll\Tests;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use ZuidWest\Poll\Activation;
 use ZuidWest\Poll\PostType\PollPostType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,9 @@ final class PollPostTypeTest extends TestCase
         Monkey\setUp();
         Functions\when('sanitize_text_field')->returnArg();
         Functions\when('wp_generate_uuid4')->justReturn('11111111-2222-4333-8444-555555555555');
+        Functions\when('get_option')->alias(
+            static fn (string $option, mixed $default = false): mixed => $default
+        );
         $this->sut = new PollPostType();
     }
 
@@ -49,7 +53,7 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
-    public function register_meta_exposes_hide_total_as_boolean_defaulting_to_shown(): void
+    public function register_meta_exposes_total_visibility_as_an_enum(): void
     {
         $registered = [];
         Functions\when('register_post_meta')->alias(
@@ -60,27 +64,52 @@ final class PollPostTypeTest extends TestCase
 
         $this->sut->registerMeta();
 
-        $args = $registered[PollPostType::META_HIDE_TOTAL];
-        $this->assertSame('boolean', $args['type']);
-        $this->assertFalse($args['default']);
-        $this->assertTrue($args['show_in_rest']);
-        // The REST layer may hand over any JSON scalar; storage stays boolean.
-        $this->assertSame('rest_sanitize_boolean', $args['sanitize_callback']);
+        $args = $registered[PollPostType::META_TOTAL_VISIBILITY];
+        $this->assertSame('string', $args['type']);
+        $this->assertSame(PollPostType::TOTAL_VISIBILITY_DEFAULT, $args['default']);
+        $this->assertSame(PollPostType::totalVisibilityValues(), $args['show_in_rest']['schema']['enum']);
+        $this->assertSame([PollPostType::class, 'sanitizeTotalVisibility'], $args['sanitize_callback']);
     }
 
     #[Test]
-    public function hides_total_casts_the_stored_meta_string(): void
+    public function total_visibility_uses_new_meta_and_normalizes_corruption(): void
     {
+        Functions\when('metadata_exists')->justReturn(true);
+        Functions\when('get_post_meta')->justReturn('hide');
+        $this->assertSame('hide', PollPostType::totalVisibility(42));
+
+        Functions\when('get_post_meta')->justReturn('corrupt');
+        $this->assertSame('default', PollPostType::totalVisibility(42));
+    }
+
+    #[Test]
+    public function missing_total_visibility_follows_the_legacy_toggle_only_while_that_row_exists(): void
+    {
+        Functions\when('metadata_exists')->alias(
+            static fn (string $type, int $id, string $key): bool => $key === PollPostType::META_HIDE_TOTAL
+        );
         Functions\when('get_post_meta')->justReturn('1');
-        $this->assertTrue(PollPostType::hidesTotal(42));
+        $this->assertSame('hide', PollPostType::totalVisibility(42));
 
-        // Meta stores booleans as '1'/'' and returns false when missing;
-        // both falsy shapes read as "total shown".
         Functions\when('get_post_meta')->justReturn('');
-        $this->assertFalse(PollPostType::hidesTotal(42));
+        $this->assertSame('show', PollPostType::totalVisibility(42));
 
-        Functions\when('get_post_meta')->justReturn(false);
-        $this->assertFalse(PollPostType::hidesTotal(42));
+        // Neither row: a poll created after the migration uses the site default.
+        Functions\when('metadata_exists')->justReturn(false);
+        $this->assertSame('default', PollPostType::totalVisibility(42));
+    }
+
+    #[Test]
+    public function legacy_rest_poll_without_a_toggle_row_uses_show_only_before_the_upgrade_cutoff(): void
+    {
+        Functions\when('metadata_exists')->justReturn(false);
+        Functions\when('get_option')->alias(
+            static fn (string $option, mixed $default = false): mixed => $option
+                === Activation::TOTAL_VISIBILITY_CUTOFF_OPTION ? 42 : $default
+        );
+
+        $this->assertSame(PollPostType::TOTAL_VISIBILITY_SHOW, PollPostType::totalVisibility(42));
+        $this->assertSame(PollPostType::TOTAL_VISIBILITY_DEFAULT, PollPostType::totalVisibility(43));
     }
 
     #[Test]

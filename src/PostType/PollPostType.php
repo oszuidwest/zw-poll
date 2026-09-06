@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\PostType;
 
+use ZuidWest\Poll\Activation;
+
 /**
  * Defines the poll CPT and validates editor-controlled meta.
  */
@@ -22,6 +24,10 @@ final class PollPostType
     public const META_OPTIONS = self::META_PREFIX . 'options';
     public const META_STATUS = self::META_PREFIX . 'status';
     public const META_HIDE_TOTAL = self::META_PREFIX . 'hide_total';
+    public const META_TOTAL_VISIBILITY = self::META_PREFIX . 'total_visibility';
+    public const TOTAL_VISIBILITY_DEFAULT = 'default';
+    public const TOTAL_VISIBILITY_HIDE = 'hide';
+    public const TOTAL_VISIBILITY_SHOW = 'show';
     public const META_AGGREGATE = self::META_PREFIX . 'aggregate';
     public const META_VOTE_EPOCH = self::META_PREFIX . 'vote_epoch';
 
@@ -117,12 +123,17 @@ final class PollPostType
             'auth_callback' => $auth,
         ]);
 
-        register_post_meta(self::POST_TYPE, self::META_HIDE_TOTAL, [
-            'type' => 'boolean',
+        register_post_meta(self::POST_TYPE, self::META_TOTAL_VISIBILITY, [
+            'type' => 'string',
             'single' => true,
-            'default' => false,
-            'show_in_rest' => true,
-            'sanitize_callback' => 'rest_sanitize_boolean',
+            'default' => self::TOTAL_VISIBILITY_DEFAULT,
+            'show_in_rest' => [
+                'schema' => [
+                    'type' => 'string',
+                    'enum' => self::totalVisibilityValues(),
+                ],
+            ],
+            'sanitize_callback' => [self::class, 'sanitizeTotalVisibility'],
             'auth_callback' => $auth,
         ]);
 
@@ -154,13 +165,63 @@ final class PollPostType
     }
 
     /**
-     * Checks whether the total vote count is hidden for a poll.
+     * Returns the supported per-poll total visibility values.
+     *
+     * @return list<string>
+     */
+    public static function totalVisibilityValues(): array
+    {
+        return [
+            self::TOTAL_VISIBILITY_DEFAULT,
+            self::TOTAL_VISIBILITY_HIDE,
+            self::TOTAL_VISIBILITY_SHOW,
+        ];
+    }
+
+    /**
+     * Sanitizes a total visibility value to the default policy.
+     *
+     * @param mixed $value Raw meta value.
+     */
+    public static function sanitizeTotalVisibility(mixed $value): string
+    {
+        return is_string($value) && in_array($value, self::totalVisibilityValues(), true)
+            ? $value
+            : self::TOTAL_VISIBILITY_DEFAULT;
+    }
+
+    /**
+     * Returns the effective per-poll total visibility policy.
+     *
+     * A poll the migration has not reached yet keeps its legacy presentation.
      *
      * @param int $poll_id Poll post ID.
      */
-    public static function hidesTotal(int $poll_id): bool
+    public static function totalVisibility(int $poll_id): string
     {
-        return (bool) get_post_meta($poll_id, self::META_HIDE_TOTAL, true);
+        if (metadata_exists('post', $poll_id, self::META_TOTAL_VISIBILITY)) {
+            return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
+        }
+
+        if (metadata_exists('post', $poll_id, self::META_HIDE_TOTAL)) {
+            return self::legacyTotalVisibility($poll_id);
+        }
+
+        return $poll_id <= (int) get_option(Activation::TOTAL_VISIBILITY_CUTOFF_OPTION, 0)
+            ? self::TOTAL_VISIBILITY_SHOW
+            : self::TOTAL_VISIBILITY_DEFAULT;
+    }
+
+    /**
+     * Maps the legacy hide-total toggle to a policy; an unset toggle showed the total.
+     *
+     * @param int $poll_id Poll post ID.
+     */
+    public static function legacyTotalVisibility(int $poll_id): string
+    {
+        return (bool) get_post_meta($poll_id, self::META_HIDE_TOTAL, true)
+            ? self::TOTAL_VISIBILITY_HIDE
+            : self::TOTAL_VISIBILITY_SHOW;
     }
 
     /**

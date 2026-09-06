@@ -11,6 +11,7 @@ namespace ZuidWest\Poll\Frontend;
 
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Rest\VoteController;
+use ZuidWest\Poll\Support\Settings;
 use ZuidWest\Poll\Vote\AggregateCache;
 use ZuidWest\Poll\Vote\VoteEpoch;
 use WP_Post;
@@ -70,7 +71,12 @@ final class PollRenderer
         // Presentation-only: totals/counts stay in context so view.js can
         // update percentage bars after a vote; page caches may hold this flag
         // until the rendered page refreshes.
-        $show_total = !PollPostType::hidesTotal($poll_id);
+        $total_visibility = PollPostType::totalVisibility($poll_id);
+        $show_total = $total_visibility !== PollPostType::TOTAL_VISIBILITY_HIDE;
+        // "show" is the site threshold lowered to zero; "hide" skips the markup entirely.
+        $total_min_votes = $total_visibility === PollPostType::TOTAL_VISIBILITY_SHOW
+            ? 0
+            : Settings::get()['total_min_votes'];
 
         /* translators: %s: total number of votes. */
         $total_label = __('Totaal aantal stemmen: %s', 'zw-poll');
@@ -99,6 +105,10 @@ final class PollRenderer
                 $ctx = wp_interactivity_get_context();
                 return !empty($ctx['voted']) || !empty($ctx['closed']);
             },
+            'showTotalCount' => static function (): bool {
+                $ctx = wp_interactivity_get_context();
+                return (int) ($ctx['total'] ?? 0) >= (int) ($ctx['totalMinVotes'] ?? 0);
+            },
             'cannotSubmit' => static function (): bool {
                 $ctx = wp_interactivity_get_context();
                 return !empty($ctx['busy']) || empty($ctx['selected']) || !empty($ctx['closed']);
@@ -123,6 +133,7 @@ final class PollRenderer
             'votedOptionId' => '',
             'token' => '',
             'errorMessage' => '',
+            'totalMinVotes' => $total_min_votes,
             'counts' => (object) $counts,
             'total' => $total,
         ];
@@ -280,7 +291,11 @@ final class PollRenderer
                 <span class="zw-poll__final"><?php esc_html_e('Einduitslag', 'zw-poll'); ?></span>
             <?php endif; ?>
             <?php if ($show_total) : ?>
-                <p class="zw-poll__total" data-wp-text="state.totalText"></p>
+                <p
+                    class="zw-poll__total"
+                    data-wp-text="state.totalText"
+                    data-wp-bind--hidden="!state.showTotalCount"
+                ></p>
             <?php endif; ?>
         </div>
         <?php endif; ?>

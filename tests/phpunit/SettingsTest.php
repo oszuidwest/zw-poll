@@ -29,6 +29,7 @@ final class SettingsTest extends TestCase
     public function defaults_match_existing_runtime_behaviour_except_uninstall_cleanup_opt_in(): void
     {
         $this->assertSame([
+            'total_min_votes' => Settings::TOTAL_MIN_VOTES_DEFAULT,
             'rate_limit_enabled' => true,
             'rate_limit_max' => Settings::RATE_LIMIT_MAX_DEFAULT,
             'rate_limit_window' => Settings::RATE_LIMIT_WINDOW_DEFAULT,
@@ -41,6 +42,7 @@ final class SettingsTest extends TestCase
     public function sanitize_clamps_limits_and_coerces_checkboxes(): void
     {
         $settings = Settings::sanitize([
+            'total_min_votes' => '1000001',
             'rate_limit_enabled' => '1',
             'rate_limit_max' => '20000',
             'rate_limit_window' => '999999',
@@ -49,6 +51,7 @@ final class SettingsTest extends TestCase
         ]);
 
         $this->assertTrue($settings['rate_limit_enabled']);
+        $this->assertSame(Settings::TOTAL_MIN_VOTES_MAX, $settings['total_min_votes']);
         $this->assertSame(10000, $settings['rate_limit_max']);
         $this->assertSame(DAY_IN_SECONDS, $settings['rate_limit_window']);
         $this->assertSame(Settings::PROXY_HEADER_X_REAL_IP, $settings['proxy_header']);
@@ -59,16 +62,26 @@ final class SettingsTest extends TestCase
     public function sanitize_clamps_invalid_low_limits_to_minimum_and_unknown_proxy_header_to_none(): void
     {
         $settings = Settings::sanitize([
+            'total_min_votes' => '-1',
             'rate_limit_max' => '0',
             'rate_limit_window' => 'not-a-number',
             'proxy_header' => 'HTTP_X_FORWARDED_FOR',
         ]);
 
         $this->assertFalse($settings['rate_limit_enabled']);
+        $this->assertSame(0, $settings['total_min_votes']);
         $this->assertSame(Settings::RATE_LIMIT_MAX_MIN, $settings['rate_limit_max']);
         $this->assertSame(Settings::RATE_LIMIT_WINDOW_MIN, $settings['rate_limit_window']);
         $this->assertSame(Settings::PROXY_HEADER_NONE, $settings['proxy_header']);
         $this->assertFalse($settings['delete_data_on_uninstall']);
+    }
+
+    #[Test]
+    public function total_vote_threshold_accepts_zero_and_both_boundaries(): void
+    {
+        $this->assertSame(0, Settings::sanitize(['total_min_votes' => '0'])['total_min_votes']);
+        $this->assertSame(1000000, Settings::sanitize(['total_min_votes' => '1000000'])['total_min_votes']);
+        $this->assertSame(0, Settings::sanitize(['total_min_votes' => 'invalid'])['total_min_votes']);
     }
 
     #[Test]
@@ -149,6 +162,7 @@ final class SettingsTest extends TestCase
         Functions\when('get_option')->alias(
             static fn (string $option, mixed $default = []): mixed => $option === Settings::OPTION
                 ? [
+                    'total_min_votes' => 345,
                     'rate_limit_enabled' => true,
                     'rate_limit_max' => 7,
                     'rate_limit_window' => 120,
@@ -160,6 +174,7 @@ final class SettingsTest extends TestCase
         Functions\expect('add_settings_error')->never();
 
         $settings = Settings::sanitizeForSave([
+            'total_min_votes' => '999',
             'rate_limit_enabled' => '0',
             'rate_limit_max' => '9999',
             'rate_limit_window' => '9999',
@@ -168,6 +183,7 @@ final class SettingsTest extends TestCase
         ]);
 
         $this->assertTrue($settings['rate_limit_enabled']);
+        $this->assertSame(345, $settings['total_min_votes']);
         $this->assertSame(7, $settings['rate_limit_max']);
         $this->assertSame(120, $settings['rate_limit_window']);
         $this->assertSame(Settings::PROXY_HEADER_X_REAL_IP, $settings['proxy_header']);
