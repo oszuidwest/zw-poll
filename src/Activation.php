@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll;
 
-use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
@@ -19,12 +18,8 @@ final class Activation
 {
     public const DB_VERSION = \ZW_POLL_VERSION;
     public const DB_VERSION_OPTION = 'zw_poll_db_version';
-    public const TOTAL_VISIBILITY_CURSOR_OPTION = 'zw_poll_total_visibility_cursor';
-    public const TOTAL_VISIBILITY_CUTOFF_OPTION = 'zw_poll_total_visibility_cutoff';
     public const IP_SALT_OPTION = 'zw_poll_ip_salt';
     public const VOTES_TABLE = 'zw_poll_votes';
-
-    private const TOTAL_VISIBILITY_BATCH_SIZE = 100;
 
     /**
      * Registers runtime lifecycle hooks.
@@ -92,14 +87,6 @@ final class Activation
     }
 
     /**
-     * Ensures the current site's database objects are installed.
-     */
-    public static function ensureInstalled(): void
-    {
-        self::upgrade();
-    }
-
-    /**
      * Activates the plugin for the current site.
      */
     private static function activateSite(): void
@@ -164,16 +151,14 @@ final class Activation
     }
 
     /**
-     * Brings the current site's schema and data up to the plugin version.
+     * Ensures the current site's votes table is installed.
      *
-     * Every step is idempotent; the version is stored only after all steps
-     * succeed, so a partial failure retries on the next request.
+     * The version is stored only after the table and its unique cookie index
+     * are verified, so a partial failure retries on the next request.
      */
-    private static function upgrade(): void
+    public static function ensureInstalled(): void
     {
-        $installed = (string) get_option(self::DB_VERSION_OPTION);
-
-        if ($installed === self::DB_VERSION) {
+        if ((string) get_option(self::DB_VERSION_OPTION) === self::DB_VERSION) {
             return;
         }
 
@@ -192,11 +177,7 @@ final class Activation
             return;
         }
 
-        if (!self::migrateTotalVisibility()) {
-            return;
-        }
-
-        // Autoload this scalar: ensureInstalled() reads it on every request, and
+        // Autoload this scalar: init runs this on every request, and
         // one alloptions read is cheaper than a standalone query without persistent object cache.
         if (!update_option(self::DB_VERSION_OPTION, self::DB_VERSION, true)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.
@@ -204,122 +185,7 @@ final class Activation
                 'zw-poll: failed to store database version %s; installation retries on the next request.',
                 self::DB_VERSION
             ));
-            return;
         }
-
-        delete_option(self::TOTAL_VISIBILITY_CURSOR_OPTION);
-        delete_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION);
-    }
-
-    /**
-     * Migrates the legacy total toggle without changing existing presentation.
-     *
-     * Every poll, trashed ones included, receives an explicit policy before
-     * its legacy key is removed: hidden totals stay hidden and formerly
-     * visible totals are forced visible. One ID-ordered batch runs per request.
-     * Returns true only after the final batch completes.
-     */
-    private static function migrateTotalVisibility(): bool
-    {
-        global $wpdb;
-
-        $cursor = max(0, (int) get_option(self::TOTAL_VISIBILITY_CURSOR_OPTION, 0));
-        $stored_cutoff = get_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION, null);
-        if ($stored_cutoff === null) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Capture the stable pre-upgrade boundary once.
-            $cutoff = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COALESCE(MAX(ID), 0) FROM {$wpdb->posts} WHERE post_type = %s",
-                PollPostType::POST_TYPE
-            ));
-            if ($wpdb->last_error !== '') {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
-                error_log('zw-poll: failed to determine the total visibility migration cutoff: ' . $wpdb->last_error);
-                return false;
-            }
-
-            if (!add_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION, $cutoff, '', false)) {
-                $stored_cutoff = get_option(self::TOTAL_VISIBILITY_CUTOFF_OPTION, null);
-                if ($stored_cutoff === null) {
-                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
-                    error_log('zw-poll: failed to store the total visibility migration cutoff.');
-                    return false;
-                }
-                $cutoff = (int) $stored_cutoff;
-            }
-        } else {
-            $cutoff = (int) $stored_cutoff;
-        }
-        $cutoff = max(0, $cutoff);
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A live, bounded ID cursor avoids offset skips while posts change.
-        $poll_ids = array_map('intval', $wpdb->get_col($wpdb->prepare(
-            "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d AND ID <= %d ORDER BY ID ASC LIMIT %d",
-            PollPostType::POST_TYPE,
-            $cursor,
-            $cutoff,
-            self::TOTAL_VISIBILITY_BATCH_SIZE
-        )));
-        if ($wpdb->last_error !== '') {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
-            error_log(sprintf(
-                'zw-poll: total visibility migration query failed after post %d: %s',
-                $cursor,
-                $wpdb->last_error
-            ));
-            return false;
-        }
-
-        update_meta_cache('post', $poll_ids);
-
-        $complete = true;
-        foreach ($poll_ids as $poll_id) {
-            // An absent row makes update_post_meta() an insert, so false means failure.
-            if (
-                !metadata_exists('post', $poll_id, PollPostType::META_TOTAL_VISIBILITY)
-                && !update_post_meta(
-                    $poll_id,
-                    PollPostType::META_TOTAL_VISIBILITY,
-                    PollPostType::legacyTotalVisibility($poll_id)
-                )
-            ) {
-                $complete = false;
-                continue;
-            }
-
-            if (
-                metadata_exists('post', $poll_id, PollPostType::META_HIDE_TOTAL)
-                && !delete_post_meta($poll_id, PollPostType::META_HIDE_TOTAL)
-            ) {
-                $complete = false;
-            }
-        }
-
-        if (!$complete) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
-            error_log(sprintf(
-                'zw-poll: total visibility migration failed after post %d; the batch retries on the next request.',
-                $cursor
-            ));
-            return false;
-        }
-
-        if (count($poll_ids) < self::TOTAL_VISIBILITY_BATCH_SIZE) {
-            return true;
-        }
-
-        $next_cursor = $poll_ids[count($poll_ids) - 1];
-        if (
-            !update_option(self::TOTAL_VISIBILITY_CURSOR_OPTION, $next_cursor, false)
-            && (int) get_option(self::TOTAL_VISIBILITY_CURSOR_OPTION, 0) !== $next_cursor
-        ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Migration failures need server-side diagnostics.
-            error_log(sprintf(
-                'zw-poll: failed to store the total visibility migration cursor after post %d.',
-                $next_cursor
-            ));
-        }
-
-        return false;
     }
 
     /**

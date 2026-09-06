@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\PostType;
 
-use ZuidWest\Poll\Activation;
-
 /**
  * Defines the poll CPT and validates editor-controlled meta.
  */
@@ -23,7 +21,6 @@ final class PollPostType
     public const META_PREFIX = '_zw_poll_';
     public const META_OPTIONS = self::META_PREFIX . 'options';
     public const META_STATUS = self::META_PREFIX . 'status';
-    public const META_HIDE_TOTAL = self::META_PREFIX . 'hide_total';
     public const META_TOTAL_VISIBILITY = self::META_PREFIX . 'total_visibility';
     public const TOTAL_VISIBILITY_DEFAULT = 'default';
     public const TOTAL_VISIBILITY_HIDE = 'hide';
@@ -191,37 +188,13 @@ final class PollPostType
     }
 
     /**
-     * Returns the effective per-poll total visibility policy.
-     *
-     * A poll the migration has not reached yet keeps its legacy presentation.
+     * Returns the stored per-poll total visibility policy, normalized to a known value.
      *
      * @param int $poll_id Poll post ID.
      */
     public static function totalVisibility(int $poll_id): string
     {
-        if (metadata_exists('post', $poll_id, self::META_TOTAL_VISIBILITY)) {
-            return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
-        }
-
-        if (metadata_exists('post', $poll_id, self::META_HIDE_TOTAL)) {
-            return self::legacyTotalVisibility($poll_id);
-        }
-
-        return $poll_id <= (int) get_option(Activation::TOTAL_VISIBILITY_CUTOFF_OPTION, 0)
-            ? self::TOTAL_VISIBILITY_SHOW
-            : self::TOTAL_VISIBILITY_DEFAULT;
-    }
-
-    /**
-     * Maps the legacy hide-total toggle to a policy; an unset toggle showed the total.
-     *
-     * @param int $poll_id Poll post ID.
-     */
-    public static function legacyTotalVisibility(int $poll_id): string
-    {
-        return (bool) get_post_meta($poll_id, self::META_HIDE_TOTAL, true)
-            ? self::TOTAL_VISIBILITY_HIDE
-            : self::TOTAL_VISIBILITY_SHOW;
+        return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
     }
 
     /**

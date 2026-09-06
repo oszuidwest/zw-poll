@@ -6,7 +6,6 @@ namespace ZuidWest\Poll\Tests;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use ZuidWest\Poll\Activation;
 use ZuidWest\Poll\PostType\PollPostType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,9 +20,6 @@ final class PollPostTypeTest extends TestCase
         Monkey\setUp();
         Functions\when('sanitize_text_field')->returnArg();
         Functions\when('wp_generate_uuid4')->justReturn('11111111-2222-4333-8444-555555555555');
-        Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = false): mixed => $default
-        );
         $this->sut = new PollPostType();
     }
 
@@ -72,9 +68,8 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
-    public function total_visibility_uses_new_meta_and_normalizes_corruption(): void
+    public function total_visibility_uses_stored_meta_and_defaults_invalid_values(): void
     {
-        Functions\when('metadata_exists')->justReturn(true);
         Functions\when('get_post_meta')->justReturn('hide');
         $this->assertSame('hide', PollPostType::totalVisibility(42));
 
@@ -83,43 +78,10 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
-    public function missing_total_visibility_follows_the_legacy_toggle_only_while_that_row_exists(): void
-    {
-        Functions\when('metadata_exists')->alias(
-            static fn (string $type, int $id, string $key): bool => $key === PollPostType::META_HIDE_TOTAL
-        );
-        Functions\when('get_post_meta')->justReturn('1');
-        $this->assertSame('hide', PollPostType::totalVisibility(42));
-
-        Functions\when('get_post_meta')->justReturn('');
-        $this->assertSame('show', PollPostType::totalVisibility(42));
-
-        // Neither row: a poll created after the migration uses the site default.
-        Functions\when('metadata_exists')->justReturn(false);
-        $this->assertSame('default', PollPostType::totalVisibility(42));
-    }
-
-    #[Test]
-    public function legacy_rest_poll_without_a_toggle_row_uses_show_only_before_the_upgrade_cutoff(): void
-    {
-        Functions\when('metadata_exists')->justReturn(false);
-        Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = false): mixed => $option
-                === Activation::TOTAL_VISIBILITY_CUTOFF_OPTION ? 42 : $default
-        );
-
-        $this->assertSame(PollPostType::TOTAL_VISIBILITY_SHOW, PollPostType::totalVisibility(42));
-        $this->assertSame(PollPostType::TOTAL_VISIBILITY_DEFAULT, PollPostType::totalVisibility(43));
-    }
-
-    #[Test]
     public function register_meta_gives_aggregate_no_default(): void
     {
         // A null default fails core's type check and keeps the object meta out
         // of the registry; readers handle missing meta.
-        Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = []): mixed => $default
-        );
         $registered = [];
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
@@ -136,7 +98,6 @@ final class PollPostTypeTest extends TestCase
     public function registered_meta_auth_uses_object_level_edit_permission(): void
     {
         $callbacks = [];
-        Functions\when('get_option')->justReturn([]);
         Functions\when('register_post_meta')->alias(
             static function (string $post_type, string $meta_key, array $args) use (&$callbacks): void {
                 $callbacks[$meta_key] = $args['auth_callback'];

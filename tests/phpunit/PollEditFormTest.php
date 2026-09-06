@@ -252,7 +252,6 @@ final class PollEditFormTest extends TestCase
         Functions\when('esc_attr')->returnArg();
         Functions\when('_n')->alias(static fn (string $single, string $plural, int $count): string => $count === 1 ? $single : $plural);
         Functions\when('number_format_i18n')->alias(static fn (int $number): string => (string) $number);
-        Functions\when('metadata_exists')->justReturn(true);
         Functions\when('checked')->alias(static function (mixed $checked, mixed $current): void {
             echo $checked === $current ? 'checked="checked"' : '';
         });
