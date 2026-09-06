@@ -69,6 +69,63 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
+    public function option_images_are_non_negative_rest_integers(): void
+    {
+        $registered = [];
+        Functions\when('register_post_meta')->alias(
+            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
+                $registered[$meta_key] = $args;
+            }
+        );
+
+        $this->sut->registerMeta();
+
+        $schema = $registered[PollPostType::META_OPTIONS]['show_in_rest']['schema'];
+        $image_schema = $schema['items']['properties']['imageId'];
+        $this->assertSame('integer', $image_schema['type']);
+        $this->assertSame(0, $image_schema['minimum']);
+    }
+
+    #[Test]
+    public function option_image_ids_normalize_without_turning_negatives_positive(): void
+    {
+        $this->assertSame(123, PollPostType::normalizeImageId('123'));
+        $this->assertSame(0, PollPostType::normalizeImageId('-123'));
+        $this->assertSame(0, PollPostType::normalizeImageId('invalid'));
+        $this->assertSame(0, PollPostType::normalizeImageId('123px'));
+        $this->assertSame(0, PollPostType::normalizeImageId(12.3));
+        $this->assertSame(0, PollPostType::normalizeImageId(['123']));
+
+        Functions\when('get_post_meta')->justReturn([
+            ['id' => 'a', 'label' => 'A', 'imageId' => '123'],
+            ['id' => 'b', 'label' => 'B'],
+        ]);
+        $this->assertSame([
+            ['id' => 'a', 'label' => 'A', 'imageId' => 123],
+            ['id' => 'b', 'label' => 'B', 'imageId' => 0],
+        ], PollPostType::options(42));
+    }
+
+    #[Test]
+    public function complete_images_requires_a_live_image_for_every_option(): void
+    {
+        Functions\when('_prime_post_caches')->justReturn(null);
+        Functions\when('wp_attachment_is_image')->alias(
+            static fn (int $attachment_id): bool => in_array($attachment_id, [101, 102], true)
+        );
+        $complete = [
+            ['id' => 'a', 'label' => 'A', 'imageId' => 101],
+            ['id' => 'b', 'label' => 'B', 'imageId' => 102],
+        ];
+
+        $this->assertTrue(PollPostType::hasCompleteImages($complete));
+        $this->assertTrue(PollPostType::hasAnyImages($complete));
+        $this->assertFalse(PollPostType::hasCompleteImages([$complete[0], ['id' => 'b', 'label' => 'B']]));
+        $this->assertFalse(PollPostType::hasCompleteImages([$complete[0], ['id' => 'b', 'label' => 'B', 'imageId' => 999]]));
+        $this->assertFalse(PollPostType::hasCompleteImages([]));
+    }
+
+    #[Test]
     public function hides_total_casts_the_stored_meta_string(): void
     {
         Functions\when('get_post_meta')->justReturn('1');

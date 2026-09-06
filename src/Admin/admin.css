@@ -160,8 +160,35 @@
 .zw-poll-edit-option {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 8px;
 	margin-bottom: 8px;
+}
+
+.zw-poll-edit-option__label {
+	flex: 1 1 18rem;
+}
+
+.zw-poll-edit-option__image {
+	order: 1;
+	display: flex;
+	flex: 1 0 100%;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.zw-poll-edit-option__preview:empty {
+	display: none;
+}
+
+.zw-poll-edit-option__thumbnail {
+	display: block;
+	width: 80px;
+	aspect-ratio: 4 / 3;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	object-fit: cover;
 }
 
 .zw-poll-edit-option .button-link {

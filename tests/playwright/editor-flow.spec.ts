@@ -166,7 +166,8 @@ test.describe( 'Admin / poll-beheer', () => {
 		await labels.nth( 1 ).fill( 'Tweede' );
 		const editor = await publishAndReopen( page );
 
-		const hiddenIds = '.zw-poll-edit-options__list input[type="hidden"]';
+		const hiddenIds =
+			'.zw-poll-edit-options__list input[type="hidden"][name$="[id]"]';
 		const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 		await expect( editor.locator( hiddenIds ) ).toHaveCount( 2 );
 		const idsBefore = await editor

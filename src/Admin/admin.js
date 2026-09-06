@@ -112,6 +112,42 @@
 		const min = parseInt( box.dataset.min, 10 ) || 2;
 		const max = parseInt( box.dataset.max, 10 ) || 10;
 		let nextIndex = list.children.length;
+		let mediaFrame = null;
+		let mediaFrameRow = null;
+
+		const setImage = ( row, attachment ) => {
+			const imageId = row.querySelector(
+				'.zw-poll-edit-option__image-id'
+			);
+			const preview = row.querySelector(
+				'.zw-poll-edit-option__preview'
+			);
+			const choose = row.querySelector(
+				'.zw-poll-edit-option__choose-image'
+			);
+			const remove = row.querySelector(
+				'.zw-poll-edit-option__remove-image'
+			);
+			const id = Number( attachment?.id ) || 0;
+
+			imageId.value = String( id );
+			preview.replaceChildren();
+			if ( id > 0 ) {
+				const image = document.createElement( 'img' );
+				image.className = 'zw-poll-edit-option__thumbnail';
+				image.src =
+					attachment.sizes?.thumbnail?.url ||
+					attachment.sizes?.medium?.url ||
+					attachment.url;
+				image.alt = '';
+				preview.append( image );
+			}
+			choose.textContent =
+				id > 0
+					? __( 'Afbeelding vervangen', 'zw-poll' )
+					: __( 'Afbeelding kiezen', 'zw-poll' );
+			remove.hidden = id === 0;
+		};
 
 		const refresh = () => {
 			const rows = list.children;
@@ -158,6 +194,47 @@
 		list.addEventListener( 'click', ( event ) => {
 			const row = event.target.closest( '.zw-poll-edit-option' );
 			if ( ! row ) {
+				return;
+			}
+			const chooseImage = event.target.closest(
+				'.zw-poll-edit-option__choose-image'
+			);
+			if ( chooseImage && window.wp?.media ) {
+				mediaFrameRow = row;
+				if ( ! mediaFrame ) {
+					mediaFrame = window.wp.media( {
+						title: __( 'Afbeelding kiezen', 'zw-poll' ),
+						button: {
+							text: __( 'Afbeelding gebruiken', 'zw-poll' ),
+						},
+						library: { type: 'image' },
+						multiple: false,
+					} );
+					mediaFrame.on( 'select', () => {
+						const attachment = mediaFrame
+							.state()
+							.get( 'selection' )
+							.first()
+							?.toJSON();
+						if ( attachment && mediaFrameRow ) {
+							setImage( mediaFrameRow, attachment );
+						}
+					} );
+					mediaFrame.on( 'open', () => {
+						mediaFrame.state().get( 'selection' ).reset();
+					} );
+				}
+				mediaFrame.open();
+				return;
+			}
+			const removeImage = event.target.closest(
+				'.zw-poll-edit-option__remove-image'
+			);
+			if ( removeImage ) {
+				setImage( row, null );
+				row.querySelector(
+					'.zw-poll-edit-option__choose-image'
+				).focus();
 				return;
 			}
 			if (

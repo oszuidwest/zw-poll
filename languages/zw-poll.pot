@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-06T12:01:38+00:00\n"
+"POT-Creation-Date: 2026-09-06T12:24:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -120,7 +120,7 @@ msgstr ""
 
 #: src/Admin/PollAdminColumns.php:67
 #: src/Admin/PollMetaBoxes.php:98
-#: src/Frontend/PollRenderer.php:180
+#: src/Frontend/PollRenderer.php:183
 #: src/Admin/classic-editor.js:202
 msgid "Gesloten"
 msgstr ""
@@ -167,7 +167,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/PollEditForm.php:45
-#: src/Admin/PollEditForm.php:132
+#: src/Admin/PollEditForm.php:144
 msgid "Antwoorden"
 msgstr ""
 
@@ -180,50 +180,69 @@ msgid "Vraag aan de lezer"
 msgstr ""
 
 #. translators: %d: minimum number of answers.
-#: src/Admin/PollEditForm.php:102
+#: src/Admin/PollEditForm.php:100
 #, php-format
 msgid "Deze poll is onvolledig en wordt niet aan lezers getoond. Geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:139
+#: src/Admin/PollEditForm.php:113
+msgid "Afbeeldingen worden pas getoond als alle antwoorden een geldige afbeelding hebben."
+msgstr ""
+
+#: src/Admin/PollEditForm.php:151
 msgid "Antwoord toevoegen"
 msgstr ""
 
 #. translators: 1: minimum number of answers, 2: maximum number of answers, 3: maximum answer length.
-#: src/Admin/PollEditForm.php:145
+#: src/Admin/PollEditForm.php:157
 #, php-format
 msgid "Min. %1$d antwoorden, max. %2$d antwoorden, max. %3$d tekens per antwoord."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:179
+#: src/Admin/PollEditForm.php:191
 msgid "Totaal aantal stemmen tonen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:181
+#: src/Admin/PollEditForm.php:193
 msgid "Uitgeschakeld: lezers zien alleen percentages, geen totaal onder de resultaten."
 msgstr ""
 
 #. translators: %d: answer number.
-#: src/Admin/PollEditForm.php:263
-#: src/Admin/admin.js:130
+#: src/Admin/PollEditForm.php:277
+#: src/Admin/admin.js:166
 #, php-format,js-format
 msgid "Antwoord %d"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:276
+#: src/Admin/PollEditForm.php:279
+#: src/Admin/admin.js:147
+msgid "Afbeelding vervangen"
+msgstr ""
+
+#: src/Admin/PollEditForm.php:280
+#: src/Admin/admin.js:148
+#: src/Admin/admin.js:206
+msgid "Afbeelding kiezen"
+msgstr ""
+
+#: src/Admin/PollEditForm.php:299
 msgid "Omhoog"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:277
+#: src/Admin/PollEditForm.php:300
 msgid "Omlaag"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:278
+#: src/Admin/PollEditForm.php:301
 msgid "Antwoord verwijderen"
 msgstr ""
 
+#: src/Admin/PollEditForm.php:327
+msgid "Afbeelding verwijderen"
+msgstr ""
+
 #: src/Admin/PollMetaBoxes.php:48
-#: src/Frontend/PollRenderer.php:222
+#: src/Frontend/PollRenderer.php:230
 msgid "Resultaten"
 msgstr ""
 
@@ -261,7 +280,7 @@ msgstr[1] ""
 
 #. translators: %s: total number of votes.
 #: src/Admin/PollMetaBoxes.php:167
-#: src/Frontend/PollRenderer.php:76
+#: src/Frontend/PollRenderer.php:77
 #, php-format
 msgid "Totaal aantal stemmen: %s"
 msgstr ""
@@ -403,59 +422,59 @@ msgstr ""
 msgid "Poll onvolledig: geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:84
+#: src/Frontend/PollRenderer.php:85
 msgid "Even rustig aan — probeer over een minuutje opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:85
+#: src/Frontend/PollRenderer.php:86
 msgid "Deze poll bestaat niet meer."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:86
+#: src/Frontend/PollRenderer.php:87
 #: src/Rest/VoteController.php:139
 msgid "Deze poll is gesloten."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:87
+#: src/Frontend/PollRenderer.php:88
 msgid "Kies eerst een optie."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:88
+#: src/Frontend/PollRenderer.php:89
 #: src/Rest/VoteController.php:205
 msgid "Je hebt al gestemd op deze poll."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:89
+#: src/Frontend/PollRenderer.php:90
 #: src/Rest/VoteController.php:106
 msgid "Stemmen vanaf deze pagina is niet toegestaan."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:90
+#: src/Frontend/PollRenderer.php:91
 #: src/Rest/VoteController.php:161
 msgid "Stemmen op deze poll is niet toegestaan."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:91
+#: src/Frontend/PollRenderer.php:92
 msgid "Stem niet opgeslagen. Probeer het later opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:92
+#: src/Frontend/PollRenderer.php:93
 msgid "Er ging iets mis. Probeer het later opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:188
+#: src/Frontend/PollRenderer.php:191
 msgid "Kies een optie"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:213
+#: src/Frontend/PollRenderer.php:221
 msgid "Stem"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:262
+#: src/Frontend/PollRenderer.php:275
 msgid "Gestemd"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:280
+#: src/Frontend/PollRenderer.php:293
 msgid "Einduitslag"
 msgstr ""
 
@@ -575,6 +594,10 @@ msgstr ""
 
 #: src/Admin/admin.js:90
 msgid "Kopiëren mislukt"
+msgstr ""
+
+#: src/Admin/admin.js:208
+msgid "Afbeelding gebruiken"
 msgstr ""
 
 #: src/Admin/classic-editor.js:78
