@@ -98,6 +98,10 @@ final class SettingsPageTest extends TestCase
             $fields['zw_poll_rate_limit_max']
         );
         $this->assertSame(
+            ['label_for' => 'zw_poll_total_min_votes'],
+            $fields['zw_poll_total_min_votes']
+        );
+        $this->assertSame(
             ['label_for' => 'zw_poll_rate_limit_window'],
             $fields['zw_poll_rate_limit_window']
         );
@@ -113,6 +117,7 @@ final class SettingsPageTest extends TestCase
         Functions\when('get_option')->alias(
             static fn (string $option, mixed $default = []): mixed => $option === Settings::OPTION
                 ? [
+                    'total_min_votes' => 789,
                     'rate_limit_max' => 123,
                     'rate_limit_window' => 456,
                 ]
@@ -120,10 +125,14 @@ final class SettingsPageTest extends TestCase
         );
 
         ob_start();
+        (new SettingsPage())->renderTotalMinVotesField();
         (new SettingsPage())->renderRateLimitMaxField();
         (new SettingsPage())->renderRateLimitWindowField();
         $html = (string) ob_get_clean();
 
+        $this->assertStringContainsString('id="zw_poll_total_min_votes"', $html);
+        $this->assertStringContainsString('min="0" max="1000000"', $html);
+        $this->assertStringContainsString('value="789"', $html);
         $this->assertStringContainsString('id="zw_poll_rate_limit_max"', $html);
         $this->assertStringContainsString('min="1" max="10000"', $html);
         $this->assertStringContainsString('value="123"', $html);

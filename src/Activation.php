@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll;
 
+use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
@@ -20,6 +21,8 @@ final class Activation
     public const DB_VERSION_OPTION = 'zw_poll_db_version';
     public const IP_SALT_OPTION = 'zw_poll_ip_salt';
     public const VOTES_TABLE = 'zw_poll_votes';
+    public const TOTAL_VISIBILITY_VERSION_OPTION = 'zw_poll_total_visibility_version';
+    public const TOTAL_VISIBILITY_VERSION = 1;
 
     /**
      * Registers runtime lifecycle hooks.
@@ -92,6 +95,7 @@ final class Activation
     public static function ensureInstalled(): void
     {
         self::installVotesTable();
+        self::upgradeTotalVisibility();
     }
 
     /**
@@ -100,6 +104,7 @@ final class Activation
     private static function activateSite(): void
     {
         self::installVotesTable();
+        self::upgradeTotalVisibility();
         Capabilities::grantToDefaultRoles();
         // IpHasher seeds the salt lazily, including installs that bypass activation.
     }
@@ -192,6 +197,58 @@ final class Activation
                 'zw-poll: failed to store database version %s; installation retries on the next request.',
                 self::DB_VERSION
             ));
+        }
+    }
+
+    /**
+     * Migrates the legacy total toggle without changing existing presentation.
+     *
+     * Every poll receives an explicit policy before the legacy key is removed:
+     * hidden totals remain hidden and every formerly visible total is forced
+     * visible. The version marker is stored only after every write succeeds,
+     * making partial failures safe to retry on the next request.
+     */
+    public static function upgradeTotalVisibility(): void
+    {
+        if ((int) get_option(self::TOTAL_VISIBILITY_VERSION_OPTION, 0) >= self::TOTAL_VISIBILITY_VERSION) {
+            return;
+        }
+
+        $poll_ids = get_posts([
+            'post_type' => PollPostType::POST_TYPE,
+            'post_status' => 'any',
+            'numberposts' => -1,
+            'fields' => 'ids',
+            'orderby' => 'ID',
+            'order' => 'ASC',
+            'suppress_filters' => false,
+        ]);
+
+        $complete = true;
+        foreach ($poll_ids as $poll_id) {
+            $poll_id = (int) $poll_id;
+            if (metadata_exists('post', $poll_id, PollPostType::META_TOTAL_VISIBILITY)) {
+                $visibility = PollPostType::sanitizeTotalVisibility(
+                    get_post_meta($poll_id, PollPostType::META_TOTAL_VISIBILITY, true)
+                );
+            } else {
+                $visibility = (bool) get_post_meta($poll_id, PollPostType::META_HIDE_TOTAL, true)
+                    ? PollPostType::TOTAL_VISIBILITY_HIDE
+                    : PollPostType::TOTAL_VISIBILITY_SHOW;
+            }
+
+            $written = update_post_meta($poll_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
+            $stored = get_post_meta($poll_id, PollPostType::META_TOTAL_VISIBILITY, true);
+            if ($written === false && $stored !== $visibility) {
+                $complete = false;
+                continue;
+            }
+
+            delete_post_meta($poll_id, PollPostType::META_HIDE_TOTAL);
+        }
+
+        if ($complete) {
+            update_option(self::TOTAL_VISIBILITY_VERSION_OPTION, self::TOTAL_VISIBILITY_VERSION, true);
         }
     }
 

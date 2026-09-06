@@ -11,6 +11,7 @@ namespace ZuidWest\Poll\Frontend;
 
 use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Rest\VoteController;
+use ZuidWest\Poll\Support\Settings;
 use ZuidWest\Poll\Vote\AggregateCache;
 use ZuidWest\Poll\Vote\VoteEpoch;
 use WP_Post;
@@ -70,7 +71,10 @@ final class PollRenderer
         // Presentation-only: totals/counts stay in context so view.js can
         // update percentage bars after a vote; page caches may hold this flag
         // until the rendered page refreshes.
-        $show_total = !PollPostType::hidesTotal($poll_id);
+        $total_visibility = PollPostType::totalVisibility($poll_id);
+        $show_total = $total_visibility !== PollPostType::TOTAL_VISIBILITY_HIDE;
+        $force_show_total = $total_visibility === PollPostType::TOTAL_VISIBILITY_SHOW;
+        $total_min = Settings::get()['total_min_votes'];
 
         /* translators: %s: total number of votes. */
         $total_label = __('Totaal aantal stemmen: %s', 'zw-poll');
@@ -79,6 +83,7 @@ final class PollRenderer
         wp_interactivity_state('zw-poll', [
             'restUrl' => esc_url_raw(VoteController::voteUrl()),
             'cookiePrefix' => VoteController::COOKIE_PREFIX,
+            'totalMin' => $total_min,
             'i18n' => [
                 'errors' => [
                     'rate_limited' => __('Even rustig aan — probeer over een minuutje opnieuw.', 'zw-poll'),
@@ -98,6 +103,11 @@ final class PollRenderer
             'showResults' => static function (): bool {
                 $ctx = wp_interactivity_get_context();
                 return !empty($ctx['voted']) || !empty($ctx['closed']);
+            },
+            'showTotalCount' => static function () use ($total_min): bool {
+                $ctx = wp_interactivity_get_context();
+                return !empty($ctx['forceShowTotal'])
+                    || (int) ($ctx['total'] ?? 0) >= $total_min;
             },
             'cannotSubmit' => static function (): bool {
                 $ctx = wp_interactivity_get_context();
@@ -123,6 +133,7 @@ final class PollRenderer
             'votedOptionId' => '',
             'token' => '',
             'errorMessage' => '',
+            'forceShowTotal' => $force_show_total,
             'counts' => (object) $counts,
             'total' => $total,
         ];
@@ -275,12 +286,19 @@ final class PollRenderer
         <?php endforeach; ?>
 
         <?php if ($is_closed || $show_total) : ?>
-        <div class="zw-poll__results-foot">
+        <div
+            class="zw-poll__results-foot"
+            <?php if (!$is_closed) : ?>data-wp-bind--hidden="!state.showTotalCount"<?php endif; ?>
+        >
             <?php if ($is_closed) : ?>
                 <span class="zw-poll__final"><?php esc_html_e('Einduitslag', 'zw-poll'); ?></span>
             <?php endif; ?>
             <?php if ($show_total) : ?>
-                <p class="zw-poll__total" data-wp-text="state.totalText"></p>
+                <p
+                    class="zw-poll__total"
+                    data-wp-text="state.totalText"
+                    <?php if ($is_closed) : ?>data-wp-bind--hidden="!state.showTotalCount"<?php endif; ?>
+                ></p>
             <?php endif; ?>
         </div>
         <?php endif; ?>

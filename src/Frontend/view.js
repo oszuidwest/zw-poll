@@ -76,6 +76,13 @@ const { state } = store( 'zw-poll', {
 			const ctx = getContext();
 			return ctx.voted || ctx.closed;
 		},
+		get showTotalCount() {
+			const ctx = getContext();
+			return (
+				Boolean( ctx.forceShowTotal ) ||
+				( ctx.total ?? 0 ) >= ( state.totalMin ?? 0 )
+			);
+		},
 		get cannotSubmit() {
 			const ctx = getContext();
 			return ctx.busy || ! ctx.selected || ctx.closed;

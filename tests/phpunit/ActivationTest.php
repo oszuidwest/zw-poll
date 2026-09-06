@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use wpdb;
 use ZuidWest\Poll\Activation;
+use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Support\Capabilities;
 
 /**
@@ -34,9 +35,11 @@ final class ActivationTest extends TestCase
     private function mockDbVersion(string|false $version): void
     {
         Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = false): mixed => $option === Activation::DB_VERSION_OPTION
-                ? $version
-                : $default
+            static fn (string $option, mixed $default = false): mixed => match ($option) {
+                Activation::DB_VERSION_OPTION => $version,
+                Activation::TOTAL_VISIBILITY_VERSION_OPTION => Activation::TOTAL_VISIBILITY_VERSION,
+                default => $default,
+            }
         );
     }
 
@@ -152,6 +155,82 @@ final class ActivationTest extends TestCase
             ->andReturn(true);
 
         Activation::ensureInstalled();
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function total_visibility_upgrade_preserves_legacy_behavior_and_normalizes_existing_values(): void
+    {
+        $legacy = [11 => '1', 12 => '', 13 => false, 14 => '1', 15 => ''];
+        $stored = [14 => 'show', 15 => 'corrupt'];
+        $deleted = [];
+        $marker = null;
+        $query = [];
+        Functions\when('get_option')->justReturn(0);
+        Functions\when('get_posts')->alias(
+            static function (array $args) use (&$query): array {
+                $query = $args;
+                return [11, 12, 13, 14, 15];
+            }
+        );
+        Functions\when('metadata_exists')->alias(
+            static fn (string $type, int $id, string $key): bool => array_key_exists($id, $stored)
+        );
+        Functions\when('get_post_meta')->alias(
+            static function (int $id, string $key) use (&$legacy, &$stored): mixed {
+                return $key === PollPostType::META_TOTAL_VISIBILITY
+                    ? ($stored[$id] ?? '')
+                    : ($legacy[$id] ?? '');
+            }
+        );
+        Functions\when('update_post_meta')->alias(
+            static function (int $id, string $key, string $value) use (&$stored): bool {
+                $stored[$id] = $value;
+                return true;
+            }
+        );
+        Functions\when('delete_post_meta')->alias(
+            static function (int $id, string $key) use (&$deleted): bool {
+                $deleted[] = [$id, $key];
+                return true;
+            }
+        );
+        Functions\when('update_option')->alias(
+            static function (string $key, mixed $value, bool $autoload) use (&$marker): bool {
+                if ($key === Activation::TOTAL_VISIBILITY_VERSION_OPTION) {
+                    $marker = [$value, $autoload];
+                }
+                return true;
+            }
+        );
+
+        Activation::upgradeTotalVisibility();
+
+        $this->assertSame('any', $query['post_status']);
+        $this->assertSame([
+            14 => 'show',
+            15 => 'default',
+            11 => 'hide',
+            12 => 'show',
+            13 => 'show',
+        ], $stored);
+        $this->assertCount(5, $deleted);
+        $this->assertSame([Activation::TOTAL_VISIBILITY_VERSION, true], $marker);
+    }
+
+    #[Test]
+    public function failed_total_visibility_write_keeps_legacy_meta_and_retries_later(): void
+    {
+        Functions\when('get_option')->justReturn(0);
+        Functions\when('get_posts')->justReturn([42]);
+        Functions\when('metadata_exists')->justReturn(false);
+        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('update_post_meta')->justReturn(false);
+        Functions\expect('delete_post_meta')->never();
+        Functions\expect('update_option')->never();
+
+        Activation::upgradeTotalVisibility();
 
         $this->addToAssertionCount(1);
     }
