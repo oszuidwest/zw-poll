@@ -68,9 +68,9 @@
     </rule>
 
     <!--
-        6.9 is the supported baseline, not the technical floor; the plugin still
+        7.1 is the supported baseline, not the technical floor; the plugin still
         runs from 6.5. Keep this aligned with zw-poll.php, README.md, and the
         CI matrix.
     -->
-    <config name="minimum_wp_version" value="6.9"/>
+    <config name="minimum_wp_version" value="7.1"/>
 </ruleset>

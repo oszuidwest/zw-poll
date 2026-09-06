@@ -42,10 +42,10 @@ final class AdminControllerTest extends TestCase
         parent::tearDown();
     }
 
-    private function controller(int $deleted = 0, array $tally = []): AdminController
+    private function controller(int|false $deleted = 0, array $tally = []): AdminController
     {
         $db = new class($deleted, $tally) extends wpdb {
-            public function __construct(private int $deleted, private array $tally)
+            public function __construct(private int|false $deleted, private array $tally)
             {
                 $this->prefix = 'wp_';
             }
@@ -196,5 +196,25 @@ final class AdminControllerTest extends TestCase
 
         $this->assertInstanceOf(WP_Error::class, $result);
         $this->assertSame('poll_not_found', $result->get_error_code());
+    }
+
+    #[Test]
+    public function reset_reports_a_database_delete_failure(): void
+    {
+        Functions\when('get_post')->justReturn($this->poll());
+        $writes = [];
+        Functions\when('update_post_meta')->alias(
+            static function (int $id, string $key, mixed $value) use (&$writes): bool {
+                $writes[] = [$id, $key, $value];
+                return true;
+            }
+        );
+
+        $result = $this->controller(deleted: false)->reset($this->request());
+
+        $this->assertInstanceOf(WP_Error::class, $result);
+        $this->assertSame('vote_delete_failed', $result->get_error_code());
+        $this->assertSame(500, $result->get_error_data()['status']);
+        $this->assertSame([], $writes);
     }
 }

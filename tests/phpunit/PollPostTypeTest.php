@@ -276,6 +276,22 @@ final class PollPostTypeTest extends TestCase
     }
 
     #[Test]
+    public function sanitize_options_skips_non_string_labels(): void
+    {
+        $input = [
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeeee', 'label' => ['nested']],
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeeef', 'label' => new \stdClass()],
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeef0', 'label' => 'Real'],
+        ];
+
+        $out = $this->sut->sanitizeOptions($input);
+
+        $this->assertSame([
+            ['id' => 'aaaaaaaa-bbbb-4ccc-9ddd-eeeeeeeeeef0', 'label' => 'Real'],
+        ], $out);
+    }
+
+    #[Test]
     public function seed_aggregate_meta_adds_empty_unique_cache_anchor(): void
     {
         $captured = [];

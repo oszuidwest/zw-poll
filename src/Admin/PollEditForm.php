@@ -21,9 +21,7 @@ final class PollEditForm
     private const NONCE_ACTION = 'zw_poll_edit_form';
     private const NONCE_FIELD = 'zw_poll_edit_form_nonce';
 
-    /**
-     * Registers edit form hooks.
-     */
+    /** Registers edit form hooks. */
     public function register(): void
     {
         // Registering at 9 (before PollMetaBoxes at 10) renders this box
@@ -34,9 +32,7 @@ final class PollEditForm
         add_action('admin_notices', [$this, 'renderIncompleteNotice']);
     }
 
-    /**
-     * Adds the poll edit meta boxes.
-     */
+    /** Adds the poll edit meta boxes. */
     public function addMetaBoxes(): void
     {
         add_meta_box(
@@ -78,11 +74,7 @@ final class PollEditForm
             : $placeholder;
     }
 
-    /**
-     * Warns when a published poll is not renderable for readers.
-     *
-     * Shares PollPostType::isComplete() with frontend rendering.
-     */
+    /** Warns when a published poll is not renderable for readers. */
     public function renderIncompleteNotice(): void
     {
         // Only the post editor screen has the post type as its id; the list
@@ -230,13 +222,11 @@ final class PollEditForm
     /**
      * Persists the classic form fields.
      *
-     * REST requests omit this nonce, leaving their meta payload authoritative.
-     * Core saves the question as the post title.
-     *
      * @param int $post_id Poll post ID.
      */
     public function save(int $post_id): void
     {
+        // REST saves omit this form nonce and let registered meta callbacks validate input.
         $nonce = isset($_POST[self::NONCE_FIELD]) && is_string($_POST[self::NONCE_FIELD])
             ? sanitize_key(wp_unslash($_POST[self::NONCE_FIELD]))
             : '';
@@ -319,9 +309,6 @@ final class PollEditForm
     /**
      * Reduces submitted option rows to sanitized id/label pairs.
      *
-     * Keeping the stored UUID of an existing option is required: votes are
-     * keyed by option ID, so regenerating IDs would orphan cast votes.
-     *
      * @param array<int|string, mixed> $rows Submitted option rows.
      * @return array<int, array{id: string, label: string}>
      */
@@ -333,8 +320,12 @@ final class PollEditForm
                 continue;
             }
             $out[] = [
-                'id' => isset($row['id']) ? sanitize_text_field((string) $row['id']) : '',
-                'label' => isset($row['label']) ? sanitize_text_field((string) $row['label']) : '',
+                'id' => isset($row['id']) && is_string($row['id'])
+                    ? sanitize_text_field($row['id'])
+                    : '',
+                'label' => isset($row['label']) && is_string($row['label'])
+                    ? sanitize_text_field($row['label'])
+                    : '',
             ];
         }
         return $out;

@@ -13,5 +13,4 @@ parameters:
         - phpstan-bootstrap.php
     # WP-CLI classes/functions are not part of the WordPress stubs.
     scanFiles:
-        - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
-        - vendor/php-stubs/wp-cli-stubs/wp-cli-commands-stubs.php
+        - stubs/wp-cli.php

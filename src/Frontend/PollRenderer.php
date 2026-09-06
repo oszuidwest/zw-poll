@@ -82,7 +82,7 @@ final class PollRenderer
         /* translators: %s: total number of votes. */
         $total_label = __('Totaal aantal stemmen: %s', 'zw-poll');
 
-        // WordPress 6.9 cannot load text domains for script modules; pass strings through state.
+        // Pass script-module translations through Interactivity API state.
         wp_interactivity_state('zw-poll', [
             'restUrl' => esc_url_raw(VoteController::voteUrl()),
             'cookiePrefix' => VoteController::COOKIE_PREFIX,
@@ -324,14 +324,7 @@ final class PollRenderer
         return (string) ob_get_clean();
     }
 
-    /**
-     * Displays the option percentage from the current directive context.
-     *
-     * Runs inside server directive processing, where the per-bar context
-     * carries optionId and the root context carries counts/total. Mirrors
-     * view.js's percentage(); AggregateCache::percentage() keeps the
-     * rounding policy shared.
-     */
+    /** Displays the option percentage from the current directive context. */
     private static function contextPercentage(): int
     {
         $ctx = wp_interactivity_get_context();
@@ -344,10 +337,10 @@ final class PollRenderer
     /**
      * Renders a diagnostic placeholder for editors only.
      *
-     * @param string $class   Wrapper class list.
-     * @param string $message Placeholder message.
+     * @param string $css_class Wrapper class list.
+     * @param string $message   Placeholder message.
      */
-    private static function editorPlaceholder(string $class, string $message): string
+    private static function editorPlaceholder(string $css_class, string $message): string
     {
         if (!current_user_can('edit_posts')) {
             return '';
@@ -355,7 +348,7 @@ final class PollRenderer
 
         ob_start();
         ?>
-<div class="<?php echo esc_attr($class); ?>">
+<div class="<?php echo esc_attr($css_class); ?>">
     <?php echo esc_html($message); ?>
 </div>
 <?php

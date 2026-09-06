@@ -35,9 +35,7 @@ use ZuidWest\Poll\Vote\VoteRepository;
  */
 final class Plugin
 {
-    /**
-     * Wires WordPress hooks and service collaborators.
-     */
+    /** Wires WordPress hooks and service collaborators. */
     public static function boot(): void
     {
         // File-only deployments skip activation; init keeps runtime paths on the current schema.

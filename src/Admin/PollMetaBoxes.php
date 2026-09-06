@@ -20,9 +20,7 @@ use WP_Post;
  */
 final class PollMetaBoxes
 {
-    /**
-     * Registers poll editor hooks.
-     */
+    /** Registers poll editor hooks. */
     public function register(): void
     {
         add_action('add_meta_boxes_' . PollPostType::POST_TYPE, [$this, 'configureMetaBoxes']);
@@ -239,9 +237,7 @@ final class PollMetaBoxes
         echo '</ul>';
     }
 
-    /**
-     * Renders the empty-poll setup message.
-     */
+    /** Renders the empty-poll setup message. */
     private function renderEmptyPollMessage(): void
     {
         echo '<p class="zw-poll-admin-empty">' . esc_html(sprintf(

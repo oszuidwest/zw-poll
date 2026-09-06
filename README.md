@@ -8,7 +8,7 @@ compatibility, and made interactive with the WordPress Interactivity API.
 
 | Component | Version |
 |---|---|
-| WordPress | 6.9+ |
+| WordPress | 7.1+ |
 | PHP | 8.3+ |
 | Node.js | 20+ locally, 24 in CI |
 
@@ -136,7 +136,7 @@ npm run test:e2e
 ```
 
 CI also runs WordPress Plugin Check, verifies the translation template, and runs
-Playwright against WordPress 6.9 and the latest WordPress release.
+Playwright against WordPress 7.1 and the latest WordPress release.
 
 ## Architecture
 

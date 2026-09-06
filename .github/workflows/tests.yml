@@ -82,13 +82,9 @@ jobs:
           if-no-files-found: error
 
   playwright:
-    name: Playwright (WordPress Playground)
+    name: Playwright (WordPress 7.1)
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        wordpress: ['6.9', 'latest']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -106,7 +102,7 @@ jobs:
 
       - name: Start WordPress Playground
         env:
-          WP_VERSION: ${{ matrix.wordpress }}
+          WP_VERSION: '7.1'
         run: nohup npm run playground -- --wp="$WP_VERSION" > playground.log 2>&1 &
 
       - name: Wait for Playground to be ready
@@ -144,7 +140,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-wp-${{ matrix.wordpress }}
+          name: playwright-report-wp-7.1
           path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore

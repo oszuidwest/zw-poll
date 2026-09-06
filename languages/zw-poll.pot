@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ZuidWest Poll 0.1.1\n"
+"Project-Id-Version: ZuidWest Poll 0.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/zw-poll\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-06T19:48:10+00:00\n"
+"POT-Creation-Date: 2026-09-06T20:51:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -39,119 +39,119 @@ msgstr ""
 msgid "https://www.zuidwesttv.nl/"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:144
-#: src/Admin/ClassicEditor.php:162
+#: src/Admin/ClassicEditor.php:134
+#: src/Admin/ClassicEditor.php:150
 msgid "Poll invoegen"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:145
+#: src/Admin/ClassicEditor.php:135
 msgid "De pollkiezer kan niet worden geopend."
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:147
+#: src/Admin/ClassicEditor.php:137
 msgid "poll"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:164
-#: src/PostType/PollPostType.php:67
+#: src/Admin/ClassicEditor.php:152
+#: src/PostType/PollPostType.php:63
 msgid "Polls zoeken"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:169
+#: src/Admin/ClassicEditor.php:157
 msgid "Zoek een poll…"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:175
+#: src/Admin/ClassicEditor.php:163
 msgid "Nieuwe poll maken"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:176
+#: src/Admin/ClassicEditor.php:164
 msgid "(opent in een nieuw venster)"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:178
+#: src/Admin/ClassicEditor.php:166
 msgid "Annuleren"
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:141
+#: src/Admin/DeleteGuard.php:134
 msgid "Deze poll wordt nog gebruikt in een of meer artikelen en kan niet permanent verwijderd worden. Verwijder eerst de shortcode uit die artikelen."
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:145
+#: src/Admin/DeleteGuard.php:138
 msgid "Deze poll bevat stemmen en kan niet permanent verwijderd worden. Verwijder eerst de stemmen via de poll-editor, of laat de poll in de prullenbak staan."
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:153
-#: src/PostType/PollPostType.php:64
+#: src/Admin/DeleteGuard.php:146
+#: src/PostType/PollPostType.php:60
 msgid "Poll bewerken"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:45
+#: src/Admin/PollAdminColumns.php:43
 msgid "Vraag"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:46
-#: src/Admin/PollMetaBoxes.php:40
+#: src/Admin/PollAdminColumns.php:44
+#: src/Admin/PollMetaBoxes.php:38
 msgid "Status"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:47
-#: src/Admin/SettingsPage.php:89
+#: src/Admin/PollAdminColumns.php:45
+#: src/Admin/SettingsPage.php:81
 msgid "Stemmen"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:48
-#: src/Admin/PollMetaBoxes.php:67
+#: src/Admin/PollAdminColumns.php:46
+#: src/Admin/PollMetaBoxes.php:65
 msgid "Gebruikt in"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:49
-#: src/Admin/PollMetaBoxes.php:199
+#: src/Admin/PollAdminColumns.php:47
+#: src/Admin/PollMetaBoxes.php:197
 msgid "Shortcode"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:50
+#: src/Admin/PollAdminColumns.php:48
 msgid "Datum"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:67
+#: src/Admin/PollAdminColumns.php:65
 msgid "Open"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:67
-#: src/Admin/PollMetaBoxes.php:98
+#: src/Admin/PollAdminColumns.php:65
+#: src/Admin/PollMetaBoxes.php:96
 #: src/Frontend/PollRenderer.php:192
 #: src/Admin/classic-editor.js:202
 msgid "Gesloten"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:83
-#: src/Admin/PollMetaBoxes.php:222
+#: src/Admin/PollAdminColumns.php:81
+#: src/Admin/PollMetaBoxes.php:220
 msgid "Niet in gebruik"
 msgstr ""
 
 #. translators: %d: number of posts.
-#: src/Admin/PollAdminColumns.php:96
+#: src/Admin/PollAdminColumns.php:94
 #, php-format
 msgid "%d artikel"
 msgid_plural "%d artikelen"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/PollAdminColumns.php:108
+#: src/Admin/PollAdminColumns.php:106
 msgid "—"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:125
+#: src/Admin/PollAdminColumns.php:123
 msgid "Sluiten"
 msgstr ""
 
-#: src/Admin/PollAdminColumns.php:126
+#: src/Admin/PollAdminColumns.php:124
 msgid "Heropenen"
 msgstr ""
 
 #. translators: %d: number of polls.
-#: src/Admin/PollAdminColumns.php:165
+#: src/Admin/PollAdminColumns.php:161
 #, php-format
 msgid "%d poll gesloten."
 msgid_plural "%d polls gesloten."
@@ -159,81 +159,81 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of polls.
-#: src/Admin/PollAdminColumns.php:167
+#: src/Admin/PollAdminColumns.php:163
 #, php-format
 msgid "%d poll heropend."
 msgid_plural "%d polls heropend."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/PollEditForm.php:44
-#: src/Admin/PollEditForm.php:137
+#: src/Admin/PollEditForm.php:40
+#: src/Admin/PollEditForm.php:129
 msgid "Antwoorden"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:52
+#: src/Admin/PollEditForm.php:48
 msgid "Planning"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:60
-#: src/Admin/SettingsPage.php:74
+#: src/Admin/PollEditForm.php:56
+#: src/Admin/SettingsPage.php:66
 msgid "Weergave"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:77
+#: src/Admin/PollEditForm.php:73
 msgid "Vraag aan de lezer"
 msgstr ""
 
 #. translators: %d: minimum number of answers.
-#: src/Admin/PollEditForm.php:107
+#: src/Admin/PollEditForm.php:99
 #, php-format
 msgid "Deze poll is onvolledig en wordt niet aan lezers getoond. Geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:144
+#: src/Admin/PollEditForm.php:136
 msgid "Antwoord toevoegen"
 msgstr ""
 
 #. translators: 1: minimum number of answers, 2: maximum number of answers, 3: maximum answer length.
-#: src/Admin/PollEditForm.php:150
+#: src/Admin/PollEditForm.php:142
 #, php-format
 msgid "Min. %1$d antwoorden, max. %2$d antwoorden, max. %3$d tekens per antwoord."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:180
+#: src/Admin/PollEditForm.php:172
 msgid "Totaal aantal stemmen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:211
+#: src/Admin/PollEditForm.php:203
 msgid "Einddatum"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:222
+#: src/Admin/PollEditForm.php:214
 msgid "Datum en tijd gebruiken de tijdzone van deze site."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:225
+#: src/Admin/PollEditForm.php:217
 msgid "Deze datum is al verstreken. De poll sluit bij de eerstvolgende controle."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:290
+#: src/Admin/PollEditForm.php:280
 msgid "Site-instelling volgen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:291
+#: src/Admin/PollEditForm.php:281
 msgid "Altijd verbergen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:292
+#: src/Admin/PollEditForm.php:282
 msgid "Altijd tonen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:304
+#: src/Admin/PollEditForm.php:294
 msgid "Standaard wordt het aantal stemmen altijd getoond, omdat de drempel op 0 staat."
 msgstr ""
 
 #. translators: %s: configured minimum vote count.
-#: src/Admin/PollEditForm.php:309
+#: src/Admin/PollEditForm.php:299
 #, php-format
 msgid "Standaard wordt het aantal stemmen getoond zodra er %s stem is."
 msgid_plural "Standaard wordt het aantal stemmen getoond zodra er %s of meer stemmen zijn."
@@ -241,55 +241,55 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: answer number.
-#: src/Admin/PollEditForm.php:354
+#: src/Admin/PollEditForm.php:345
 #: src/Admin/admin.js:130
 #, php-format,js-format
 msgid "Antwoord %d"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:367
+#: src/Admin/PollEditForm.php:358
 msgid "Omhoog"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:368
+#: src/Admin/PollEditForm.php:359
 msgid "Omlaag"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:369
+#: src/Admin/PollEditForm.php:360
 msgid "Antwoord verwijderen"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:48
+#: src/Admin/PollMetaBoxes.php:46
 #: src/Frontend/PollRenderer.php:245
 msgid "Resultaten"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:58
+#: src/Admin/PollMetaBoxes.php:56
 msgid "Insluiten"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:98
+#: src/Admin/PollMetaBoxes.php:96
 msgid "Open voor stemmen"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:108
+#: src/Admin/PollMetaBoxes.php:106
 msgid "Poll sluiten"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:108
+#: src/Admin/PollMetaBoxes.php:106
 msgid "Poll heropenen"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:113
+#: src/Admin/PollMetaBoxes.php:111
 msgid "Sluiten stopt nieuwe stemmen; de resultaten blijven zichtbaar."
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:114
+#: src/Admin/PollMetaBoxes.php:112
 msgid "Heropenen maakt stemmen weer mogelijk."
 msgstr ""
 
 #. translators: 1: option label, 2: percentage, 3: vote count.
-#: src/Admin/PollMetaBoxes.php:143
+#: src/Admin/PollMetaBoxes.php:141
 #, php-format
 msgid "%1$s: %2$d procent (%3$s stem)"
 msgid_plural "%1$s: %2$d procent (%3$s stemmen)"
@@ -297,135 +297,135 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: total number of votes.
-#: src/Admin/PollMetaBoxes.php:167
+#: src/Admin/PollMetaBoxes.php:165
 #: src/Frontend/PollRenderer.php:83
 #, php-format
 msgid "Totaal aantal stemmen: %s"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:181
+#: src/Admin/PollMetaBoxes.php:179
 msgid "Alle stemmen verwijderen…"
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:184
+#: src/Admin/PollMetaBoxes.php:182
 msgid "Verwijdert alle stemmen voor deze poll. Niet terug te draaien."
 msgstr ""
 
-#: src/Admin/PollMetaBoxes.php:209
+#: src/Admin/PollMetaBoxes.php:207
 msgid "Plak deze shortcode in een artikel of pagina om de poll te tonen."
 msgstr ""
 
 #. translators: %d: post ID.
-#: src/Admin/PollMetaBoxes.php:232
+#: src/Admin/PollMetaBoxes.php:230
 #, php-format
 msgid "Artikel #%d"
 msgstr ""
 
 #. translators: %d: minimum number of answers.
-#: src/Admin/PollMetaBoxes.php:249
+#: src/Admin/PollMetaBoxes.php:245
 #, php-format
 msgid "Geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:41
-#: src/Admin/SettingsPage.php:42
-#: src/Admin/SettingsPage.php:150
+#: src/Admin/SettingsPage.php:37
+#: src/Admin/SettingsPage.php:38
+#: src/Admin/SettingsPage.php:140
 msgid "Instellingen"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:80
+#: src/Admin/SettingsPage.php:72
 msgid "Minimumaantal stemmen voor zichtbaar totaal"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:95
+#: src/Admin/SettingsPage.php:87
 msgid "Rate limiting"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:102
+#: src/Admin/SettingsPage.php:94
 msgid "Maximumaantal stemmen per periode"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:110
+#: src/Admin/SettingsPage.php:102
 msgid "Lengte van de periode (seconden)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:118
+#: src/Admin/SettingsPage.php:110
 msgid "Proxy-header"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:127
+#: src/Admin/SettingsPage.php:119
 msgid "De-installatie"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:133
+#: src/Admin/SettingsPage.php:125
 msgid "Gegevens verwijderen"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:146
+#: src/Admin/SettingsPage.php:136
 msgid "Je hebt geen rechten om deze instellingen te beheren."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:164
+#: src/Admin/SettingsPage.php:152
 msgid "Bepaal hoeveel stemmen er per IP-adres binnen een periode zijn toegestaan en welke header het IP-adres van de stemmer levert. De limiet remt misbruik af, maar is geen waterdichte garantie."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:175
+#: src/Admin/SettingsPage.php:161
 msgid "Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd bij polls die de site-instelling volgen."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:190
+#: src/Admin/SettingsPage.php:174
 msgid "Per poll kan hiervan worden afgeweken."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:199
+#: src/Admin/SettingsPage.php:181
 msgid "De polls zelf blijven altijd bestaan. Deze optie bepaalt alleen of de stemtabel, de salt, de instellingen en de pluginrechten worden verwijderd."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:212
+#: src/Admin/SettingsPage.php:192
 msgid "Rate limiting inschakelen"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:213
+#: src/Admin/SettingsPage.php:193
 msgid "Uitgeschakeld: er geldt geen limiet op stemmen per IP-adres."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:234
+#: src/Admin/SettingsPage.php:210
 msgid "Wijzigingen gelden pas voor nieuwe periodes."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:269
+#: src/Admin/SettingsPage.php:243
 msgid "Deze instelling wordt in code bepaald door het zw_poll_client_ip-filter."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:276
+#: src/Admin/SettingsPage.php:250
 msgid "Standaard gebruikt de plugin REMOTE_ADDR. Kies alleen een header die je proxy gegarandeerd zelf zet. Gebruik X-Forwarded-For alleen als je proxy die header volledig overschrijft en geen door de bezoeker meegestuurde waarden doorlaat."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:289
+#: src/Admin/SettingsPage.php:261
 msgid "Verwijder bij de-installatie ook de stemtabel, de salt, de instellingen en de pluginrechten."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:290
+#: src/Admin/SettingsPage.php:262
 msgid "Standaard blijven deze gegevens behouden."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:355
+#: src/Admin/SettingsPage.php:327
 msgid "Geen (REMOTE_ADDR)"
 msgstr ""
 
 #. translators: 1: poll ID, 2: total votes, 3: number of options.
-#: src/Cli/Commands.php:76
+#: src/Cli/Commands.php:77
 #, php-format
 msgid "Aggregaat herbouwd voor poll %1$d: %2$d stemmen over %3$d opties."
 msgstr ""
 
-#: src/Cli/Commands.php:140
+#: src/Cli/Commands.php:141
 #: src/Admin/classic-editor.js:62
 msgid "Geen polls gevonden."
 msgstr ""
 
 #. translators: %d: number of expired polls closed.
-#: src/Cli/Commands.php:170
+#: src/Cli/Commands.php:171
 #, php-format
 msgid "%d verlopen poll gesloten."
 msgid_plural "%d verlopen polls gesloten."
@@ -433,24 +433,24 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: poll ID, 2: poll title.
-#: src/Cli/Commands.php:202
+#: src/Cli/Commands.php:203
 #, php-format
 msgid "Alle stemmen voor poll %1$d (%2$s) verwijderen?"
 msgstr ""
 
 #. translators: 1: number of deleted votes, 2: poll ID.
-#: src/Cli/Commands.php:213
+#: src/Cli/Commands.php:218
 #, php-format
 msgid "%1$d stemmen verwijderd voor poll %2$d."
 msgstr ""
 
 #. translators: %d: the post ID that was supplied.
-#: src/Cli/Commands.php:232
+#: src/Cli/Commands.php:237
 #, php-format
 msgid "Geen poll gevonden met ID %d."
 msgstr ""
 
-#: src/Cron/PollCloseSweep.php:46
+#: src/Cron/PollCloseSweep.php:44
 msgid "Elke vijf minuten"
 msgstr ""
 
@@ -473,7 +473,7 @@ msgid "Deze poll bestaat niet meer."
 msgstr ""
 
 #: src/Frontend/PollRenderer.php:93
-#: src/Rest/VoteController.php:139
+#: src/Rest/VoteController.php:133
 msgid "Deze poll is gesloten."
 msgstr ""
 
@@ -482,17 +482,17 @@ msgid "Kies eerst een optie."
 msgstr ""
 
 #: src/Frontend/PollRenderer.php:95
-#: src/Rest/VoteController.php:205
+#: src/Rest/VoteController.php:197
 msgid "Je hebt al gestemd op deze poll."
 msgstr ""
 
 #: src/Frontend/PollRenderer.php:96
-#: src/Rest/VoteController.php:106
+#: src/Rest/VoteController.php:100
 msgid "Stemmen vanaf deze pagina is niet toegestaan."
 msgstr ""
 
 #: src/Frontend/PollRenderer.php:97
-#: src/Rest/VoteController.php:161
+#: src/Rest/VoteController.php:155
 msgid "Stemmen op deze poll is niet toegestaan."
 msgstr ""
 
@@ -526,92 +526,96 @@ msgstr ""
 msgid "Einduitslag"
 msgstr ""
 
-#: src/PostType/PollPostType.php:60
-#: src/PostType/PollPostType.php:70
+#: src/PostType/PollPostType.php:56
+#: src/PostType/PollPostType.php:66
 msgid "Polls"
 msgstr ""
 
-#: src/PostType/PollPostType.php:61
+#: src/PostType/PollPostType.php:57
 #: src/Admin/classic-editor.js:198
 msgid "Poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:62
-#: src/PostType/PollPostType.php:65
+#: src/PostType/PollPostType.php:58
+#: src/PostType/PollPostType.php:61
 msgid "Nieuwe poll"
 msgstr ""
 
-#: src/PostType/PollPostType.php:63
+#: src/PostType/PollPostType.php:59
 msgid "Nieuwe poll toevoegen"
 msgstr ""
 
-#: src/PostType/PollPostType.php:66
+#: src/PostType/PollPostType.php:62
 msgid "Poll bekijken"
 msgstr ""
 
-#: src/PostType/PollPostType.php:68
+#: src/PostType/PollPostType.php:64
 msgid "Geen polls gevonden"
 msgstr ""
 
-#: src/PostType/PollPostType.php:69
+#: src/PostType/PollPostType.php:65
 msgid "Geen polls gevonden in de prullenbak"
 msgstr ""
 
-#: src/PostType/PollPostType.php:71
+#: src/PostType/PollPostType.php:67
 msgid "Alle polls"
 msgstr ""
 
-#: src/Rest/AdminController.php:100
-#: src/Rest/VoteController.php:131
+#: src/Rest/AdminController.php:96
+#: src/Rest/VoteController.php:125
 msgid "Poll bestaat niet."
 msgstr ""
 
-#: src/Rest/VoteController.php:119
+#: src/Rest/VoteController.php:113
 msgid "Te veel verzoeken. Probeer het later opnieuw."
 msgstr ""
 
-#: src/Rest/VoteController.php:148
+#: src/Rest/VoteController.php:142
 msgid "Onbekende optie."
 msgstr ""
 
-#: src/Rest/VoteController.php:183
+#: src/Rest/VoteController.php:177
 msgid "Stem niet opgeslagen."
 msgstr ""
 
-#: src/Rest/VoteController.php:225
+#: src/Rest/VoteController.php:217
 msgid "WP_Error values returned from zw_poll_vote_allowed must include a status in error data; status 403 was used."
 msgstr ""
 
-#: src/Rest/VoteController.php:268
+#: src/Rest/VoteController.php:258
 msgid "The zw_poll_client_ip filter must return a valid IP address; REMOTE_ADDR was used."
 msgstr ""
 
-#: src/Shortcode/PollShortcode.php:105
+#: src/Shortcode/PollShortcode.php:97
 msgid "Kopiëren"
 msgstr ""
 
-#: src/Support/Settings.php:137
+#: src/Support/Settings.php:133
 msgid "Instellingen konden niet worden verwerkt; standaardwaarden zijn opgeslagen."
 msgstr ""
 
 #. translators: 1: settings field label, 2: submitted value, 3: stored value.
-#: src/Support/Settings.php:311
+#: src/Support/Settings.php:307
 #, php-format
 msgid "Ongeldige waarde voor %1$s (%2$s); opgeslagen als %3$s."
 msgstr ""
 
-#: src/Vote/RateLimiter.php:127
+#: src/Vote/PollReset.php:40
+msgid "Stemmen konden niet worden verwijderd."
+msgstr ""
+
+#: src/Vote/RateLimiter.php:125
 msgid "The zw_poll_rate_limit filter must return an array; defaults were used."
 msgstr ""
 
 #. translators: %s: rate limit field name, either max or window.
-#: src/Vote/RateLimiter.php:167
+#: src/Vote/RateLimiter.php:165
 #, php-format
 msgid "The zw_poll_rate_limit filter returned a non-integer %s value; the default was used."
 msgstr ""
 
 #. translators: %s: rate limit field name, either max or window.
-#: src/Vote/RateLimiter.php:176
+#: src/Vote/RateLimiter.php:174
 #, php-format
 msgid "The zw_poll_rate_limit filter returned a non-positive %s value; the default was used."
 msgstr ""

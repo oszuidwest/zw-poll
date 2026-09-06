@@ -14,6 +14,7 @@ use ZuidWest\Poll\PostType\PollPostType;
 use ZuidWest\Poll\Vote\AggregateCache;
 use ZuidWest\Poll\Vote\PollReset;
 use WP_CLI;
+use WP_Error;
 use WP_Post;
 
 /**
@@ -207,6 +208,10 @@ final class Commands
         );
 
         $result = $this->resetter->reset($poll->ID);
+        if ($result instanceof WP_Error) {
+            WP_CLI::error($result->get_error_message());
+            return;
+        }
 
         WP_CLI::success(sprintf(
             /* translators: 1: number of deleted votes, 2: poll ID. */

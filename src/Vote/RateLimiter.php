@@ -54,9 +54,6 @@ final class RateLimiter
     /**
      * Checks whether an IP hash may cast another vote in the current window.
      *
-     * Soft throttle only: transient get/set is non-atomic, so bursts may exceed
-     * the cap. Duplicate prevention stays in the cookie-token UNIQUE index.
-     *
      * @param string $ip_hash Hashed client IP.
      * @param int    $poll_id Poll post ID.
      */
@@ -69,6 +66,7 @@ final class RateLimiter
         $buckets = $this->buckets($ip_hash, $poll_id);
         $counts = [];
 
+        // Transient reads and writes are non-atomic; this is a soft throttle.
         foreach ($buckets as $index => $bucket) {
             $count = (int) get_transient($bucket['key']);
             if ($count >= $bucket['max']) {
@@ -153,9 +151,9 @@ final class RateLimiter
      *
      * @param mixed  $value   Filtered limit value.
      * @param string $field   Limit field name.
-     * @param int    $default Default value for the field.
+     * @param int    $fallback Default value for the field.
      */
-    private static function positiveInt(mixed $value, string $field, int $default): int
+    private static function positiveInt(mixed $value, string $field, int $fallback): int
     {
         $int_value = (is_int($value) || is_string($value))
             ? filter_var($value, FILTER_VALIDATE_INT)
@@ -167,7 +165,7 @@ final class RateLimiter
                 __('The zw_poll_rate_limit filter returned a non-integer %s value; the default was used.', 'zw-poll'),
                 $field
             ));
-            return $default;
+            return $fallback;
         }
 
         if ($int_value <= 0) {
@@ -176,7 +174,7 @@ final class RateLimiter
                 __('The zw_poll_rate_limit filter returned a non-positive %s value; the default was used.', 'zw-poll'),
                 $field
             ));
-            return $default;
+            return $fallback;
         }
 
         return $int_value;

@@ -37,17 +37,13 @@ final class PollShortcode
         $this->renderer = $renderer ?? PollRenderer::render(...);
     }
 
-    /**
-     * Registers shortcode hooks.
-     */
+    /** Registers shortcode hooks. */
     public function register(): void
     {
         add_action('init', [$this, 'registerShortcode']);
     }
 
-    /**
-     * Registers the shortcode with WordPress.
-     */
+    /** Registers the shortcode with WordPress. */
     public function registerShortcode(): void
     {
         add_shortcode(self::TAG, [$this, 'render']);
@@ -55,10 +51,6 @@ final class PollShortcode
 
     /**
      * Renders the shortcode.
-     *
-     * The renderer returns Interactivity API markup; the server directive pass
-     * fills the directive-bound output so cached pages show results without
-     * JavaScript. Assets are enqueued only when a poll actually renders.
      *
      * @param array<string, string>|string $atts Raw shortcode attributes.
      */

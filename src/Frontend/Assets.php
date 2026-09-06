@@ -21,17 +21,13 @@ final class Assets
     public const STYLE_HANDLE = 'zw-poll';
     public const MODULE_ID = 'zw-poll-view';
 
-    /**
-     * Registers asset hooks.
-     */
+    /** Registers asset hooks. */
     public function register(): void
     {
         add_action('init', [$this, 'registerAssets']);
     }
 
-    /**
-     * Registers the stylesheet and view module; the shortcode enqueues them on demand.
-     */
+    /** Registers the stylesheet and view module; the shortcode enqueues them on demand. */
     public function registerAssets(): void
     {
         wp_register_style(
@@ -48,14 +44,10 @@ final class Assets
         );
     }
 
-    /**
-     * Enqueues the frontend assets for a rendered poll.
-     *
-     * Shortcodes render during the_content, after wp_head; late-enqueued styles
-     * print in the footer via print_late_styles(), script modules always do.
-     */
+    /** Enqueues the frontend assets for a rendered poll. */
     public static function enqueue(): void
     {
+        // Shortcodes render after wp_head; WordPress prints late styles in the footer.
         wp_enqueue_style(self::STYLE_HANDLE);
         wp_enqueue_script_module(self::MODULE_ID);
     }

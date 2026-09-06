@@ -20,9 +20,7 @@ final class PollCloseSweep
     public const EVENT = 'zw_poll_close_expired';
     private const SCHEDULE = 'zw_poll_five_minutes';
 
-    /**
-     * Registers cron and status-change hooks.
-     */
+    /** Registers cron and status-change hooks. */
     public function register(): void
     {
         add_filter('cron_schedules', [$this, 'addSchedule']);
@@ -49,9 +47,7 @@ final class PollCloseSweep
         return $schedules;
     }
 
-    /**
-     * Ensures the per-site recurring event exists.
-     */
+    /** Ensures the per-site recurring event exists. */
     public function schedule(): void
     {
         if (wp_next_scheduled(self::EVENT) === false) {
@@ -59,9 +55,7 @@ final class PollCloseSweep
         }
     }
 
-    /**
-     * Adapts the integer-returning sweep to a void action callback.
-     */
+    /** Adapts the integer-returning sweep to a void action callback. */
     public function runScheduledSweep(): void
     {
         $this->sweep();

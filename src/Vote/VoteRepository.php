@@ -24,9 +24,7 @@ final class VoteRepository implements VoteCounter
      */
     public function __construct(private readonly wpdb $db) {}
 
-    /**
-     * Returns the fully-qualified votes table name.
-     */
+    /** Returns the fully-qualified votes table name. */
     public function table(): string
     {
         return $this->db->prefix . Activation::VOTES_TABLE;
@@ -34,10 +32,6 @@ final class VoteRepository implements VoteCounter
 
     /**
      * Checks the anonymous dedup key for a poll.
-     *
-     * The cache-safe frontend sends no REST nonce, so votes have no reliable
-     * user ID. IP hashes are stored for audit only; shared NATs make them unsafe
-     * as dedup keys. Same-token races are handled by the database UNIQUE index.
      *
      * @param int    $poll_id      Poll post ID.
      * @param string $cookie_token Anonymous voter token.
@@ -88,11 +82,10 @@ final class VoteRepository implements VoteCounter
      *
      * @param int $poll_id Poll post ID.
      */
-    public function deleteAllForPoll(int $poll_id): int
+    public function deleteAllForPoll(int $poll_id): int|false
     {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Delete from plugin-owned votes table.
-        $result = $this->db->delete($this->table(), ['poll_id' => $poll_id], ['%d']);
-        return is_int($result) ? $result : 0;
+        return $this->db->delete($this->table(), ['poll_id' => $poll_id], ['%d']);
     }
 
     /**
