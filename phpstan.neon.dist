@@ -1,0 +1,17 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - src
+        - zw-poll.php
+        - uninstall.php
+    tmpDir: .phpstan-cache
+    # Defines the ZW_POLL_* constants (set in zw-poll.php at runtime).
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    # WP-CLI classes/functions are not part of the WordPress stubs.
+    scanFiles:
+        - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
+        - vendor/php-stubs/wp-cli-stubs/wp-cli-commands-stubs.php

@@ -1,0 +1,45 @@
+/*
+ * ZuidWest Poll shortcode preview inside the TinyMCE iframe.
+ */
+
+.zw-poll-mce {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	padding: 14px 16px;
+	border: 1px solid #dcdcde;
+	border-left: 4px solid #2271b1;
+	border-radius: 3px;
+	background: #f6f7f7;
+}
+
+.zw-poll-mce__label {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	color: #2271b1;
+	white-space: nowrap;
+}
+
+.zw-poll-mce__question {
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.zw-poll-mce__closed {
+	font-size: 11px;
+	padding: 1px 6px;
+	border-radius: 3px;
+	background: #e8e8e8;
+	color: #555;
+	white-space: nowrap;
+}
+
+.zw-poll-mce--missing {
+	border-left-color: #d63638;
+}
+
+.zw-poll-mce--missing .zw-poll-mce__label {
+	color: #d63638;
+}

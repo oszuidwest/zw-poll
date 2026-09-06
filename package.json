@@ -1,0 +1,32 @@
+{
+    "name": "zw-poll",
+    "private": true,
+    "description": "Development tooling for the ZuidWest Poll plugin (lint, Playground, Playwright).",
+    "license": "GPL-2.0-or-later",
+    "scripts": {
+        "build:plugin": "scripts/build-plugin.sh",
+        "format": "wp-scripts format src",
+        "lint": "npm run lint:js && npm run lint:css",
+        "lint:js": "wp-scripts lint-js \"src/**/*.js\"",
+        "lint:css": "wp-scripts lint-style \"src/**/*.css\"",
+        "security": "node scripts/npm-audit.mjs",
+        "playground": "wp-playground-cli server --port=9400 --workers=1 --mount=./:/wordpress/wp-content/plugins/zw-poll --blueprint=./playground/blueprint.json",
+        "test:e2e": "playwright test",
+        "make-pot": "scripts/pot.sh"
+    },
+    "devDependencies": {
+        "@axe-core/playwright": "^4.13.0",
+        "@playwright/test": "^1.62.1",
+        "@wordpress/scripts": "^34.2.0",
+        "@wp-playground/cli": "^3.1.52"
+    },
+    "overrides": {
+        "linkify-it": "^5.0.2",
+        "markdown-it": "^14.3.0",
+        "markdownlint-cli": {
+            "minimatch": "^3.1.5"
+        },
+        "qs": "6.16.0",
+        "serialize-javascript": "^7.0.7"
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+    "meta": {
+        "title": "ZuidWest Poll demo",
+        "author": "oszuidwest"
+    },
+    "landingPage": "/poll-demo/",
+    "preferredVersions": { "php": "8.3", "wp": "latest" },
+    "siteOptions": {
+        "blogname": "ZuidWest Poll demo",
+        "permalink_structure": "/%postname%/",
+        "classic-editor-replace": "classic",
+        "classic-editor-allow-users": "allow"
+    },
+    "steps": [
+        {
+            "step": "installPlugin",
+            "pluginData": {
+                "resource": "wordpress.org/plugins",
+                "slug": "classic-editor"
+            }
+        },
+        {
+            "step": "activatePlugin",
+            "pluginPath": "classic-editor/classic-editor.php"
+        },
+        {
+            "step": "activatePlugin",
+            "pluginPath": "zw-poll/zw-poll.php"
+        },
+        {
+            "step": "runPHP",
+            "code": "<?php require '/wordpress/wp-load.php'; if (class_exists('ZuidWest\\Poll\\Activation')) { ZuidWest\\Poll\\Activation::activate(); } if (get_page_by_path('poll-demo')) { return; } $options = [['id' => wp_generate_uuid4(), 'label' => 'Espresso'], ['id' => wp_generate_uuid4(), 'label' => 'Cappuccino'], ['id' => wp_generate_uuid4(), 'label' => 'Verse muntthee']]; $poll_id = wp_insert_post(['post_type' => 'zw_poll', 'post_status' => 'publish', 'post_title' => 'Wat drink jij het liefst op de redactie?']); update_post_meta($poll_id, '_zw_poll_options', $options); update_post_meta($poll_id, '_zw_poll_status', 'open'); wp_insert_post(['post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Poll demo', 'post_name' => 'poll-demo', 'post_content' => '[zw_poll id=\"' . $poll_id . '\"]']); $closed_options = [['id' => wp_generate_uuid4(), 'label' => 'Ja'], ['id' => wp_generate_uuid4(), 'label' => 'Nee']]; $closed_poll_id = wp_insert_post(['post_type' => 'zw_poll', 'post_status' => 'publish', 'post_title' => 'Bevalt deze opmaak?']); update_post_meta($closed_poll_id, '_zw_poll_options', $closed_options); update_post_meta($closed_poll_id, '_zw_poll_status', 'closed'); update_post_meta($closed_poll_id, '_zw_poll_aggregate', ['counts' => [$closed_options[0]['id'] => 3, $closed_options[1]['id'] => 2], 'total' => 5, 'updated_at' => gmdate('Y-m-d H:i:s')]); wp_insert_post(['post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Poll gesloten demo', 'post_name' => 'poll-gesloten-demo', 'post_content' => '[zw_poll id=\"' . $closed_poll_id . '\"]']); flush_rewrite_rules();"
+        }
+    ]
+}

@@ -1,0 +1,57 @@
+{
+    "name": "oszuidwest/zw-poll",
+    "description": "Poll voor WordPress: laat lezers stemmen via een shortcode in artikelen en pagina's.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.3"
+    },
+    "require-dev": {
+        "brain/monkey": "^2.6",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "mockery/mockery": "^1.6",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "php-stubs/wp-cli-stubs": "^2.11",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^12.0",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "wp-coding-standards/wpcs": "^3.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "ZuidWest\\Poll\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ZuidWest\\Poll\\Tests\\": "tests/phpunit/"
+        },
+        "exclude-from-classmap": [
+            "/tests/phpunit/bootstrap.php"
+        ]
+    },
+    "scripts": {
+        "test": "phpunit",
+        "coverage": [
+            "@test --coverage-clover=coverage.xml",
+            "@php scripts/check-coverage.php coverage.xml"
+        ],
+        "stan": "phpstan analyse --memory-limit=1G",
+        "lint": "phpcs",
+        "lint:fix": "phpcbf",
+        "quality": [
+            "@lint",
+            "@stan",
+            "@test"
+        ],
+        "security": "composer audit --locked --no-interaction"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<ruleset name="ZuidWest Poll">
+    <description>WordPress coding standards for the ZuidWest Poll plugin.</description>
+
+    <file>src</file>
+    <file>zw-poll.php</file>
+    <file>uninstall.php</file>
+    <file>tests/phpunit</file>
+
+    <arg name="extensions" value="php"/>
+    <arg name="basepath" value="."/>
+    <arg name="colors"/>
+    <arg name="parallel" value="8"/>
+    <arg value="sp"/>
+
+    <config name="testVersion" value="8.3-"/>
+
+    <!--
+        Modern PSR-4, strict-types codebase: skip classic WordPress style sniffs
+        that do not fit (file names, Yoda conditions, array alignment). Keep WPCS
+        focused on defects plus required docs: escaping, sanitisation, SQL,
+        i18n, prefixes, and WordPress-Docs.
+    -->
+    <rule ref="WordPress-Docs">
+        <exclude-pattern>tests/phpunit/*</exclude-pattern>
+    </rule>
+
+    <rule ref="PHPCompatibilityWP"/>
+
+    <rule ref="WordPress.Security"/>
+    <rule ref="WordPress.Security.EscapeOutput">
+        <properties>
+            <!-- Core helpers that return output already escaped by WordPress. -->
+            <property name="customAutoEscapedFunctions" type="array">
+                <element value="wp_interactivity_data_wp_context"/>
+            </property>
+        </properties>
+    </rule>
+    <rule ref="WordPress.Security.NonceVerification">
+        <exclude-pattern>tests/phpunit/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Security.ValidatedSanitizedInput">
+        <exclude-pattern>tests/phpunit/*</exclude-pattern>
+    </rule>
+
+    <rule ref="WordPress.DB">
+        <exclude-pattern>tests/phpunit/*</exclude-pattern>
+    </rule>
+
+    <rule ref="WordPress.WP.I18n">
+        <exclude-pattern>tests/phpunit/*</exclude-pattern>
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="zw-poll"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <exclude-pattern>tests/phpunit/*</exclude-pattern>
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="zw_poll"/>
+                <element value="ZW_POLL"/>
+                <element value="ZuidWest\Poll"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!--
+        6.9 is the supported baseline, not the technical floor; the plugin still
+        runs from 6.5. Keep this aligned with zw-poll.php, README.md, and the
+        CI matrix.
+    -->
+    <config name="minimum_wp_version" value="6.9"/>
+</ruleset>

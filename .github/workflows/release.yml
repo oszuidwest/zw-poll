@@ -1,0 +1,185 @@
+---
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Create a missing release without requiring a version bump'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  decide:
+    name: Decide whether to release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_needed: ${{ steps.decide.outputs.release_needed }}
+      tag_exists: ${{ steps.decide.outputs.tag_exists }}
+    steps:
+      - name: Require the main branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases must be dispatched from the main branch."
+          exit 1
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Extract and validate version
+        id: version
+        run: echo "version=$(scripts/build-plugin.sh --print-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to release
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          LATEST_TAG=$(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -1 || true)
+          LATEST_BARE="${LATEST_TAG#v}"
+          version_gt() {
+            test "$(printf '%s\n' "$@" | sort -V | head -1)" != "$1"
+          }
+
+          TAG_EXISTS=false
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            TAG_EXISTS=true
+            TAG_COMMIT=$(git rev-list -n 1 "$VERSION")
+            if [ "$TAG_COMMIT" != "$GITHUB_SHA" ]; then
+              echo "::error::Tag $VERSION exists on $TAG_COMMIT, not $GITHUB_SHA."
+              exit 1
+            fi
+          fi
+
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "::error::GitHub Release $VERSION already exists and will not be overwritten."
+            exit 1
+          fi
+
+          if [ "$FORCE" = true ]; then
+            RELEASE_NEEDED=true
+            REASON="forced recovery of a missing release"
+          elif [ -z "$LATEST_TAG" ]; then
+            RELEASE_NEEDED=true
+            REASON="first release"
+          elif version_gt "$VERSION" "$LATEST_BARE"; then
+            RELEASE_NEEDED=true
+            REASON="version bumped from $LATEST_TAG to $VERSION"
+          else
+            RELEASE_NEEDED=false
+            REASON="no version bump (latest: $LATEST_TAG, header: $VERSION)"
+          fi
+
+          echo "Release decision: $RELEASE_NEEDED ($REASON)"
+          echo "release_needed=$RELEASE_NEEDED" >> "$GITHUB_OUTPUT"
+          echo "tag_exists=$TAG_EXISTS" >> "$GITHUB_OUTPUT"
+
+      - name: Report skipped release
+        if: steps.decide.outputs.release_needed != 'true'
+        run: echo "::notice::Skipping release because the plugin version was not bumped."
+
+  release:
+    name: Release
+    needs: decide
+    if: needs.decide.outputs.release_needed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.decide.outputs.version }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2, wp-cli
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --no-progress --prefer-dist --no-interaction --optimize-autoloader
+          npm ci
+
+      - name: Run release quality gate
+        run: |
+          composer validate --strict --no-check-publish
+          composer security
+          composer quality
+          npm run security
+          npm run lint
+
+      - name: Verify translation template
+        run: scripts/pot.sh --check
+
+      - name: WordPress Plugin Check
+        uses: ./.github/actions/plugin-check
+
+      - name: Install gettext when translations require compilation
+        run: |
+          if compgen -G 'languages/*.po' > /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y gettext
+          fi
+
+      - name: Build allowlisted release package
+        run: npm run build:plugin
+
+      - name: Verify release package
+        run: |
+          ZIP="dist/zw-poll-${VERSION}.zip"
+          test -s "$ZIP"
+          test -s "${ZIP}.sha256"
+          zipinfo -1 "$ZIP" > /tmp/package-files.txt
+          grep -qx 'zw-poll/zw-poll.php' /tmp/package-files.txt
+          grep -qx 'zw-poll/uninstall.php' /tmp/package-files.txt
+          grep -qx 'zw-poll/LICENSE' /tmp/package-files.txt
+          grep -qx 'zw-poll/README.md' /tmp/package-files.txt
+          grep -q '^zw-poll/src/' /tmp/package-files.txt
+          grep -qx 'zw-poll/src/Frontend/view.js' /tmp/package-files.txt
+          grep -qx 'zw-poll/src/Frontend/style.css' /tmp/package-files.txt
+          grep -q '^zw-poll/languages/' /tmp/package-files.txt
+          if grep -Eq '/(tests|vendor|node_modules|playground|scripts|\.github)/|/(composer|package|phpcs|phpstan|phpunit)' /tmp/package-files.txt; then
+            echo "::error::Development files found in the release package."
+            cat /tmp/package-files.txt
+            exit 1
+          fi
+
+      - name: Tag the validated commit
+        if: needs.decide.outputs.tag_exists != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "refs/tags/$VERSION"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ZIP="dist/zw-poll-${VERSION}.zip"
+          ARGS=("$VERSION" "$ZIP" "${ZIP}.sha256" --title "$VERSION" --generate-notes --verify-tag)
+          if [[ "$VERSION" == *-* ]]; then
+            ARGS+=(--prerelease)
+          fi
+          gh release create "${ARGS[@]}"

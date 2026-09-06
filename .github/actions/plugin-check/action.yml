@@ -1,0 +1,40 @@
+---
+name: WordPress Plugin Check
+description: Run the WordPress Plugin Check against the checked-out plugin in wp-env.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version-file: '.nvmrc'
+
+    - name: Configure the Plugin Check environment
+      shell: bash
+      run: |
+        cat > .wp-env.json <<'JSON'
+        {
+          "core": null,
+          "port": 8880,
+          "testsEnvironment": false,
+          "mappings": {
+            "wp-content/plugins/zw-poll": "."
+          }
+        }
+        JSON
+
+    - name: Install Plugin Check tooling
+      shell: bash
+      run: npm install --global @wordpress/env@11.14.0
+
+    - name: Run Plugin Check
+      shell: bash
+      run: |
+        wp-env start --update
+        wp-env run cli wp plugin install plugin-check --version=2.1.0 --activate
+        wp-env run cli wp plugin activate zw-poll
+        wp-env run cli wp plugin check zw-poll \
+          --slug=zw-poll \
+          --exclude-files=phpstan-bootstrap.php \
+          --exclude-directories=node_modules,playground,scripts,tests,vendor \
+          --exclude-checks=late_escaping,plugin_review_phpcs,file_type,plugin_readme

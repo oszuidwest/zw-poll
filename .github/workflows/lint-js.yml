@@ -1,0 +1,50 @@
+---
+name: JS Quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lint-js.yml'
+      - 'src/**/*.js'
+      - 'src/**/*.css'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/npm-audit.mjs'
+      - 'docs/npm-audit.md'
+  pull_request:
+    paths:
+      - '.github/workflows/lint-js.yml'
+      - 'src/**/*.js'
+      - 'src/**/*.css'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/npm-audit.mjs'
+      - 'docs/npm-audit.md'
+  workflow_dispatch:
+  schedule:
+    - cron: '24 6 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint and audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run security
+      - run: npm run lint
