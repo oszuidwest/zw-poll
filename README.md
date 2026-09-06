@@ -59,9 +59,9 @@ remain valid.
 Each answer can optionally use an image from the WordPress media library. The
 card layout is enabled only when every answer has a valid image attachment;
 partial or stale image sets safely retain the existing text layout. Two and
-four answers use two columns, other counts use three columns, and mobile uses
-one column. Images are decorative because the adjacent answer label already
-provides the accessible name.
+four answers use two columns, other counts use three columns, and narrower
+screens drop to two and then one column. Images are decorative because the
+adjacent answer label already provides the accessible name.
 
 Shortcode usage is listed under **Used in** and is taken into account by the
 delete guard.

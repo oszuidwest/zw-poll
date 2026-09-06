@@ -63,7 +63,19 @@ final class PollRenderer
             );
         }
         // PollPostType::options() guarantees the keys consumed below.
-        $has_images = PollPostType::hasCompleteImages($options);
+        // Image cards are all-or-nothing; the form card and the result bar
+        // share one core-generated markup string per option.
+        $media = [];
+        if (PollPostType::hasCompleteImages($options)) {
+            foreach ($options as $opt) {
+                $media[$opt['id']] = '<span class="zw-poll__media">' . wp_get_attachment_image(
+                    $opt['imageId'],
+                    'medium_large',
+                    false,
+                    ['class' => 'zw-poll__image', 'alt' => '', 'loading' => 'lazy']
+                ) . '</span>';
+            }
+        }
 
         $aggregate = AggregateCache::forDisplay($poll_id, $options);
         $counts = $aggregate['counts'];
@@ -145,7 +157,7 @@ final class PollRenderer
         $results_id = $instance_id . '-results';
         $radio_name = $instance_id . '-option';
         $wrapper_class = 'zw-poll'
-            . ($has_images ? ' zw-poll--images ' . self::imageLayoutClass(count($options)) : '')
+            . ($media !== [] ? ' zw-poll--images ' . self::imageLayoutClass(count($options)) : '')
             . ($is_closed ? ' zw-poll--closed' : '');
 
         ob_start();
@@ -204,11 +216,10 @@ final class PollRenderer
             </legend>
             <?php foreach ($options as $opt) : ?>
                 <label class="zw-poll__option">
-                    <?php if ($has_images) : ?>
-                        <span class="zw-poll__option-media">
-                            <?php self::renderOptionImage($opt['imageId'], 'zw-poll__option-image'); ?>
-                        </span>
-                    <?php endif; ?>
+                    <?php
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
+                    echo $media[$opt['id']] ?? '';
+                    ?>
                     <input
                         type="radio"
                         name="<?php echo esc_attr($radio_name); ?>"
@@ -263,11 +274,10 @@ final class PollRenderer
                 <?php echo wp_interactivity_data_wp_context(['optionId' => $opt_id]); ?>
                 data-wp-class--is-selected="state.isVotedOption"
             >
-                <?php if ($has_images) : ?>
-                    <span class="zw-poll__bar-media">
-                        <?php self::renderOptionImage($opt['imageId'], 'zw-poll__bar-image'); ?>
-                    </span>
-                <?php endif; ?>
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
+                echo $media[$opt_id] ?? '';
+                ?>
                 <span class="zw-poll__bar-label">
                     <span class="zw-poll__bar-label-text">
                         <?php echo esc_html($opt['label']); ?>
@@ -335,27 +345,6 @@ final class PollRenderer
 </aside>
 <?php
         return (string) ob_get_clean();
-    }
-
-    /**
-     * Renders core-generated responsive image markup for an option.
-     *
-     * @param int    $image_id Attachment ID.
-     * @param string $class    Image element class.
-     */
-    private static function renderOptionImage(int $image_id, string $class): void
-    {
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
-        echo wp_get_attachment_image(
-            $image_id,
-            'medium_large',
-            false,
-            [
-                'class' => $class,
-                'alt' => '',
-                'loading' => 'lazy',
-            ]
-        );
     }
 
     /**

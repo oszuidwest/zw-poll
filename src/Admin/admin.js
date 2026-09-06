@@ -122,30 +122,20 @@
 			const preview = row.querySelector(
 				'.zw-poll-edit-option__preview'
 			);
-			const choose = row.querySelector(
-				'.zw-poll-edit-option__choose-image'
-			);
 			const remove = row.querySelector(
 				'.zw-poll-edit-option__remove-image'
 			);
-			const id = Number( attachment?.id ) || 0;
+			const id = attachment?.id ?? 0;
 
 			imageId.value = String( id );
 			preview.replaceChildren();
 			if ( id > 0 ) {
 				const image = document.createElement( 'img' );
 				image.className = 'zw-poll-edit-option__thumbnail';
-				image.src =
-					attachment.sizes?.thumbnail?.url ||
-					attachment.sizes?.medium?.url ||
-					attachment.url;
+				image.src = attachment.sizes?.thumbnail?.url ?? attachment.url;
 				image.alt = '';
 				preview.append( image );
 			}
-			choose.textContent =
-				id > 0
-					? __( 'Afbeelding vervangen', 'zw-poll' )
-					: __( 'Afbeelding kiezen', 'zw-poll' );
 			remove.hidden = id === 0;
 		};
 

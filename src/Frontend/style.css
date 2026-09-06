@@ -192,26 +192,13 @@
 		border-color 160ms ease;
 }
 
-.zw-poll--images .zw-poll__options {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-}
-
 .zw-poll--images .zw-poll__option {
+	flex: 0 0 var(--zw-poll-image-card-basis);
 	grid-template-columns: auto minmax(0, 1fr);
 	align-content: start;
 	min-height: 0;
 	padding: 0 0 0.75em;
 	overflow: hidden;
-}
-
-.zw-poll--image-layout-three-column .zw-poll__option {
-	flex: 0 0 calc((100% - 1em) / 3);
-}
-
-.zw-poll--image-layout-two-column .zw-poll__option {
-	flex: 0 0 calc((100% - 0.5em) / 2);
 }
 
 .zw-poll__option input[type="radio"] {
@@ -237,17 +224,18 @@
 	font-weight: var(--zw-poll-font-weight-bold);
 }
 
-.zw-poll__option-media {
+/* Spans the option card's grid and the result bar's flex column alike. */
+.zw-poll__media {
 	display: block;
 	grid-column: 1 / -1;
+	flex: 0 0 auto;
 	width: 100%;
 	aspect-ratio: var(--zw-poll-image-ratio);
 	overflow: hidden;
 	background: var(--zw-poll-image-background);
 }
 
-.zw-poll .zw-poll__option-image,
-.zw-poll .zw-poll__bar-image {
+.zw-poll .zw-poll__image {
 	display: block;
 	width: 100%;
 	height: 100%;
@@ -393,6 +381,24 @@
 	white-space: nowrap;
 }
 
+/*
+ * Image cards. The layout modifier sets the column count once; option cards
+ * and result bars share the width derived from it, minus the containers'
+ * 0.5em gap. Flex (not grid) so an orphan last row stays centred.
+ */
+.zw-poll--images {
+	--zw-poll-image-card-basis: calc((100% - (var(--zw-poll-image-columns) - 1) * 0.5em) / var(--zw-poll-image-columns));
+}
+
+.zw-poll--image-layout-two-column {
+	--zw-poll-image-columns: 2;
+}
+
+.zw-poll--image-layout-three-column {
+	--zw-poll-image-columns: 3;
+}
+
+.zw-poll--images .zw-poll__options,
 .zw-poll--images .zw-poll__results {
 	display: flex;
 	flex-wrap: wrap;
@@ -400,29 +406,13 @@
 }
 
 .zw-poll--images .zw-poll__bar {
+	flex: 0 0 var(--zw-poll-image-card-basis);
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
 	gap: 0.5em;
 	padding: 0;
 	overflow: hidden;
-}
-
-.zw-poll--image-layout-three-column .zw-poll__bar {
-	flex: 0 0 calc((100% - 1em) / 3);
-}
-
-.zw-poll--image-layout-two-column .zw-poll__bar {
-	flex: 0 0 calc((100% - 0.5em) / 2);
-}
-
-.zw-poll__bar-media {
-	display: block;
-	flex: 0 0 auto;
-	width: 100%;
-	aspect-ratio: var(--zw-poll-image-ratio);
-	overflow: hidden;
-	background: var(--zw-poll-image-background);
 }
 
 .zw-poll--images .zw-poll__bar-label {
@@ -507,17 +497,15 @@
 
 @media (max-width: 760px) {
 
-	.zw-poll--image-layout-three-column .zw-poll__option,
-	.zw-poll--image-layout-three-column .zw-poll__bar {
-		flex-basis: calc((100% - 0.5em) / 2);
+	.zw-poll--image-layout-three-column {
+		--zw-poll-image-columns: 2;
 	}
 }
 
 @media (max-width: 520px) {
 
-	.zw-poll--images .zw-poll__option,
-	.zw-poll--images .zw-poll__bar {
-		flex-basis: 100%;
+	.zw-poll--images {
+		--zw-poll-image-columns: 1;
 	}
 
 	.zw-poll--images .zw-poll__option {
@@ -533,12 +521,15 @@
 		padding-right: 0.625em;
 		font-size: 0.925em;
 	}
+}
 
-	.zw-poll:not(.zw-poll--images) .zw-poll__bar {
+@media (max-width: 480px) {
+
+	.zw-poll__bar {
 		grid-template-columns: 1fr;
 	}
 
-	.zw-poll:not(.zw-poll--images) .zw-poll__bar-value {
+	.zw-poll__bar-value {
 		grid-column: 1;
 		opacity: 0.85;
 	}

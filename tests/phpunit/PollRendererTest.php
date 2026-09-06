@@ -59,6 +59,7 @@ final class PollRendererTest extends TestCase
             ) . '"'
         );
         Functions\when('wp_unique_id')->justReturn('zw-poll-42-test');
+        Functions\when('_prime_post_caches')->justReturn(null);
         Functions\when('get_option')->alias(
             static fn (string $option, mixed $default = []): mixed => $default
         );
@@ -200,7 +201,6 @@ final class PollRendererTest extends TestCase
     #[Test]
     public function complete_images_render_as_clickable_cards_and_result_images(): void
     {
-        Functions\when('_prime_post_caches')->justReturn(null);
         Functions\when('wp_attachment_is_image')->justReturn(true);
         Functions\when('wp_get_attachment_image')->alias(
             static fn (int $id, string $size, bool $icon, array $attrs): string => sprintf(
@@ -219,10 +219,14 @@ final class PollRendererTest extends TestCase
 
         $this->assertStringContainsString('zw-poll--images', $html);
         $this->assertStringContainsString('zw-poll--image-layout-two-column', $html);
-        $this->assertSame(2, substr_count($html, 'class="zw-poll__option-image"'));
-        $this->assertSame(2, substr_count($html, 'class="zw-poll__bar-image"'));
+        // One image per option in the form and again in the results.
+        $this->assertSame(4, substr_count($html, 'class="zw-poll__image"'));
         $this->assertMatchesRegularExpression(
-            '/class="zw-poll__option".*class="zw-poll__option-media".*type="radio".*Optie A/s',
+            '/class="zw-poll__option".*class="zw-poll__media".*type="radio".*Optie A/s',
+            $html
+        );
+        $this->assertMatchesRegularExpression(
+            '/class="zw-poll__bar".*class="zw-poll__media".*zw-poll__bar-label/s',
             $html
         );
     }
@@ -230,7 +234,6 @@ final class PollRendererTest extends TestCase
     #[Test]
     public function partial_or_stale_images_fall_back_to_the_text_layout(): void
     {
-        Functions\when('_prime_post_caches')->justReturn(null);
         Functions\when('wp_attachment_is_image')->alias(static fn (int $id): bool => $id === 101);
         Functions\expect('wp_get_attachment_image')->never();
 
@@ -246,7 +249,7 @@ final class PollRendererTest extends TestCase
         ] as $options) {
             $html = $this->renderPoll('open', options: $options);
             $this->assertStringNotContainsString('zw-poll--images', $html);
-            $this->assertStringNotContainsString('zw-poll__option-media', $html);
+            $this->assertStringNotContainsString('zw-poll__media', $html);
         }
     }
 

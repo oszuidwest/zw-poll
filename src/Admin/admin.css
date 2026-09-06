@@ -170,7 +170,6 @@
 }
 
 .zw-poll-edit-option__image {
-	order: 1;
 	display: flex;
 	flex: 1 0 100%;
 	align-items: center;

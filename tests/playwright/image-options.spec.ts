@@ -33,18 +33,18 @@ test.describe( 'poll option images', () => {
 
 		const options = poll.locator( '.zw-poll__option' );
 		await expect( options ).toHaveCount( 3 );
-		await expect( options.locator( '.zw-poll__option-image' ) ).toHaveCount( 3 );
+		await expect( options.locator( '.zw-poll__image' ) ).toHaveCount( 3 );
 		for ( const image of await options.locator( 'img' ).all() ) {
 			await expect( image ).toHaveAttribute( 'alt', '' );
 		}
 
-		await options.first().locator( '.zw-poll__option-media' ).click();
+		await options.first().locator( '.zw-poll__media' ).click();
 		await expect( options.first().locator( 'input[type="radio"]' ) ).toBeChecked();
 		await poll.locator( '.zw-poll__submit' ).click();
 
 		const results = poll.locator( '.zw-poll__results' );
 		await expect( results ).toBeVisible();
-		await expect( results.locator( '.zw-poll__bar-image' ) ).toHaveCount( 3 );
+		await expect( results.locator( '.zw-poll__image' ) ).toHaveCount( 3 );
 		await expect( results.locator( '.zw-poll__bar-value' ).first() ).toHaveText( /^\d+%$/ );
 	} );
 
@@ -52,7 +52,7 @@ test.describe( 'poll option images', () => {
 		await page.goto( '/poll-afbeeldingen-fallback/' );
 		const poll = page.locator( '.zw-poll' );
 		await expect( poll ).not.toHaveClass( /zw-poll--images/ );
-		await expect( poll.locator( '.zw-poll__option-media' ) ).toHaveCount( 0 );
+		await expect( poll.locator( '.zw-poll__media' ) ).toHaveCount( 0 );
 		await expect( poll.locator( 'img' ) ).toHaveCount( 0 );
 	} );
 } );

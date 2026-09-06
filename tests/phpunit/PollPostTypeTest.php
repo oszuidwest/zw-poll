@@ -119,8 +119,7 @@ final class PollPostTypeTest extends TestCase
         ];
 
         $this->assertTrue(PollPostType::hasCompleteImages($complete));
-        $this->assertTrue(PollPostType::hasAnyImages($complete));
-        $this->assertFalse(PollPostType::hasCompleteImages([$complete[0], ['id' => 'b', 'label' => 'B']]));
+        $this->assertFalse(PollPostType::hasCompleteImages([$complete[0], ['id' => 'b', 'label' => 'B', 'imageId' => 0]]));
         $this->assertFalse(PollPostType::hasCompleteImages([$complete[0], ['id' => 'b', 'label' => 'B', 'imageId' => 999]]));
         $this->assertFalse(PollPostType::hasCompleteImages([]));
     }

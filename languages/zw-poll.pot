@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-06T21:06:58+00:00\n"
+"POT-Creation-Date: 2026-09-06T21:29:35+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -120,7 +120,7 @@ msgstr ""
 
 #: src/Admin/PollAdminColumns.php:65
 #: src/Admin/PollMetaBoxes.php:96
-#: src/Frontend/PollRenderer.php:195
+#: src/Frontend/PollRenderer.php:207
 #: src/Admin/classic-editor.js:202
 msgid "Gesloten"
 msgstr ""
@@ -167,7 +167,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/PollEditForm.php:40
-#: src/Admin/PollEditForm.php:141
+#: src/Admin/PollEditForm.php:138
 msgid "Antwoorden"
 msgstr ""
 
@@ -194,50 +194,50 @@ msgstr ""
 msgid "Afbeeldingen worden pas getoond als alle antwoorden een geldige afbeelding hebben."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:148
+#: src/Admin/PollEditForm.php:145
 msgid "Antwoord toevoegen"
 msgstr ""
 
 #. translators: 1: minimum number of answers, 2: maximum number of answers, 3: maximum answer length.
-#: src/Admin/PollEditForm.php:154
+#: src/Admin/PollEditForm.php:151
 #, php-format
 msgid "Min. %1$d antwoorden, max. %2$d antwoorden, max. %3$d tekens per antwoord."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:184
+#: src/Admin/PollEditForm.php:181
 msgid "Totaal aantal stemmen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:215
+#: src/Admin/PollEditForm.php:212
 msgid "Einddatum"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:226
+#: src/Admin/PollEditForm.php:223
 msgid "Datum en tijd gebruiken de tijdzone van deze site."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:229
+#: src/Admin/PollEditForm.php:226
 msgid "Deze datum is al verstreken. De poll sluit bij de eerstvolgende controle."
 msgstr ""
 
-#: src/Admin/PollEditForm.php:292
+#: src/Admin/PollEditForm.php:289
 msgid "Site-instelling volgen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:293
+#: src/Admin/PollEditForm.php:290
 msgid "Altijd verbergen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:294
+#: src/Admin/PollEditForm.php:291
 msgid "Altijd tonen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:306
+#: src/Admin/PollEditForm.php:303
 msgid "Standaard wordt het aantal stemmen altijd getoond, omdat de drempel op 0 staat."
 msgstr ""
 
 #. translators: %s: configured minimum vote count.
-#: src/Admin/PollEditForm.php:311
+#: src/Admin/PollEditForm.php:308
 #, php-format
 msgid "Standaard wordt het aantal stemmen getoond zodra er %s stem is."
 msgid_plural "Standaard wordt het aantal stemmen getoond zodra er %s of meer stemmen zijn."
@@ -245,41 +245,35 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: answer number.
-#: src/Admin/PollEditForm.php:359
-#: src/Admin/admin.js:166
+#: src/Admin/PollEditForm.php:356
+#: src/Admin/admin.js:156
 #, php-format,js-format
 msgid "Antwoord %d"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:361
-#: src/Admin/admin.js:147
-msgid "Afbeelding vervangen"
-msgstr ""
-
-#: src/Admin/PollEditForm.php:362
-#: src/Admin/admin.js:148
-#: src/Admin/admin.js:206
-msgid "Afbeelding kiezen"
-msgstr ""
-
-#: src/Admin/PollEditForm.php:381
+#: src/Admin/PollEditForm.php:375
 msgid "Omhoog"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:382
+#: src/Admin/PollEditForm.php:376
 msgid "Omlaag"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:383
+#: src/Admin/PollEditForm.php:377
 msgid "Antwoord verwijderen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:409
+#: src/Admin/PollEditForm.php:395
+#: src/Admin/admin.js:196
+msgid "Afbeelding kiezen"
+msgstr ""
+
+#: src/Admin/PollEditForm.php:402
 msgid "Afbeelding verwijderen"
 msgstr ""
 
 #: src/Admin/PollMetaBoxes.php:46
-#: src/Frontend/PollRenderer.php:253
+#: src/Frontend/PollRenderer.php:264
 msgid "Resultaten"
 msgstr ""
 
@@ -317,7 +311,7 @@ msgstr[1] ""
 
 #. translators: %s: total number of votes.
 #: src/Admin/PollMetaBoxes.php:165
-#: src/Frontend/PollRenderer.php:84
+#: src/Frontend/PollRenderer.php:96
 #, php-format
 msgid "Totaal aantal stemmen: %s"
 msgstr ""
@@ -483,65 +477,65 @@ msgstr ""
 msgid "Poll onvolledig: geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:92
+#: src/Frontend/PollRenderer.php:104
 msgid "Even rustig aan — probeer over een minuutje opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:93
+#: src/Frontend/PollRenderer.php:105
 msgid "Deze poll bestaat niet meer."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:94
+#: src/Frontend/PollRenderer.php:106
 #: src/Rest/VoteController.php:133
 msgid "Deze poll is gesloten."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:95
+#: src/Frontend/PollRenderer.php:107
 msgid "Kies eerst een optie."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:96
+#: src/Frontend/PollRenderer.php:108
 #: src/Rest/VoteController.php:197
 msgid "Je hebt al gestemd op deze poll."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:97
+#: src/Frontend/PollRenderer.php:109
 #: src/Rest/VoteController.php:100
 msgid "Stemmen vanaf deze pagina is niet toegestaan."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:98
+#: src/Frontend/PollRenderer.php:110
 #: src/Rest/VoteController.php:155
 msgid "Stemmen op deze poll is niet toegestaan."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:99
+#: src/Frontend/PollRenderer.php:111
 msgid "Stem niet opgeslagen. Probeer het later opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:100
+#: src/Frontend/PollRenderer.php:112
 msgid "Er ging iets mis. Probeer het later opnieuw."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:203
+#: src/Frontend/PollRenderer.php:215
 msgid "Kies een optie"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:233
+#: src/Frontend/PollRenderer.php:244
 msgid "Stem"
 msgstr ""
 
 #. translators: %s: poll closing date and time.
-#: src/Frontend/PollRenderer.php:241
+#: src/Frontend/PollRenderer.php:252
 #, php-format
 msgid "Stemmen kan tot %s"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:298
+#: src/Frontend/PollRenderer.php:308
 msgid "Gestemd"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:316
+#: src/Frontend/PollRenderer.php:326
 msgid "Einduitslag"
 msgstr ""
 
@@ -667,7 +661,7 @@ msgstr ""
 msgid "Kopiëren mislukt"
 msgstr ""
 
-#: src/Admin/admin.js:208
+#: src/Admin/admin.js:198
 msgid "Afbeelding gebruiken"
 msgstr ""
 

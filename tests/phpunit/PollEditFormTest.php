@@ -446,7 +446,6 @@ final class PollEditFormTest extends TestCase
         $this->assertStringContainsString('name="zw_poll_options[0][imageId]"', $html);
         $this->assertStringContainsString('value="123"', $html);
         $this->assertStringContainsString('zw-poll-edit-option__thumbnail', $html);
-        $this->assertStringContainsString('Afbeelding vervangen', $html);
         $this->assertStringContainsString('name="zw_poll_options[1][imageId]"', $html);
         $this->assertStringContainsString('Afbeelding kiezen', $html);
         $this->assertStringContainsString('name="zw_poll_options[__INDEX__][imageId]"', $html);

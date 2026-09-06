@@ -302,8 +302,8 @@ final class PollPostType
      * Single displayability predicate: the frontend gate (PollRenderer) and
      * the classic form's incomplete-poll warning must never drift apart.
      *
-     * @param string                                                      $question Poll question.
-     * @param array<int, array{id: string, label: string, imageId?: int}> $options  Valid option rows.
+     * @param string                                                     $question Poll question.
+     * @param array<int, array{id: string, label: string, imageId: int}> $options  Valid option rows.
      */
     public static function isComplete(string $question, array $options): bool
     {
@@ -332,42 +332,18 @@ final class PollPostType
     }
 
     /**
-     * Checks whether at least one option refers to an image.
-     *
-     * @param array<int, array{id: string, label: string, imageId?: int}> $options Valid option rows.
-     */
-    public static function hasAnyImages(array $options): bool
-    {
-        foreach ($options as $option) {
-            if (self::normalizeImageId($option['imageId'] ?? 0) > 0) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Checks whether every option has an existing image attachment.
      *
-     * @param array<int, array{id: string, label: string, imageId?: int}> $options Valid option rows.
+     * @param array<int, array{id: string, label: string, imageId: int}> $options Valid option rows.
      */
     public static function hasCompleteImages(array $options): bool
     {
-        if ($options === []) {
+        $image_ids = array_column($options, 'imageId');
+        if ($image_ids === [] || in_array(0, $image_ids, true)) {
             return false;
         }
 
-        $image_ids = [];
-        foreach ($options as $option) {
-            $image_id = self::normalizeImageId($option['imageId'] ?? 0);
-            if ($image_id <= 0) {
-                return false;
-            }
-            $image_ids[] = $image_id;
-        }
-
-        _prime_post_caches($image_ids, false, true);
+        _prime_post_caches($image_ids, false);
         foreach ($image_ids as $image_id) {
             if (!wp_attachment_is_image($image_id)) {
                 return false;

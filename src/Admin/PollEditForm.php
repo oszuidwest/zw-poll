@@ -104,7 +104,7 @@ final class PollEditForm
             return;
         }
 
-        if (PollPostType::hasAnyImages($options) && !PollPostType::hasCompleteImages($options)) {
+        if (array_filter(array_column($options, 'imageId')) !== [] && !PollPostType::hasCompleteImages($options)) {
             printf(
                 '<div class="notice notice-warning"><p>%s</p></div>',
                 esc_html__('Afbeeldingen worden pas getoond als alle antwoorden een geldige afbeelding hebben.', 'zw-poll')
@@ -124,10 +124,7 @@ final class PollEditForm
             $options[] = ['id' => '', 'label' => '', 'imageId' => 0];
         }
 
-        $image_ids = array_filter(array_column($options, 'imageId'));
-        if ($image_ids !== []) {
-            _prime_post_caches(array_values($image_ids), false, true);
-        }
+        _prime_post_caches(array_filter(array_column($options, 'imageId')), false);
 
         // Every box this class renders emits the same nonce, so save() keeps
         // working when another plugin removes one of the boxes.
@@ -357,9 +354,6 @@ final class PollEditForm
     {
         /* translators: %d: answer number. */
         $option_name = sprintf(__('Antwoord %d', 'zw-poll'), $position);
-        $choose_label = $image_id > 0
-            ? __('Afbeelding vervangen', 'zw-poll')
-            : __('Afbeelding kiezen', 'zw-poll');
         ?>
 <li class="zw-poll-edit-option">
     <input type="hidden" name="zw_poll_options[<?php echo esc_attr($index); ?>][id]" value="<?php echo esc_attr($id); ?>">
@@ -382,24 +376,23 @@ final class PollEditForm
     <button type="button" class="button-link zw-poll-edit-option__move-down" aria-label="<?php esc_attr_e('Omlaag', 'zw-poll'); ?>">&darr;</button>
     <button type="button" class="button-link zw-poll-edit-option__remove" aria-label="<?php esc_attr_e('Antwoord verwijderen', 'zw-poll'); ?>">&times;</button>
     <div class="zw-poll-edit-option__image">
-        <span class="zw-poll-edit-option__preview">
-            <?php
-            if ($image_id > 0) {
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
-                echo wp_get_attachment_image(
-                    $image_id,
-                    'thumbnail',
-                    false,
-                    [
-                        'class' => 'zw-poll-edit-option__thumbnail',
-                        'alt' => '',
-                    ]
-                );
-            }
-            ?>
-        </span>
+        <?php // No whitespace inside the span: admin.css hides an :empty preview. ?>
+        <span class="zw-poll-edit-option__preview"><?php
+        if ($image_id > 0) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
+            echo wp_get_attachment_image(
+                $image_id,
+                'thumbnail',
+                false,
+                [
+                    'class' => 'zw-poll-edit-option__thumbnail',
+                    'alt' => '',
+                ]
+            );
+        }
+        ?></span>
         <button type="button" class="button zw-poll-edit-option__choose-image">
-            <?php echo esc_html($choose_label); ?>
+            <?php esc_html_e('Afbeelding kiezen', 'zw-poll'); ?>
         </button>
         <button
             type="button"
