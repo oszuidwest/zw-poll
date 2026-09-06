@@ -286,7 +286,12 @@ final class Activation
                 continue;
             }
 
-            delete_post_meta($poll_id, PollPostType::META_HIDE_TOTAL);
+            if (
+                metadata_exists('post', $poll_id, PollPostType::META_HIDE_TOTAL)
+                && !delete_post_meta($poll_id, PollPostType::META_HIDE_TOTAL)
+            ) {
+                $complete = false;
+            }
         }
 
         if (!$complete) {

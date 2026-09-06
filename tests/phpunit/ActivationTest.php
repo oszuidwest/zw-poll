@@ -206,8 +206,11 @@ final class ActivationTest extends TestCase
         $stored = [14 => 'show', 15 => 'corrupt'];
         $deleted = [];
         Functions\when('metadata_exists')->alias(
-            static fn (string $type, int $id, string $key): bool => $key === PollPostType::META_TOTAL_VISIBILITY
-                && array_key_exists($id, $stored)
+            static fn (string $type, int $id, string $key): bool => match ($key) {
+                PollPostType::META_TOTAL_VISIBILITY => array_key_exists($id, $stored),
+                PollPostType::META_HIDE_TOTAL => array_key_exists($id, $legacy),
+                default => false,
+            }
         );
         Functions\when('get_post_meta')->alias(
             static fn (int $id, string $key): mixed => $key === PollPostType::META_TOTAL_VISIBILITY
@@ -241,7 +244,11 @@ final class ActivationTest extends TestCase
             12 => 'show',
             13 => 'show',
         ], $stored);
-        $this->assertCount(5, $deleted);
+        $this->assertSame([
+            [11, PollPostType::META_HIDE_TOTAL],
+            [12, PollPostType::META_HIDE_TOTAL],
+            [14, PollPostType::META_HIDE_TOTAL],
+        ], $deleted);
     }
 
     #[Test]
@@ -254,6 +261,34 @@ final class ActivationTest extends TestCase
         Functions\when('get_post_meta')->justReturn('');
         Functions\when('update_post_meta')->justReturn(false);
         Functions\expect('delete_post_meta')->never();
+        Functions\expect('update_option')->never();
+        Functions\expect('error_log')
+            ->once()
+            ->with(\Mockery::on(
+                static fn (string $message): bool => str_contains($message, 'total visibility migration')
+            ))
+            ->andReturn(true);
+
+        Activation::ensureInstalled();
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function failed_legacy_meta_deletion_does_not_store_the_database_version(): void
+    {
+        $GLOBALS['wpdb'] = $this->wpdb(['0'], [[42]]);
+        $this->mockDbVersion(false);
+        Functions\when('dbDelta')->justReturn([]);
+        Functions\when('metadata_exists')->alias(
+            static fn (string $type, int $id, string $key): bool => $key === PollPostType::META_HIDE_TOTAL
+        );
+        Functions\when('get_post_meta')->justReturn('1');
+        Functions\when('update_post_meta')->justReturn(42);
+        Functions\expect('delete_post_meta')
+            ->once()
+            ->with(42, PollPostType::META_HIDE_TOTAL)
+            ->andReturn(false);
         Functions\expect('update_option')->never();
         Functions\expect('error_log')
             ->once()

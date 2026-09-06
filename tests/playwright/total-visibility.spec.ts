@@ -1,7 +1,31 @@
 import { test, expect } from '@playwright/test';
-import { THRESHOLD_DEMO_PAGE } from './utils';
+import { login, THRESHOLD_DEMO_PAGE } from './utils';
 
 test.describe( 'Zichtbaarheid stemtotaal', () => {
+	test.beforeEach( async ( { page } ) => {
+		const admin = await page.context().newPage();
+		await login( admin );
+		await admin.goto( '/wp-admin/edit.php?post_type=zw_poll' );
+		await admin
+			.getByRole( 'link', { name: 'Waar lees jij nieuws?', exact: true } )
+			.first()
+			.click();
+
+		const pollId = new URL( admin.url() ).searchParams.get( 'post' );
+		const nonce = await admin
+			.locator( '.zw-poll-status-toggle' )
+			.getAttribute( 'data-rest-nonce' );
+		expect( pollId ).toMatch( /^\d+$/ );
+		expect( nonce ).toBeTruthy();
+
+		const reset = await admin.request.post(
+			`/wp-json/zw-poll/v1/poll/${ pollId }/reset`,
+			{ headers: { 'X-WP-Nonce': nonce ?? '' } }
+		);
+		expect( reset.ok() ).toBeTruthy();
+		await admin.close();
+	} );
+
 	test( 'toont het totaal direct wanneer een stem de drempel bereikt', async ( {
 		page,
 	} ) => {
