@@ -231,16 +231,9 @@ final class PollEditForm
         // Missing or invalid values preserve storage; this also protects saves
         // when another plugin removes the display box.
         if (isset($_POST['zw_poll_total_visibility'])) {
-            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Exact scalar equality plus the enum whitelist rejects altered input.
-            $submitted_visibility = wp_unslash($_POST['zw_poll_total_visibility']);
-            if (is_string($submitted_visibility)) {
-                $visibility = sanitize_key($submitted_visibility);
-                if (
-                    $visibility === $submitted_visibility
-                    && in_array($visibility, PollPostType::totalVisibilityValues(), true)
-                ) {
-                    update_post_meta($post_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
-                }
+            $visibility = sanitize_key(wp_unslash($_POST['zw_poll_total_visibility']));
+            if (in_array($visibility, PollPostType::totalVisibilityValues(), true)) {
+                update_post_meta($post_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
             }
         }
     }

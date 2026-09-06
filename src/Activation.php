@@ -21,8 +21,6 @@ final class Activation
     public const DB_VERSION_OPTION = 'zw_poll_db_version';
     public const IP_SALT_OPTION = 'zw_poll_ip_salt';
     public const VOTES_TABLE = 'zw_poll_votes';
-    public const TOTAL_VISIBILITY_VERSION_OPTION = 'zw_poll_total_visibility_version';
-    public const TOTAL_VISIBILITY_VERSION = 1;
 
     /**
      * Registers runtime lifecycle hooks.
@@ -94,8 +92,7 @@ final class Activation
      */
     public static function ensureInstalled(): void
     {
-        self::installVotesTable();
-        self::upgradeTotalVisibility();
+        self::upgrade();
     }
 
     /**
@@ -103,8 +100,7 @@ final class Activation
      */
     private static function activateSite(): void
     {
-        self::installVotesTable();
-        self::upgradeTotalVisibility();
+        self::ensureInstalled();
         Capabilities::grantToDefaultRoles();
         // IpHasher seeds the salt lazily, including installs that bypass activation.
     }
@@ -164,9 +160,12 @@ final class Activation
     }
 
     /**
-     * Creates the votes table for the current site when needed.
+     * Brings the current site's schema and data up to the plugin version.
+     *
+     * Every step is idempotent; the version is stored only after all steps
+     * succeed, so a partial failure retries on the next request.
      */
-    private static function installVotesTable(): void
+    private static function upgrade(): void
     {
         $installed = (string) get_option(self::DB_VERSION_OPTION);
 
@@ -189,6 +188,15 @@ final class Activation
             return;
         }
 
+        if (!self::migrateTotalVisibility()) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Installation failures need server-side diagnostics.
+            error_log(sprintf(
+                'zw-poll: total visibility migration for %s is incomplete; it retries on the next request.',
+                self::DB_VERSION
+            ));
+            return;
+        }
+
         // Autoload this scalar: ensureInstalled() reads it on every request, and
         // one alloptions read is cheaper than a standalone query without persistent object cache.
         if (!update_option(self::DB_VERSION_OPTION, self::DB_VERSION, true)) {
@@ -203,43 +211,31 @@ final class Activation
     /**
      * Migrates the legacy total toggle without changing existing presentation.
      *
-     * Every poll receives an explicit policy before the legacy key is removed:
-     * hidden totals remain hidden and every formerly visible total is forced
-     * visible. The version marker is stored only after every write succeeds,
-     * making partial failures safe to retry on the next request.
+     * Every poll, trashed ones included, receives an explicit policy before
+     * its legacy key is removed: hidden totals stay hidden and formerly
+     * visible totals are forced visible. Returns false when a write failed.
      */
-    public static function upgradeTotalVisibility(): void
+    private static function migrateTotalVisibility(): bool
     {
-        if ((int) get_option(self::TOTAL_VISIBILITY_VERSION_OPTION, 0) >= self::TOTAL_VISIBILITY_VERSION) {
-            return;
-        }
-
-        $poll_ids = get_posts([
+        $poll_ids = array_map('intval', get_posts([
             'post_type' => PollPostType::POST_TYPE,
-            'post_status' => 'any',
+            'post_status' => array_keys(get_post_stati()),
             'numberposts' => -1,
             'fields' => 'ids',
-            'orderby' => 'ID',
-            'order' => 'ASC',
-            'suppress_filters' => false,
-        ]);
+        ]));
+        update_meta_cache('post', $poll_ids);
 
         $complete = true;
         foreach ($poll_ids as $poll_id) {
-            $poll_id = (int) $poll_id;
-            if (metadata_exists('post', $poll_id, PollPostType::META_TOTAL_VISIBILITY)) {
-                $visibility = PollPostType::sanitizeTotalVisibility(
-                    get_post_meta($poll_id, PollPostType::META_TOTAL_VISIBILITY, true)
-                );
-            } else {
-                $visibility = (bool) get_post_meta($poll_id, PollPostType::META_HIDE_TOTAL, true)
-                    ? PollPostType::TOTAL_VISIBILITY_HIDE
-                    : PollPostType::TOTAL_VISIBILITY_SHOW;
-            }
-
-            $written = update_post_meta($poll_id, PollPostType::META_TOTAL_VISIBILITY, $visibility);
-            $stored = get_post_meta($poll_id, PollPostType::META_TOTAL_VISIBILITY, true);
-            if ($written === false && $stored !== $visibility) {
+            // An absent row makes update_post_meta() an insert, so false means failure.
+            if (
+                !metadata_exists('post', $poll_id, PollPostType::META_TOTAL_VISIBILITY)
+                && !update_post_meta(
+                    $poll_id,
+                    PollPostType::META_TOTAL_VISIBILITY,
+                    PollPostType::legacyTotalVisibility($poll_id)
+                )
+            ) {
                 $complete = false;
                 continue;
             }
@@ -247,9 +243,7 @@ final class Activation
             delete_post_meta($poll_id, PollPostType::META_HIDE_TOTAL);
         }
 
-        if ($complete) {
-            update_option(self::TOTAL_VISIBILITY_VERSION_OPTION, self::TOTAL_VISIBILITY_VERSION, true);
-        }
+        return $complete;
     }
 
     /**

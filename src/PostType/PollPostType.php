@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll\PostType;
 
-use ZuidWest\Poll\Activation;
-
 /**
  * Defines the poll CPT and validates editor-controlled meta.
  */
@@ -193,36 +191,32 @@ final class PollPostType
     /**
      * Returns the effective per-poll total visibility policy.
      *
-     * The legacy fallback remains active until the versioned upgrade has
-     * completed, so a partial failure cannot change existing presentation.
+     * A poll the migration has not reached yet keeps its legacy presentation.
      *
      * @param int $poll_id Poll post ID.
      */
     public static function totalVisibility(int $poll_id): string
     {
-        if (metadata_exists('post', $poll_id, self::META_TOTAL_VISIBILITY)) {
-            return self::sanitizeTotalVisibility(
-                get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true)
-            );
+        if (
+            !metadata_exists('post', $poll_id, self::META_TOTAL_VISIBILITY)
+            && metadata_exists('post', $poll_id, self::META_HIDE_TOTAL)
+        ) {
+            return self::legacyTotalVisibility($poll_id);
         }
 
-        if ((int) get_option(Activation::TOTAL_VISIBILITY_VERSION_OPTION, 0) >= Activation::TOTAL_VISIBILITY_VERSION) {
-            return self::TOTAL_VISIBILITY_DEFAULT;
-        }
-
-        return (bool) get_post_meta($poll_id, self::META_HIDE_TOTAL, true)
-            ? self::TOTAL_VISIBILITY_HIDE
-            : self::TOTAL_VISIBILITY_SHOW;
+        return self::sanitizeTotalVisibility(get_post_meta($poll_id, self::META_TOTAL_VISIBILITY, true));
     }
 
     /**
-     * Checks whether the total vote count is hidden for a poll.
+     * Maps the legacy hide-total toggle to a policy; an unset toggle showed the total.
      *
      * @param int $poll_id Poll post ID.
      */
-    public static function hidesTotal(int $poll_id): bool
+    public static function legacyTotalVisibility(int $poll_id): string
     {
-        return self::totalVisibility($poll_id) === self::TOTAL_VISIBILITY_HIDE;
+        return (bool) get_post_meta($poll_id, self::META_HIDE_TOTAL, true)
+            ? self::TOTAL_VISIBILITY_HIDE
+            : self::TOTAL_VISIBILITY_SHOW;
     }
 
     /**

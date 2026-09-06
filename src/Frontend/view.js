@@ -78,10 +78,7 @@ const { state } = store( 'zw-poll', {
 		},
 		get showTotalCount() {
 			const ctx = getContext();
-			return (
-				Boolean( ctx.forceShowTotal ) ||
-				( ctx.total ?? 0 ) >= ( state.totalMin ?? 0 )
-			);
+			return ctx.total >= ctx.totalMinVotes;
 		},
 		get cannotSubmit() {
 			const ctx = getContext();

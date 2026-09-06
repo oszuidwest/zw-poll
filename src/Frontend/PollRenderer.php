@@ -73,8 +73,10 @@ final class PollRenderer
         // until the rendered page refreshes.
         $total_visibility = PollPostType::totalVisibility($poll_id);
         $show_total = $total_visibility !== PollPostType::TOTAL_VISIBILITY_HIDE;
-        $force_show_total = $total_visibility === PollPostType::TOTAL_VISIBILITY_SHOW;
-        $total_min = Settings::get()['total_min_votes'];
+        // "show" is the site threshold lowered to zero; "hide" skips the markup entirely.
+        $total_min_votes = $total_visibility === PollPostType::TOTAL_VISIBILITY_SHOW
+            ? 0
+            : Settings::get()['total_min_votes'];
 
         /* translators: %s: total number of votes. */
         $total_label = __('Totaal aantal stemmen: %s', 'zw-poll');
@@ -83,7 +85,6 @@ final class PollRenderer
         wp_interactivity_state('zw-poll', [
             'restUrl' => esc_url_raw(VoteController::voteUrl()),
             'cookiePrefix' => VoteController::COOKIE_PREFIX,
-            'totalMin' => $total_min,
             'i18n' => [
                 'errors' => [
                     'rate_limited' => __('Even rustig aan — probeer over een minuutje opnieuw.', 'zw-poll'),
@@ -104,10 +105,9 @@ final class PollRenderer
                 $ctx = wp_interactivity_get_context();
                 return !empty($ctx['voted']) || !empty($ctx['closed']);
             },
-            'showTotalCount' => static function () use ($total_min): bool {
+            'showTotalCount' => static function (): bool {
                 $ctx = wp_interactivity_get_context();
-                return !empty($ctx['forceShowTotal'])
-                    || (int) ($ctx['total'] ?? 0) >= $total_min;
+                return (int) ($ctx['total'] ?? 0) >= (int) ($ctx['totalMinVotes'] ?? 0);
             },
             'cannotSubmit' => static function (): bool {
                 $ctx = wp_interactivity_get_context();
@@ -133,7 +133,7 @@ final class PollRenderer
             'votedOptionId' => '',
             'token' => '',
             'errorMessage' => '',
-            'forceShowTotal' => $force_show_total,
+            'totalMinVotes' => $total_min_votes,
             'counts' => (object) $counts,
             'total' => $total,
         ];
@@ -286,10 +286,7 @@ final class PollRenderer
         <?php endforeach; ?>
 
         <?php if ($is_closed || $show_total) : ?>
-        <div
-            class="zw-poll__results-foot"
-            <?php if (!$is_closed) : ?>data-wp-bind--hidden="!state.showTotalCount"<?php endif; ?>
-        >
+        <div class="zw-poll__results-foot">
             <?php if ($is_closed) : ?>
                 <span class="zw-poll__final"><?php esc_html_e('Einduitslag', 'zw-poll'); ?></span>
             <?php endif; ?>
@@ -297,7 +294,7 @@ final class PollRenderer
                 <p
                     class="zw-poll__total"
                     data-wp-text="state.totalText"
-                    <?php if ($is_closed) : ?>data-wp-bind--hidden="!state.showTotalCount"<?php endif; ?>
+                    data-wp-bind--hidden="!state.showTotalCount"
                 ></p>
             <?php endif; ?>
         </div>

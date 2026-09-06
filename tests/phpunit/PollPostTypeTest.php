@@ -6,7 +6,6 @@ namespace ZuidWest\Poll\Tests;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use ZuidWest\Poll\Activation;
 use ZuidWest\Poll\PostType\PollPostType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -73,26 +72,26 @@ final class PollPostTypeTest extends TestCase
     {
         Functions\when('metadata_exists')->justReturn(true);
         Functions\when('get_post_meta')->justReturn('hide');
-        $this->assertTrue(PollPostType::hidesTotal(42));
         $this->assertSame('hide', PollPostType::totalVisibility(42));
 
         Functions\when('get_post_meta')->justReturn('corrupt');
-        $this->assertFalse(PollPostType::hidesTotal(42));
         $this->assertSame('default', PollPostType::totalVisibility(42));
     }
 
     #[Test]
-    public function missing_total_visibility_preserves_legacy_behavior_until_migration_completes(): void
+    public function missing_total_visibility_follows_the_legacy_toggle_only_while_that_row_exists(): void
     {
-        Functions\when('metadata_exists')->justReturn(false);
-        Functions\when('get_option')->justReturn(0);
+        Functions\when('metadata_exists')->alias(
+            static fn (string $type, int $id, string $key): bool => $key === PollPostType::META_HIDE_TOTAL
+        );
         Functions\when('get_post_meta')->justReturn('1');
         $this->assertSame('hide', PollPostType::totalVisibility(42));
 
         Functions\when('get_post_meta')->justReturn('');
         $this->assertSame('show', PollPostType::totalVisibility(42));
 
-        Functions\when('get_option')->justReturn(Activation::TOTAL_VISIBILITY_VERSION);
+        // Neither row: a poll created after the migration uses the site default.
+        Functions\when('metadata_exists')->justReturn(false);
         $this->assertSame('default', PollPostType::totalVisibility(42));
     }
 

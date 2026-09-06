@@ -23,6 +23,10 @@ final class ActivationTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        // Sites without polls make the total visibility migration a no-op.
+        Functions\when('get_post_stati')->justReturn([]);
+        Functions\when('get_posts')->justReturn([]);
+        Functions\when('update_meta_cache')->justReturn(false);
     }
 
     protected function tearDown(): void
@@ -35,11 +39,9 @@ final class ActivationTest extends TestCase
     private function mockDbVersion(string|false $version): void
     {
         Functions\when('get_option')->alias(
-            static fn (string $option, mixed $default = false): mixed => match ($option) {
-                Activation::DB_VERSION_OPTION => $version,
-                Activation::TOTAL_VISIBILITY_VERSION_OPTION => Activation::TOTAL_VISIBILITY_VERSION,
-                default => $default,
-            }
+            static fn (string $option, mixed $default = false): mixed => $option === Activation::DB_VERSION_OPTION
+                ? $version
+                : $default
         );
     }
 
@@ -160,14 +162,16 @@ final class ActivationTest extends TestCase
     }
 
     #[Test]
-    public function total_visibility_upgrade_preserves_legacy_behavior_and_normalizes_existing_values(): void
+    public function upgrade_migrates_the_legacy_total_toggle_across_all_statuses_before_storing_the_version(): void
     {
-        $legacy = [11 => '1', 12 => '', 13 => false, 14 => '1', 15 => ''];
+        $GLOBALS['wpdb'] = $this->wpdb(['0']);
+        $this->mockDbVersion(false);
+        Functions\when('dbDelta')->justReturn([]);
+        $legacy = [11 => '1', 12 => '', 14 => '1'];
         $stored = [14 => 'show', 15 => 'corrupt'];
         $deleted = [];
-        $marker = null;
         $query = [];
-        Functions\when('get_option')->justReturn(0);
+        Functions\when('get_post_stati')->justReturn(['publish' => 'publish', 'trash' => 'trash']);
         Functions\when('get_posts')->alias(
             static function (array $args) use (&$query): array {
                 $query = $args;
@@ -175,19 +179,18 @@ final class ActivationTest extends TestCase
             }
         );
         Functions\when('metadata_exists')->alias(
-            static fn (string $type, int $id, string $key): bool => array_key_exists($id, $stored)
+            static fn (string $type, int $id, string $key): bool => $key === PollPostType::META_TOTAL_VISIBILITY
+                && array_key_exists($id, $stored)
         );
         Functions\when('get_post_meta')->alias(
-            static function (int $id, string $key) use (&$legacy, &$stored): mixed {
-                return $key === PollPostType::META_TOTAL_VISIBILITY
-                    ? ($stored[$id] ?? '')
-                    : ($legacy[$id] ?? '');
-            }
+            static fn (int $id, string $key): mixed => $key === PollPostType::META_TOTAL_VISIBILITY
+                ? ($stored[$id] ?? '')
+                : ($legacy[$id] ?? '')
         );
         Functions\when('update_post_meta')->alias(
-            static function (int $id, string $key, string $value) use (&$stored): bool {
+            static function (int $id, string $key, string $value) use (&$stored): int {
                 $stored[$id] = $value;
-                return true;
+                return $id;
             }
         );
         Functions\when('delete_post_meta')->alias(
@@ -196,41 +199,45 @@ final class ActivationTest extends TestCase
                 return true;
             }
         );
-        Functions\when('update_option')->alias(
-            static function (string $key, mixed $value, bool $autoload) use (&$marker): bool {
-                if ($key === Activation::TOTAL_VISIBILITY_VERSION_OPTION) {
-                    $marker = [$value, $autoload];
-                }
-                return true;
-            }
-        );
+        Functions\expect('update_option')
+            ->once()
+            ->with(Activation::DB_VERSION_OPTION, Activation::DB_VERSION, true)
+            ->andReturn(true);
 
-        Activation::upgradeTotalVisibility();
+        Activation::ensureInstalled();
 
-        $this->assertSame('any', $query['post_status']);
+        $this->assertSame(['publish', 'trash'], $query['post_status']);
+        // Existing rows are left alone; the read path normalizes corrupt values.
         $this->assertSame([
             14 => 'show',
-            15 => 'default',
+            15 => 'corrupt',
             11 => 'hide',
             12 => 'show',
             13 => 'show',
         ], $stored);
         $this->assertCount(5, $deleted);
-        $this->assertSame([Activation::TOTAL_VISIBILITY_VERSION, true], $marker);
     }
 
     #[Test]
     public function failed_total_visibility_write_keeps_legacy_meta_and_retries_later(): void
     {
-        Functions\when('get_option')->justReturn(0);
+        $GLOBALS['wpdb'] = $this->wpdb(['0']);
+        $this->mockDbVersion(false);
+        Functions\when('dbDelta')->justReturn([]);
         Functions\when('get_posts')->justReturn([42]);
         Functions\when('metadata_exists')->justReturn(false);
         Functions\when('get_post_meta')->justReturn('');
         Functions\when('update_post_meta')->justReturn(false);
         Functions\expect('delete_post_meta')->never();
         Functions\expect('update_option')->never();
+        Functions\expect('error_log')
+            ->once()
+            ->with(\Mockery::on(
+                static fn (string $message): bool => str_contains($message, 'total visibility migration')
+            ))
+            ->andReturn(true);
 
-        Activation::upgradeTotalVisibility();
+        Activation::ensureInstalled();
 
         $this->addToAssertionCount(1);
     }

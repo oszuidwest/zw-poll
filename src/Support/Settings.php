@@ -197,7 +197,7 @@ final class Settings
     }
 
     /**
-     * Sanitizes and clamps a positive integer option.
+     * Sanitizes and clamps an integer option.
      *
      * @param mixed  $value  Raw integer-like value.
      * @param int    $min    Minimum accepted value.
