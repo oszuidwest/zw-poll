@@ -39,6 +39,9 @@ test.describe( 'poll option images', () => {
 		const options = poll.locator( '.zw-poll__option' );
 		await expect( options ).toHaveCount( 3 );
 		await expect( options.locator( '.zw-poll__image' ) ).toHaveCount( 3 );
+		await page.addStyleTag( {
+			content: '.zw-poll .zw-poll__image { height: auto !important; }',
+		} );
 		for ( const option of await options.all() ) {
 			const media = option.locator( '.zw-poll__media' );
 			const image = media.locator( 'img' );
