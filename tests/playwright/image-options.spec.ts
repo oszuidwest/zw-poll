@@ -28,6 +28,7 @@ test.describe( 'poll option images', () => {
 	} ) => {
 		await page.goto( IMAGE_DEMO_PAGE );
 		const poll = page.locator( '.zw-poll' );
+		await expect( poll ).toHaveClass( /not-prose/ );
 		await expect( poll ).toHaveClass( /zw-poll--images/ );
 		await expect( poll ).toHaveAttribute( 'data-option-count', '3' );
 		await expect( poll ).toHaveCSS( '--zw-poll-image-columns', '3' );
@@ -39,8 +40,11 @@ test.describe( 'poll option images', () => {
 		const options = poll.locator( '.zw-poll__option' );
 		await expect( options ).toHaveCount( 3 );
 		await expect( options.locator( '.zw-poll__image' ) ).toHaveCount( 3 );
+		await poll.evaluate( ( element ) => element.parentElement?.classList.add( 'prose' ) );
 		await page.addStyleTag( {
-			content: '.zw-poll .zw-poll__image { height: auto !important; }',
+			content:
+				'.prose :where(img):not(:where([class~=not-prose], [class~=not-prose] *))' +
+				' { margin-block: 2em; }',
 		} );
 		for ( const option of await options.all() ) {
 			const media = option.locator( '.zw-poll__media' );

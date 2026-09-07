@@ -141,7 +141,7 @@ final class PollRenderer
         $question_id = $instance_id . '-question';
         $results_id = $instance_id . '-results';
         $radio_name = $instance_id . '-option';
-        $wrapper_class = 'zw-poll'
+        $wrapper_class = 'zw-poll not-prose'
             . ($media !== [] ? ' zw-poll--images' : '')
             . ($is_closed ? ' zw-poll--closed' : '');
 

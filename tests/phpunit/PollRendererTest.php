@@ -219,7 +219,7 @@ final class PollRendererTest extends TestCase
             ['id' => 'opt-b', 'label' => 'Optie B', 'imageId' => 102],
         ]);
 
-        $this->assertStringContainsString('zw-poll--images', $html);
+        $this->assertStringContainsString('class="zw-poll not-prose zw-poll--images"', $html);
         // style.css derives the column count from the option count.
         $this->assertStringContainsString('data-option-count="2"', $html);
         // One image per option in the form and again in the results; images
