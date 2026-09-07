@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from './utils';
+import { IMAGE_DEMO_PAGE, IMAGE_FALLBACK_DEMO_PAGE, login } from './utils';
 
 test.describe( 'poll option images', () => {
 	test( 'editor selects and removes an image from the media library', async ( {
@@ -26,10 +26,15 @@ test.describe( 'poll option images', () => {
 	test( 'image cards remain native labels and show images in results', async ( {
 		page,
 	} ) => {
-		await page.goto( '/poll-afbeeldingen-demo/' );
+		await page.goto( IMAGE_DEMO_PAGE );
 		const poll = page.locator( '.zw-poll' );
 		await expect( poll ).toHaveClass( /zw-poll--images/ );
-		await expect( poll ).toHaveClass( /zw-poll--image-columns-3/ );
+		await expect( poll ).toHaveAttribute( 'data-option-count', '3' );
+		await expect( poll ).toHaveCSS( '--zw-poll-image-columns', '3' );
+		await page.setViewportSize( { width: 760, height: 720 } );
+		await expect( poll ).toHaveCSS( '--zw-poll-image-columns', '2' );
+		await page.setViewportSize( { width: 520, height: 720 } );
+		await expect( poll ).toHaveCSS( '--zw-poll-image-columns', '1' );
 
 		const options = poll.locator( '.zw-poll__option' );
 		await expect( options ).toHaveCount( 3 );
@@ -49,7 +54,7 @@ test.describe( 'poll option images', () => {
 	} );
 
 	test( 'partial image sets fall back to the text layout', async ( { page } ) => {
-		await page.goto( '/poll-afbeeldingen-fallback/' );
+		await page.goto( IMAGE_FALLBACK_DEMO_PAGE );
 		const poll = page.locator( '.zw-poll' );
 		await expect( poll ).not.toHaveClass( /zw-poll--images/ );
 		await expect( poll.locator( '.zw-poll__media' ) ).toHaveCount( 0 );

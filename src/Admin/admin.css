@@ -1,6 +1,8 @@
 /*
  * ZuidWest Poll admin styles.
- * Core colors and standard focus-visible rings.
+ * Values come from core's WPDS design tokens (style dependency 'wp-theme');
+ * brand accents follow the admin colour scheme like core's own buttons.
+ * Button rules are scoped to .wp-core-ui to outrank core without !important.
  */
 
 .zw-poll-status-badge {
@@ -33,9 +35,12 @@
 	color: var(--wpds-color-foreground-content-neutral-weak);
 }
 
-.zw-poll-usage--empty {
+.zw-poll-usage--empty,
+.zw-poll-admin-empty,
+.zw-poll-picker__empty {
 	color: var(--wpds-color-foreground-content-neutral-weak);
 	font-style: italic;
+	margin: 0;
 }
 
 /* Status meta box */
@@ -49,9 +54,9 @@
 	justify-content: center;
 }
 
-.zw-poll-status-toggle[disabled] {
+.zw-poll-status-toggle[disabled],
+.zw-poll-admin-reset[disabled] {
 	opacity: 0.6;
-	cursor: not-allowed;
 }
 
 /* Results meta box */
@@ -90,10 +95,9 @@
 .zw-poll-admin-bar__track > span {
 	display: block;
 	height: 100%;
-	background: var(--wpds-color-background-thumb-brand);
+	background: var(--wp-admin-theme-color, var(--wpds-color-background-thumb-brand));
 	border-radius: inherit;
 	transition: width var(--wpds-motion-duration-xl) var(--wpds-motion-easing-balanced);
-
 	min-width: 2px;
 }
 
@@ -111,34 +115,16 @@
 
 /* Reset button */
 
-.zw-poll-admin-reset {
-	color: var(--wpds-color-foreground-interactive-error) !important;
-	border-color: var(--wpds-color-stroke-interactive-error) !important;
+.wp-core-ui .zw-poll-admin-reset {
+	color: var(--wpds-color-foreground-interactive-error);
+	border-color: var(--wpds-color-stroke-interactive-error);
 }
 
-.zw-poll-admin-reset:hover,
-.zw-poll-admin-reset:focus {
-	background: var(--wpds-color-background-interactive-error-strong) !important;
-	color: var(--wpds-color-foreground-interactive-error-strong) !important;
-}
-
-.zw-poll-admin-reset:focus-visible {
-	outline: var(--wpds-border-width-focus) solid var(--wpds-color-stroke-focus);
-	outline-offset: var(--wpds-border-width-focus);
-}
-
-.zw-poll-admin-reset[disabled] {
-	opacity: 0.6;
-
-	cursor: not-allowed;
-}
-
-/* Empty and usage list */
-
-.zw-poll-admin-empty {
-	color: var(--wpds-color-foreground-content-neutral-weak);
-	font-style: italic;
-	margin: 0;
+.wp-core-ui .zw-poll-admin-reset:hover,
+.wp-core-ui .zw-poll-admin-reset:focus {
+	background: var(--wpds-color-background-interactive-error-strong);
+	border-color: var(--wpds-color-stroke-interactive-error);
+	color: var(--wpds-color-foreground-interactive-error-strong);
 }
 
 /* Motion */
@@ -177,6 +163,10 @@
 	gap: var(--wpds-dimension-gap-sm);
 }
 
+.zw-poll-edit-option__preview:empty {
+	display: none;
+}
+
 .zw-poll-edit-option__thumbnail {
 	display: block;
 	width: 80px;
@@ -198,16 +188,12 @@
 	cursor: not-allowed;
 }
 
-.zw-poll-edit-option__remove {
-	color: var(--wpds-color-foreground-interactive-error);
-}
-
 /* Planning meta box */
 
 .zw-poll-edit-planning label {
 	display: block;
 	margin-bottom: var(--wpds-dimension-gap-xs);
-	font-weight: 600;
+	font-weight: var(--wpds-typography-font-weight-emphasis);
 }
 
 /* Display settings meta box (side column) */
@@ -294,17 +280,12 @@ i.mce-i-zw-poll::before {
 
 .zw-poll-picker__poll:hover,
 .zw-poll-picker__poll:focus-visible {
-	border-color: var(--wpds-color-stroke-interactive-brand);
-	background: var(--wpds-color-background-interactive-brand-weak-active);
+	border-color: var(--wp-admin-theme-color, var(--wpds-color-stroke-interactive-brand));
+	background: rgba(var(--wp-admin-theme-color--rgb, 56, 88, 233), 0.04);
 }
 
 .zw-poll-picker__poll strong {
 	display: block;
-}
-
-.zw-poll-picker__empty {
-	color: var(--wpds-color-foreground-content-neutral-weak);
-	font-style: italic;
 }
 
 .zw-poll-picker__footer {

@@ -60,6 +60,7 @@ final class PollRendererTest extends TestCase
         );
         Functions\when('wp_unique_id')->justReturn('zw-poll-42-test');
         Functions\when('_prime_post_caches')->justReturn(null);
+        Functions\when('get_post_status')->justReturn('inherit');
         Functions\when('get_option')->alias(
             static fn (string $option, mixed $default = []): mixed => $default
         );
@@ -100,8 +101,7 @@ final class PollRendererTest extends TestCase
         ],
         ?array $aggregate = null,
         string $total_visibility = PollPostType::TOTAL_VISIBILITY_SHOW,
-        int $closes_at = 0,
-        array $trashed_images = []
+        int $closes_at = 0
     ): string {
         $poll = $this->poll();
         $poll->post_title = $question;
@@ -109,17 +109,7 @@ final class PollRendererTest extends TestCase
             'counts' => ['opt-a' => 2, 'opt-b' => 1],
             'total' => 3,
         ];
-        Functions\when('get_post')->alias(
-            static function (int $id) use ($poll, $trashed_images): WP_Post {
-                if ($id === self::POLL_ID) {
-                    return $poll;
-                }
-                $attachment = new WP_Post();
-                $attachment->ID = $id;
-                $attachment->post_status = in_array($id, $trashed_images, true) ? 'trash' : 'inherit';
-                return $attachment;
-            }
-        );
+        Functions\when('get_post')->justReturn($poll);
         Functions\when('get_post_meta')->alias(
             static function (int $post_id, string $key) use ($status, $options, $aggregate, $total_visibility, $closes_at): mixed {
                 return match ($key) {
@@ -193,6 +183,7 @@ final class PollRendererTest extends TestCase
         );
         $this->assertStringContainsString('Einduitslag', $hidden);
         $this->assertStringNotContainsString('class="zw-poll__total"', $hidden);
+        $this->assertArrayNotHasKey('i18n', $this->interactivityState);
     }
 
     /**
@@ -213,12 +204,14 @@ final class PollRendererTest extends TestCase
     public function complete_images_render_as_clickable_cards_and_result_images(): void
     {
         Functions\when('wp_attachment_is_image')->justReturn(true);
-        $image_attrs = [];
         Functions\when('wp_get_attachment_image')->alias(
-            static function (int $id, string $size, bool $icon, array $attrs) use (&$image_attrs): string {
-                $image_attrs = $attrs;
-                return sprintf('<img class="%s" src="image-%d.jpg" alt="%s">', $attrs['class'], $id, $attrs['alt']);
-            }
+            static fn (int $id, string $size, bool $icon, array $attrs): string => sprintf(
+                '<img class="%s" src="image-%d.jpg" alt="%s" loading="%s">',
+                $attrs['class'],
+                $id,
+                $attrs['alt'],
+                $attrs['loading']
+            )
         );
 
         $html = $this->renderPoll('open', options: [
@@ -227,13 +220,12 @@ final class PollRendererTest extends TestCase
         ]);
 
         $this->assertStringContainsString('zw-poll--images', $html);
-        $this->assertStringContainsString('zw-poll--image-columns-2', $html);
-        $this->assertSame(
-            ['class' => 'zw-poll__image', 'alt' => '', 'loading' => 'lazy', 'sizes' => '(max-width: 520px) 100vw, 50vw'],
-            $image_attrs
-        );
-        // One image per option in the form and again in the results.
+        // style.css derives the column count from the option count.
+        $this->assertStringContainsString('data-option-count="2"', $html);
+        // One image per option in the form and again in the results; images
+        // are decorative (the label names the option) and lazy-loaded.
         $this->assertSame(4, substr_count($html, 'class="zw-poll__image"'));
+        $this->assertSame(4, substr_count($html, 'alt="" loading="lazy"'));
         $this->assertMatchesRegularExpression(
             '/class="zw-poll__option".*class="zw-poll__media".*type="radio".*Optie A/s',
             $html
@@ -269,13 +261,14 @@ final class PollRendererTest extends TestCase
     #[Test]
     public function trashed_image_falls_back_to_the_text_layout(): void
     {
+        Functions\when('get_post_status')->alias(static fn (int $id): string => $id === 102 ? 'trash' : 'inherit');
         Functions\when('wp_attachment_is_image')->justReturn(true);
         Functions\expect('wp_get_attachment_image')->never();
 
         $html = $this->renderPoll('open', options: [
             ['id' => 'opt-a', 'label' => 'A', 'imageId' => 101],
             ['id' => 'opt-b', 'label' => 'B', 'imageId' => 102],
-        ], trashed_images: [102]);
+        ]);
 
         $this->assertStringNotContainsString('zw-poll--images', $html);
         $this->assertStringNotContainsString('zw-poll__media', $html);

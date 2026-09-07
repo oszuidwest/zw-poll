@@ -53,3 +53,7 @@ export const CLOSED_DEMO_PAGE = '/poll-gesloten-demo/';
 export const THRESHOLD_DEMO_PAGE = '/poll-drempel-demo/';
 
 export const CLOSED_THRESHOLD_DEMO_PAGE = '/poll-drempel-gesloten-demo/';
+
+export const IMAGE_DEMO_PAGE = '/poll-afbeeldingen-demo/';
+
+export const IMAGE_FALLBACK_DEMO_PAGE = '/poll-afbeeldingen-fallback/';

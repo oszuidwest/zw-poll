@@ -1,5 +1,6 @@
 /*
  * ZuidWest Poll shortcode preview inside the TinyMCE iframe.
+ * Literal values on purpose: the iframe does not load the 'wp-theme' tokens.
  */
 
 .zw-poll-mce {

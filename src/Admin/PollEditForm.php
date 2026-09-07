@@ -21,6 +21,9 @@ final class PollEditForm
     private const NONCE_ACTION = 'zw_poll_edit_form';
     private const NONCE_FIELD = 'zw_poll_edit_form_nonce';
 
+    /** Shape of a blank repeater row; mirrors PollPostType::options(). */
+    private const EMPTY_ROW = ['id' => '', 'label' => '', 'imageId' => 0];
+
     /** Registers edit form hooks. */
     public function register(): void
     {
@@ -121,7 +124,7 @@ final class PollEditForm
     {
         $options = PollPostType::options($post->ID);
         while (count($options) < PollPostType::MIN_OPTIONS) {
-            $options[] = ['id' => '', 'label' => '', 'imageId' => 0];
+            $options[] = self::EMPTY_ROW;
         }
 
         _prime_post_caches(array_filter(array_column($options, 'imageId')), false);
@@ -138,7 +141,7 @@ final class PollEditForm
     <legend class="screen-reader-text"><?php esc_html_e('Antwoorden', 'zw-poll'); ?></legend>
     <ol class="zw-poll-edit-options__list">
         <?php foreach ($options as $index => $opt) : ?>
-            <?php $this->renderOptionRow((string) $index, $opt['id'], $opt['label'], $opt['imageId'], (int) $index + 1); ?>
+            <?php $this->renderOptionRow((string) $index, $opt, (int) $index + 1); ?>
         <?php endforeach; ?>
     </ol>
     <button type="button" class="button zw-poll-edit-options__add">
@@ -160,7 +163,7 @@ final class PollEditForm
 <template class="zw-poll-edit-options__template">
     <?php
     // The row number is refreshed by admin.js as soon as a row is added.
-    $this->renderOptionRow('__INDEX__', '', '', 0, 1);
+    $this->renderOptionRow('__INDEX__', self::EMPTY_ROW, 1);
     ?>
 </template>
         <?php
@@ -344,43 +347,46 @@ final class PollEditForm
     /**
      * Renders one option row.
      *
-     * @param string $index    Field index or the template placeholder.
-     * @param string $id       Existing option UUID, or empty for new rows.
-     * @param string $label    Option label.
-     * @param int    $image_id Attachment ID, or zero without an image.
-     * @param int    $position One-based row number for the accessible name.
+     * @param string                                         $index    Field index or the template placeholder.
+     * @param array{id: string, label: string, imageId: int} $opt      Option row; id is empty for new rows.
+     * @param int                                            $position One-based row number for the accessible name.
      */
-    private function renderOptionRow(string $index, string $id, string $label, int $image_id, int $position): void
+    private function renderOptionRow(string $index, array $opt, int $position): void
     {
         /* translators: %d: answer number. */
         $option_name = sprintf(__('Antwoord %d', 'zw-poll'), $position);
+        // Same <img> shape admin.js builds after picking, so both paths obey
+        // the same stylesheet rule; core falls back to the full size when no
+        // thumbnail exists.
+        $thumbnail_url = $opt['imageId'] > 0 ? wp_get_attachment_image_url($opt['imageId'], 'thumbnail') : false;
         ?>
 <li class="zw-poll-edit-option">
-    <input type="hidden" name="zw_poll_options[<?php echo esc_attr($index); ?>][id]" value="<?php echo esc_attr($id); ?>">
+    <input type="hidden" name="zw_poll_options[<?php echo esc_attr($index); ?>][id]" value="<?php echo esc_attr($opt['id']); ?>">
     <input
         type="hidden"
         class="zw-poll-edit-option__image-id"
         name="zw_poll_options[<?php echo esc_attr($index); ?>][imageId]"
-        value="<?php echo esc_attr((string) $image_id); ?>"
+        value="<?php echo esc_attr((string) $opt['imageId']); ?>"
     >
     <input
         type="text"
         name="zw_poll_options[<?php echo esc_attr($index); ?>][label]"
         class="regular-text zw-poll-edit-option__label"
         maxlength="<?php echo esc_attr((string) PollPostType::MAX_OPTION_LEN); ?>"
-        value="<?php echo esc_attr($label); ?>"
+        value="<?php echo esc_attr($opt['label']); ?>"
         aria-label="<?php echo esc_attr($option_name); ?>"
         placeholder="<?php echo esc_attr($option_name); ?>"
     >
     <?php
     $controls = [
-        ['move-up', __('Omhoog', 'zw-poll'), '&uarr;'],
-        ['move-down', __('Omlaag', 'zw-poll'), '&darr;'],
-        ['remove', __('Antwoord verwijderen', 'zw-poll'), '&times;'],
+        ['move-up', __('Omhoog', 'zw-poll'), '&uarr;', ''],
+        ['move-down', __('Omlaag', 'zw-poll'), '&darr;', ''],
+        ['remove', __('Antwoord verwijderen', 'zw-poll'), '&times;', ' button-link-delete'],
     ];
-    foreach ($controls as [$action, $control_label, $icon]) {
+    foreach ($controls as [$action, $control_label, $icon, $extra_class]) {
         $button = sprintf(
-            '<button type="button" class="button-link zw-poll-edit-option__%1$s" aria-label="%2$s">%3$s</button>',
+            '<button type="button" class="button-link%1$s zw-poll-edit-option__%2$s" aria-label="%3$s">%4$s</button>',
+            $extra_class,
             esc_attr($action),
             esc_attr($control_label),
             $icon
@@ -393,24 +399,15 @@ final class PollEditForm
     }
     ?>
     <div class="zw-poll-edit-option__image">
-        <?php if ($image_id > 0) : ?>
-            <?php
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
-            echo wp_get_attachment_image(
-                $image_id,
-                'thumbnail',
-                false,
-                ['class' => 'zw-poll-edit-option__thumbnail', 'alt' => '']
-            );
-            ?>
-        <?php endif; ?>
+        <?php // No whitespace inside the span: admin.css hides an :empty preview. ?>
+        <span class="zw-poll-edit-option__preview"><?php if ($thumbnail_url) : ?><img class="zw-poll-edit-option__thumbnail" src="<?php echo esc_url($thumbnail_url); ?>" alt=""><?php endif; ?></span>
         <button type="button" class="button zw-poll-edit-option__choose-image">
             <?php esc_html_e('Afbeelding kiezen', 'zw-poll'); ?>
         </button>
         <button
             type="button"
             class="button-link-delete zw-poll-edit-option__remove-image"
-            <?php if ($image_id === 0) : ?>hidden<?php endif; ?>
+            <?php if ($opt['imageId'] === 0) : ?>hidden<?php endif; ?>
         >
             <?php esc_html_e('Afbeelding verwijderen', 'zw-poll'); ?>
         </button>

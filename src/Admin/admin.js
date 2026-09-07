@@ -150,8 +150,8 @@
 			const imageId = row.querySelector(
 				'.zw-poll-edit-option__image-id'
 			);
-			const choose = row.querySelector(
-				'.zw-poll-edit-option__choose-image'
+			const preview = row.querySelector(
+				'.zw-poll-edit-option__preview'
 			);
 			const remove = row.querySelector(
 				'.zw-poll-edit-option__remove-image'
@@ -159,13 +159,13 @@
 			const id = attachment?.id ?? 0;
 
 			imageId.value = String( id );
-			row.querySelector( '.zw-poll-edit-option__thumbnail' )?.remove();
+			preview.replaceChildren();
 			if ( id > 0 ) {
 				const image = document.createElement( 'img' );
 				image.className = 'zw-poll-edit-option__thumbnail';
 				image.src = attachment.sizes?.thumbnail?.url ?? attachment.url;
 				image.alt = '';
-				choose.before( image );
+				preview.append( image );
 			}
 			remove.hidden = id === 0;
 		};
@@ -199,14 +199,14 @@
 			if ( list.children.length >= max ) {
 				return;
 			}
-			// The template holds no user data, so substituting the index
-			// placeholder in its markup covers every attribute at once.
-			const holder = document.createElement( 'template' );
-			holder.innerHTML = template.innerHTML.replaceAll(
-				'__INDEX__',
-				String( nextIndex )
-			);
-			const row = holder.content.firstElementChild;
+			const row = template.content.firstElementChild.cloneNode( true );
+			const rowIndex = String( nextIndex );
+			row.querySelectorAll( 'input[name]' ).forEach( ( input ) => {
+				input.name = input.name.replace( '__INDEX__', rowIndex );
+			} );
+			row.querySelectorAll( '[id]' ).forEach( ( element ) => {
+				element.id = element.id.replace( '__INDEX__', rowIndex );
+			} );
 			nextIndex++;
 			list.append( row );
 			row.querySelectorAll( '.wp-is-tooltip' ).forEach(

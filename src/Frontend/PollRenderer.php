@@ -64,21 +64,15 @@ final class PollRenderer
         }
         // PollPostType::options() guarantees the keys consumed below.
         // Image cards are all-or-nothing; the form card and the result bar
-        // share one core-generated markup string per option. Two and four
-        // answers fill two columns, other counts three; the sizes hint
-        // mirrors the column breakpoints in style.css.
+        // share one core-generated markup string per option.
         $media = [];
-        $columns = in_array(count($options), [2, 4], true) ? 2 : 3;
         if (PollPostType::hasCompleteImages($options)) {
-            $sizes = $columns === 2
-                ? '(max-width: 520px) 100vw, 50vw'
-                : '(max-width: 520px) 100vw, (max-width: 760px) 50vw, 33vw';
             foreach ($options as $opt) {
                 $media[$opt['id']] = '<span class="zw-poll__media">' . wp_get_attachment_image(
                     $opt['imageId'],
                     'medium_large',
                     false,
-                    ['class' => 'zw-poll__image', 'alt' => '', 'loading' => 'lazy', 'sizes' => $sizes]
+                    ['class' => 'zw-poll__image', 'alt' => '', 'loading' => 'lazy']
                 ) . '</span>';
             }
         }
@@ -148,13 +142,14 @@ final class PollRenderer
         $results_id = $instance_id . '-results';
         $radio_name = $instance_id . '-option';
         $wrapper_class = 'zw-poll'
-            . ($media !== [] ? ' zw-poll--images zw-poll--image-columns-' . $columns : '')
+            . ($media !== [] ? ' zw-poll--images' : '')
             . ($is_closed ? ' zw-poll--closed' : '');
 
         ob_start();
         ?>
 <aside
     class="<?php echo esc_attr($wrapper_class); ?>"
+    data-option-count="<?php echo esc_attr((string) count($options)); ?>"
     data-wp-interactive="zw-poll"
     <?php echo wp_interactivity_data_wp_context($context); ?>
     data-wp-init="callbacks.init"
