@@ -17,7 +17,7 @@
 	--zw-poll-warning-color: color-mix(in srgb, #8a6200 55%, currentcolor);
 	--zw-poll-warning-background: color-mix(in srgb, var(--zw-poll-warning-color) 14%, transparent);
 	--zw-poll-card-radius: 6px;
-	--zw-poll-image-ratio: 4 / 3;
+	--zw-poll-image-ratio: 1 / 1;
 	--zw-poll-image-background: var(--zw-poll-soft);
 	--zw-poll-image-badge-background: #1d2327;
 	--zw-poll-image-badge-color: #fff;
@@ -224,6 +224,7 @@
 
 /* Spans the option card's grid; the result bar's flex column stretches it. */
 .zw-poll__media {
+	position: relative;
 	grid-column: 1 / -1;
 	width: 100%;
 	aspect-ratio: var(--zw-poll-image-ratio);
@@ -233,6 +234,8 @@
 
 .zw-poll .zw-poll__image {
 	display: block;
+	position: absolute;
+	inset: 0;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;

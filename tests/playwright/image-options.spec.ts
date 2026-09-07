@@ -39,8 +39,14 @@ test.describe( 'poll option images', () => {
 		const options = poll.locator( '.zw-poll__option' );
 		await expect( options ).toHaveCount( 3 );
 		await expect( options.locator( '.zw-poll__image' ) ).toHaveCount( 3 );
-		for ( const image of await options.locator( 'img' ).all() ) {
+		for ( const option of await options.all() ) {
+			const media = option.locator( '.zw-poll__media' );
+			const image = media.locator( 'img' );
 			await expect( image ).toHaveAttribute( 'alt', '' );
+			await expect( image ).toHaveCSS( 'object-fit', 'cover' );
+			const mediaBox = await media.boundingBox();
+			expect( mediaBox?.height ).toBe( mediaBox?.width );
+			await expect( image.boundingBox() ).resolves.toEqual( mediaBox );
 		}
 
 		await options.first().locator( '.zw-poll__media' ).click();
