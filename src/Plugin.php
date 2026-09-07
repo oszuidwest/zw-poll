@@ -72,7 +72,7 @@ final class Plugin
                 wp_register_style(
                     'zw-poll-admin',
                     ZW_POLL_URL . 'src/Admin/admin.css',
-                    [],
+                    ['wp-theme'],
                     ZW_POLL_VERSION
                 );
                 wp_register_script(
