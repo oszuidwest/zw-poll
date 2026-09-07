@@ -453,6 +453,27 @@ final class PollEditFormTest extends TestCase
     }
 
     #[Test]
+    public function options_box_can_remove_an_image_whose_thumbnail_is_unavailable(): void
+    {
+        $this->stubMetaBoxRendering();
+        Functions\when('_prime_post_caches')->justReturn(null);
+        Functions\when('get_post_meta')->justReturn([
+            ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 123],
+        ]);
+        Functions\expect('wp_get_attachment_image_url')->once()->with(123, 'thumbnail')->andReturn(false);
+
+        ob_start();
+        (new PollEditForm())->renderOptions($this->pollPost('publish'));
+        $html = (string) ob_get_clean();
+
+        $this->assertMatchesRegularExpression(
+            '/value="123".*?class="button-link-delete zw-poll-edit-option__remove-image"\s*>/s',
+            $html
+        );
+        $this->assertStringNotContainsString('class="zw-poll-edit-option__thumbnail"', $html);
+    }
+
+    #[Test]
     public function registers_meta_box_save_placeholder_and_notice_hooks(): void
     {
         $form = new PollEditForm();

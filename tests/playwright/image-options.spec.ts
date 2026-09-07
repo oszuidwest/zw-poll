@@ -30,6 +30,11 @@ test.describe( 'poll option images', () => {
 		const poll = page.locator( '.zw-poll' );
 		await expect( poll ).toHaveClass( /zw-poll--images/ );
 		await expect( poll ).toHaveAttribute( 'data-option-count', '3' );
+		await expect( poll ).toHaveCSS( '--zw-poll-image-columns', '3' );
+		await page.setViewportSize( { width: 760, height: 720 } );
+		await expect( poll ).toHaveCSS( '--zw-poll-image-columns', '2' );
+		await page.setViewportSize( { width: 520, height: 720 } );
+		await expect( poll ).toHaveCSS( '--zw-poll-image-columns', '1' );
 
 		const options = poll.locator( '.zw-poll__option' );
 		await expect( options ).toHaveCount( 3 );

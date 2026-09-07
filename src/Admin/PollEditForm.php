@@ -389,7 +389,7 @@ final class PollEditForm
         <button
             type="button"
             class="button-link-delete zw-poll-edit-option__remove-image"
-            <?php if (!$thumbnail_url) : ?>hidden<?php endif; ?>
+            <?php if ($opt['imageId'] === 0) : ?>hidden<?php endif; ?>
         >
             <?php esc_html_e('Afbeelding verwijderen', 'zw-poll'); ?>
         </button>
