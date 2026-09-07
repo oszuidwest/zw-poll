@@ -95,24 +95,9 @@ final class PollRenderer
         /* translators: %s: total number of votes. */
         $total_label = __('Totaal aantal stemmen: %s', 'zw-poll');
 
-        // Pass script-module translations through Interactivity API state.
         wp_interactivity_state('zw-poll', [
             'restUrl' => esc_url_raw(VoteController::voteUrl()),
             'cookiePrefix' => VoteController::COOKIE_PREFIX,
-            'i18n' => [
-                'errors' => [
-                    'rate_limited' => __('Even rustig aan — probeer over een minuutje opnieuw.', 'zw-poll'),
-                    'poll_not_found' => __('Deze poll bestaat niet meer.', 'zw-poll'),
-                    'poll_closed' => __('Deze poll is gesloten.', 'zw-poll'),
-                    'invalid_option' => __('Kies eerst een optie.', 'zw-poll'),
-                    'already_voted' => __('Je hebt al gestemd op deze poll.', 'zw-poll'),
-                    'invalid_origin' => __('Stemmen vanaf deze pagina is niet toegestaan.', 'zw-poll'),
-                    'vote_forbidden' => __('Stemmen op deze poll is niet toegestaan.', 'zw-poll'),
-                    'insert_failed' => __('Stem niet opgeslagen. Probeer het later opnieuw.', 'zw-poll'),
-                    'default' => __('Er ging iets mis. Probeer het later opnieuw.', 'zw-poll'),
-                ],
-                'total' => $total_label,
-            ],
             // Mirror client getters for initial directive processing. These
             // cache-safe closures are not serialized; isVotedOption is client-only.
             'showResults' => static function (): bool {
@@ -157,13 +142,14 @@ final class PollRenderer
         $results_id = $instance_id . '-results';
         $radio_name = $instance_id . '-option';
         $wrapper_class = 'zw-poll'
-            . ($media !== [] ? ' zw-poll--images ' . self::imageLayoutClass(count($options)) : '')
+            . ($media !== [] ? ' zw-poll--images' : '')
             . ($is_closed ? ' zw-poll--closed' : '');
 
         ob_start();
         ?>
 <aside
     class="<?php echo esc_attr($wrapper_class); ?>"
+    data-option-count="<?php echo esc_attr((string) count($options)); ?>"
     data-wp-interactive="zw-poll"
     <?php echo wp_interactivity_data_wp_context($context); ?>
     data-wp-init="callbacks.init"
@@ -345,18 +331,6 @@ final class PollRenderer
 </aside>
 <?php
         return (string) ob_get_clean();
-    }
-
-    /**
-     * Chooses a two- or three-column image-card layout.
-     *
-     * @param int $option_count Number of poll options.
-     */
-    private static function imageLayoutClass(int $option_count): string
-    {
-        return in_array($option_count, [2, 4], true)
-            ? 'zw-poll--image-layout-two-column'
-            : 'zw-poll--image-layout-three-column';
     }
 
     /**

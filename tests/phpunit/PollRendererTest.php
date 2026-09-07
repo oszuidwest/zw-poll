@@ -183,6 +183,7 @@ final class PollRendererTest extends TestCase
         );
         $this->assertStringContainsString('Einduitslag', $hidden);
         $this->assertStringNotContainsString('class="zw-poll__total"', $hidden);
+        $this->assertArrayNotHasKey('i18n', $this->interactivityState);
     }
 
     /**
@@ -219,9 +220,12 @@ final class PollRendererTest extends TestCase
         ]);
 
         $this->assertStringContainsString('zw-poll--images', $html);
-        $this->assertStringContainsString('zw-poll--image-layout-two-column', $html);
-        // One image per option in the form and again in the results.
+        // style.css derives the column count from the option count.
+        $this->assertStringContainsString('data-option-count="2"', $html);
+        // One image per option in the form and again in the results; images
+        // are decorative (the label names the option) and lazy-loaded.
         $this->assertSame(4, substr_count($html, 'class="zw-poll__image"'));
+        $this->assertSame(4, substr_count($html, 'alt="" loading="lazy"'));
         $this->assertMatchesRegularExpression(
             '/class="zw-poll__option".*class="zw-poll__media".*type="radio".*Optie A/s',
             $html

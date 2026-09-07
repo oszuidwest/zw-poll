@@ -1,5 +1,7 @@
 import { store, getContext } from '@wordpress/interactivity';
 
+const __ = window.wp?.i18n?.__ || ( ( text ) => text );
+
 // One page-load token makes retries and double-submits share a dedup key.
 const generateToken = () => {
 	const bytes = new Uint8Array( 16 );
@@ -54,11 +56,28 @@ const currentVotedOptionIdFromCookie = ( ctx ) => {
 	);
 };
 
-// PHP passes script-module translations through Interactivity API state.
-const errorMessage = ( code, fallback = '' ) => {
-	const errors = state.i18n?.errors || {};
-	return errors[ code ] || fallback || errors.default || '';
+// Reader-friendlier copy for codes whose REST message is terse; other codes
+// show the (already translated) message the endpoint returns.
+const errorMessages = {
+	rate_limited: __(
+		'Even rustig aan — probeer over een minuutje opnieuw.',
+		'zw-poll'
+	),
+	poll_not_found: __( 'Deze poll bestaat niet meer.', 'zw-poll' ),
+	invalid_option: __( 'Kies eerst een optie.', 'zw-poll' ),
+	insert_failed: __(
+		'Stem niet opgeslagen. Probeer het later opnieuw.',
+		'zw-poll'
+	),
+	default: __( 'Er ging iets mis. Probeer het later opnieuw.', 'zw-poll' ),
 };
+
+const errorMessage = ( code, fallback = '' ) => {
+	return errorMessages[ code ] || fallback || errorMessages.default;
+};
+
+/* translators: %s: total number of votes. */
+const totalTemplate = __( 'Totaal aantal stemmen: %s', 'zw-poll' );
 
 // Voting hides the focused submit; move focus to revealed live results.
 const focusResults = ( poll ) => {
@@ -97,9 +116,10 @@ const { state } = store( 'zw-poll', {
 		},
 		get totalText() {
 			const ctx = getContext();
-			const n = ctx.total || 0;
-			const template = state.i18n?.total || '%s';
-			return template.replace( '%s', formatNumber( n ) );
+			return totalTemplate.replace(
+				'%s',
+				formatNumber( ctx.total || 0 )
+			);
 		},
 		get isVotedOption() {
 			const ctx = getContext();

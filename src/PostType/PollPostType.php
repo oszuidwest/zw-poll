@@ -324,11 +324,7 @@ final class PollPostType
             return max(0, $value);
         }
 
-        if (!is_string($value) || preg_match('/^\d+$/D', $value) !== 1) {
-            return 0;
-        }
-
-        return (int) $value;
+        return is_string($value) && ctype_digit($value) ? (int) $value : 0;
     }
 
     /**

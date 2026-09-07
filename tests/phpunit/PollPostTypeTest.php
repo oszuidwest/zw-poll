@@ -52,14 +52,7 @@ final class PollPostTypeTest extends TestCase
     #[Test]
     public function register_meta_exposes_total_visibility_as_an_enum(): void
     {
-        $registered = [];
-        Functions\when('register_post_meta')->alias(
-            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
-                $registered[$meta_key] = $args;
-            }
-        );
-
-        $this->sut->registerMeta();
+        $registered = $this->registeredMeta();
 
         $args = $registered[PollPostType::META_TOTAL_VISIBILITY];
         $this->assertSame('string', $args['type']);
@@ -71,14 +64,7 @@ final class PollPostTypeTest extends TestCase
     #[Test]
     public function option_images_are_non_negative_rest_integers(): void
     {
-        $registered = [];
-        Functions\when('register_post_meta')->alias(
-            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
-                $registered[$meta_key] = $args;
-            }
-        );
-
-        $this->sut->registerMeta();
+        $registered = $this->registeredMeta();
 
         $schema = $registered[PollPostType::META_OPTIONS]['show_in_rest']['schema'];
         $image_schema = $schema['items']['properties']['imageId'];
@@ -128,14 +114,7 @@ final class PollPostTypeTest extends TestCase
     #[Test]
     public function register_meta_exposes_the_closing_deadline(): void
     {
-        $registered = [];
-        Functions\when('register_post_meta')->alias(
-            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
-                $registered[$meta_key] = $args;
-            }
-        );
-
-        $this->sut->registerMeta();
+        $registered = $this->registeredMeta();
 
         $args = $registered[PollPostType::META_CLOSES_AT];
         $this->assertSame('integer', $args['type']);
@@ -178,14 +157,7 @@ final class PollPostTypeTest extends TestCase
     {
         // A null default fails core's type check and keeps the object meta out
         // of the registry; readers handle missing meta.
-        $registered = [];
-        Functions\when('register_post_meta')->alias(
-            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
-                $registered[$meta_key] = $args;
-            }
-        );
-
-        $this->sut->registerMeta();
+        $registered = $this->registeredMeta();
 
         $this->assertArrayNotHasKey('default', $registered[PollPostType::META_AGGREGATE]);
     }
@@ -458,5 +430,24 @@ final class PollPostTypeTest extends TestCase
         ]);
 
         $this->assertSame(300, mb_strlen($data['post_title']));
+    }
+
+    /**
+     * Captures the arguments registerMeta() passes to register_post_meta(), keyed by meta key.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function registeredMeta(): array
+    {
+        $registered = [];
+        Functions\when('register_post_meta')->alias(
+            static function (string $post_type, string $meta_key, array $args) use (&$registered): void {
+                $registered[$meta_key] = $args;
+            }
+        );
+
+        $this->sut->registerMeta();
+
+        return $registered;
     }
 }
