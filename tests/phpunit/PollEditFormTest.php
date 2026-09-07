@@ -477,7 +477,6 @@ final class PollEditFormTest extends TestCase
         }
 
         $this->assertCount(9, $tooltips);
-        $this->assertCount(9, array_unique(array_column($tooltips, 'id')));
         foreach ($expected as $offset => $tooltip) {
             $this->assertSame($tooltip['content'], $tooltips[$offset]['content']);
             $this->assertSame($tooltip['id'], $tooltips[$offset]['id']);

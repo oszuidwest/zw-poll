@@ -320,15 +320,11 @@ final class PollPostType
      */
     public static function normalizeImageId(mixed $value): int
     {
-        if (is_int($value)) {
-            return max(0, $value);
-        }
+        $id = is_int($value) || is_string($value)
+            ? filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])
+            : false;
 
-        if (!is_string($value) || preg_match('/^\d+$/D', $value) !== 1) {
-            return 0;
-        }
-
-        return (int) $value;
+        return $id === false ? 0 : $id;
     }
 
     /**
@@ -345,7 +341,9 @@ final class PollPostType
 
         _prime_post_caches($image_ids, false);
         foreach ($image_ids as $image_id) {
-            if (get_post_status($image_id) === 'trash' || !wp_attachment_is_image($image_id)) {
+            // Raw status: get_post_status() resolves attachments through their
+            // parent post, which costs an uncached query per parent.
+            if (get_post($image_id)?->post_status === 'trash' || !wp_attachment_is_image($image_id)) {
                 return false;
             }
         }

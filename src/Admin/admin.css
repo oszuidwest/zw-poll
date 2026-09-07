@@ -177,10 +177,6 @@
 	gap: var(--wpds-dimension-gap-sm);
 }
 
-.zw-poll-edit-option__preview:empty {
-	display: none;
-}
-
 .zw-poll-edit-option__thumbnail {
 	display: block;
 	width: 80px;

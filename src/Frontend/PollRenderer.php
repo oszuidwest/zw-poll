@@ -64,15 +64,21 @@ final class PollRenderer
         }
         // PollPostType::options() guarantees the keys consumed below.
         // Image cards are all-or-nothing; the form card and the result bar
-        // share one core-generated markup string per option.
+        // share one core-generated markup string per option. Two and four
+        // answers fill two columns, other counts three; the sizes hint
+        // mirrors the column breakpoints in style.css.
         $media = [];
+        $columns = in_array(count($options), [2, 4], true) ? 2 : 3;
         if (PollPostType::hasCompleteImages($options)) {
+            $sizes = $columns === 2
+                ? '(max-width: 520px) 100vw, 50vw'
+                : '(max-width: 520px) 100vw, (max-width: 760px) 50vw, 33vw';
             foreach ($options as $opt) {
                 $media[$opt['id']] = '<span class="zw-poll__media">' . wp_get_attachment_image(
                     $opt['imageId'],
                     'medium_large',
                     false,
-                    ['class' => 'zw-poll__image', 'alt' => '', 'loading' => 'lazy']
+                    ['class' => 'zw-poll__image', 'alt' => '', 'loading' => 'lazy', 'sizes' => $sizes]
                 ) . '</span>';
             }
         }
@@ -142,7 +148,7 @@ final class PollRenderer
         $results_id = $instance_id . '-results';
         $radio_name = $instance_id . '-option';
         $wrapper_class = 'zw-poll'
-            . ($media !== [] ? ' zw-poll--images ' . self::imageLayoutClass(count($options)) : '')
+            . ($media !== [] ? ' zw-poll--images zw-poll--image-columns-' . $columns : '')
             . ($is_closed ? ' zw-poll--closed' : '');
 
         ob_start();
@@ -330,18 +336,6 @@ final class PollRenderer
 </aside>
 <?php
         return (string) ob_get_clean();
-    }
-
-    /**
-     * Chooses a two- or three-column image-card layout.
-     *
-     * @param int $option_count Number of poll options.
-     */
-    private static function imageLayoutClass(int $option_count): string
-    {
-        return in_array($option_count, [2, 4], true)
-            ? 'zw-poll--image-layout-two-column'
-            : 'zw-poll--image-layout-three-column';
     }
 
     /**

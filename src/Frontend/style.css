@@ -244,11 +244,11 @@
 }
 
 .zw-poll--images .zw-poll__option input[type="radio"] {
-	margin-left: 0.875em;
+	margin-left: var(--zw-poll-image-inset);
 }
 
 .zw-poll--images .zw-poll__option-label {
-	padding-right: 0.875em;
+	padding-right: var(--zw-poll-image-inset);
 	overflow-wrap: anywhere;
 }
 
@@ -388,13 +388,14 @@
  */
 .zw-poll--images {
 	--zw-poll-image-card-basis: calc((100% - (var(--zw-poll-image-columns) - 1) * 0.5em) / var(--zw-poll-image-columns));
+	--zw-poll-image-inset: 0.875em;
 }
 
-.zw-poll--image-layout-two-column {
+.zw-poll--image-columns-2 {
 	--zw-poll-image-columns: 2;
 }
 
-.zw-poll--image-layout-three-column {
+.zw-poll--image-columns-3 {
 	--zw-poll-image-columns: 3;
 }
 
@@ -422,7 +423,6 @@
 }
 
 .zw-poll--images .zw-poll__bar-track {
-	width: auto;
 	margin: 0 0.75em 0.75em;
 }
 
@@ -497,7 +497,7 @@
 
 @media (max-width: 760px) {
 
-	.zw-poll--image-layout-three-column {
+	.zw-poll--image-columns-3 {
 		--zw-poll-image-columns: 2;
 	}
 }
@@ -506,6 +506,7 @@
 
 	.zw-poll--images {
 		--zw-poll-image-columns: 1;
+		--zw-poll-image-inset: 0.625em;
 	}
 
 	.zw-poll--images .zw-poll__option {
@@ -513,12 +514,7 @@
 		padding-bottom: 0.625em;
 	}
 
-	.zw-poll--images .zw-poll__option input[type="radio"] {
-		margin-left: 0.625em;
-	}
-
 	.zw-poll--images .zw-poll__option-label {
-		padding-right: 0.625em;
 		font-size: 0.925em;
 	}
 }

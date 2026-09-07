@@ -29,7 +29,7 @@ test.describe( 'poll option images', () => {
 		await page.goto( '/poll-afbeeldingen-demo/' );
 		const poll = page.locator( '.zw-poll' );
 		await expect( poll ).toHaveClass( /zw-poll--images/ );
-		await expect( poll ).toHaveClass( /zw-poll--image-layout-three-column/ );
+		await expect( poll ).toHaveClass( /zw-poll--image-columns-3/ );
 
 		const options = poll.locator( '.zw-poll__option' );
 		await expect( options ).toHaveCount( 3 );

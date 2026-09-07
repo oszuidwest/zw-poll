@@ -393,21 +393,17 @@ final class PollEditForm
     }
     ?>
     <div class="zw-poll-edit-option__image">
-        <?php // No whitespace inside the span: admin.css hides an :empty preview. ?>
-        <span class="zw-poll-edit-option__preview"><?php
-        if ($image_id > 0) {
+        <?php if ($image_id > 0) : ?>
+            <?php
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
             echo wp_get_attachment_image(
                 $image_id,
                 'thumbnail',
                 false,
-                [
-                    'class' => 'zw-poll-edit-option__thumbnail',
-                    'alt' => '',
-                ]
+                ['class' => 'zw-poll-edit-option__thumbnail', 'alt' => '']
             );
-        }
-        ?></span>
+            ?>
+        <?php endif; ?>
         <button type="button" class="button zw-poll-edit-option__choose-image">
             <?php esc_html_e('Afbeelding kiezen', 'zw-poll'); ?>
         </button>

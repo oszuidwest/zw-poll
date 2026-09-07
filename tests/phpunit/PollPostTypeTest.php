@@ -10,6 +10,7 @@ use DateTimeZone;
 use ZuidWest\Poll\PostType\PollPostType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use WP_Post;
 
 final class PollPostTypeTest extends TestCase
 {
@@ -110,7 +111,12 @@ final class PollPostTypeTest extends TestCase
     public function complete_images_requires_a_live_image_for_every_option(): void
     {
         Functions\when('_prime_post_caches')->justReturn(null);
-        Functions\when('get_post_status')->justReturn('inherit');
+        Functions\when('get_post')->alias(static function (int $id): WP_Post {
+            $attachment = new WP_Post();
+            $attachment->ID = $id;
+            $attachment->post_status = 'inherit';
+            return $attachment;
+        });
         Functions\when('wp_attachment_is_image')->alias(
             static fn (int $attachment_id): bool => in_array($attachment_id, [101, 102], true)
         );

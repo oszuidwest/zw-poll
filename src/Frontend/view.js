@@ -77,9 +77,8 @@ const errorMessages = {
 	default: __( 'Er ging iets mis. Probeer het later opnieuw.', 'zw-poll' ),
 };
 
-const errorMessage = ( code, fallback = '' ) => {
-	return errorMessages[ code ] || fallback || errorMessages.default;
-};
+const errorMessage = ( code, fallback = '' ) =>
+	errorMessages[ code ] || fallback || errorMessages.default;
 
 // Voting hides the focused submit; move focus to revealed live results.
 const focusResults = ( poll ) => {
