@@ -45,8 +45,11 @@ test.describe( 'poll option images', () => {
 			await expect( image ).toHaveAttribute( 'alt', '' );
 			await expect( image ).toHaveCSS( 'object-fit', 'cover' );
 			const mediaBox = await media.boundingBox();
-			expect( mediaBox?.height ).toBe( mediaBox?.width );
-			await expect( image.boundingBox() ).resolves.toEqual( mediaBox );
+			const imageBox = await image.boundingBox();
+			expect( mediaBox ).not.toBeNull();
+			expect( imageBox ).not.toBeNull();
+			expect( mediaBox!.height ).toBe( mediaBox!.width );
+			expect( imageBox ).toEqual( mediaBox );
 		}
 
 		await options.first().locator( '.zw-poll__media' ).click();
