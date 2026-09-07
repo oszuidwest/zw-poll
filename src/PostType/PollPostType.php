@@ -100,6 +100,10 @@ final class PollPostType
                         'properties' => [
                             'id' => ['type' => 'string'],
                             'label' => ['type' => 'string'],
+                            'imageId' => [
+                                'type' => 'integer',
+                                'minimum' => 0,
+                            ],
                         ],
                     ],
                 ],
@@ -251,7 +255,7 @@ final class PollPostType
      * Returns valid option rows for a poll.
      *
      * @param int $poll_id Poll post ID.
-     * @return array<int, array{id: string, label: string}>
+     * @return array<int, array{id: string, label: string, imageId: int}>
      */
     public static function options(int $poll_id): array
     {
@@ -272,7 +276,11 @@ final class PollPostType
                 continue;
             }
 
-            $options[] = ['id' => $id, 'label' => $label];
+            $options[] = [
+                'id' => $id,
+                'label' => $label,
+                'imageId' => self::normalizeImageId($option['imageId'] ?? 0),
+            ];
         }
 
         if (count($raw) > count($options)) {
@@ -291,8 +299,11 @@ final class PollPostType
     /**
      * Checks whether a question and options make a poll renderable.
      *
-     * @param string                                       $question Poll question.
-     * @param array<int, array{id: string, label: string}> $options  Valid option rows.
+     * Single displayability predicate: the frontend gate (PollRenderer) and
+     * the classic form's incomplete-poll warning must never drift apart.
+     *
+     * @param string                                                     $question Poll question.
+     * @param array<int, array{id: string, label: string, imageId: int}> $options  Valid option rows.
      */
     public static function isComplete(string $question, array $options): bool
     {
@@ -300,10 +311,53 @@ final class PollPostType
     }
 
     /**
+     * Normalizes a raw option image reference to a non-negative attachment ID.
+     *
+     * Negative input deliberately becomes zero: absint() would turn an
+     * invalid -123 into the different, potentially valid attachment 123.
+     *
+     * @param mixed $value Raw image ID.
+     */
+    public static function normalizeImageId(mixed $value): int
+    {
+        if (is_int($value)) {
+            return max(0, $value);
+        }
+
+        if (!is_string($value) || preg_match('/^\d+$/D', $value) !== 1) {
+            return 0;
+        }
+
+        return (int) $value;
+    }
+
+    /**
+     * Checks whether every option has a non-trashed image attachment.
+     *
+     * @param array<int, array{id: string, label: string, imageId: int}> $options Valid option rows.
+     */
+    public static function hasCompleteImages(array $options): bool
+    {
+        $image_ids = array_column($options, 'imageId');
+        if ($image_ids === [] || in_array(0, $image_ids, true)) {
+            return false;
+        }
+
+        _prime_post_caches($image_ids, false);
+        foreach ($image_ids as $image_id) {
+            if (get_post_status($image_id) === 'trash' || !wp_attachment_is_image($image_id)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Sanitizes submitted option rows.
      *
      * @param mixed $value Raw options meta value.
-     * @return array<int, array{id: string, label: string}>
+     * @return array<int, array{id: string, label: string, imageId: int}>
      */
     public function sanitizeOptions(mixed $value): array
     {
@@ -324,7 +378,11 @@ final class PollPostType
                 ? $opt['id']
                 : wp_generate_uuid4();
             $used_ids[$id] = true;
-            $out[] = ['id' => $id, 'label' => $label];
+            $out[] = [
+                'id' => $id,
+                'label' => $label,
+                'imageId' => self::normalizeImageId($opt['imageId'] ?? 0),
+            ];
             if (count($out) >= self::MAX_OPTIONS) {
                 break;
             }

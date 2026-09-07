@@ -97,6 +97,10 @@ final class Plugin
                 ) {
                     wp_enqueue_style('zw-poll-admin');
                     wp_enqueue_script('zw-poll-admin');
+                    // The media picker in the options repeater; the list table has no use for it.
+                    if ($screen->base === 'post') {
+                        wp_enqueue_media();
+                    }
                 }
             }, 1);
             (new PollAdminColumns())->register();

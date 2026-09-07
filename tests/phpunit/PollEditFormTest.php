@@ -56,8 +56,8 @@ final class PollEditFormTest extends TestCase
         $_POST = array_merge([
             'zw_poll_edit_form_nonce' => 'nonce123',
             'zw_poll_options' => [
-                ['id' => 'uuid-1', 'label' => 'Ja'],
-                ['id' => '', 'label' => 'Nee'],
+                ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 0],
+                ['id' => '', 'label' => 'Nee', 'imageId' => 0],
             ],
             'zw_poll_total_visibility' => PollPostType::TOTAL_VISIBILITY_SHOW,
             'zw_poll_closes_at' => '',
@@ -156,8 +156,8 @@ final class PollEditFormTest extends TestCase
         // by option ID, so a regenerated ID would orphan cast votes.
         $this->assertSame(
             [self::POLL_ID, [
-                ['id' => 'uuid-1', 'label' => 'Ja'],
-                ['id' => '', 'label' => 'Nee'],
+                ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 0],
+                ['id' => '', 'label' => 'Nee', 'imageId' => 0],
             ]],
             $writes[PollPostType::META_OPTIONS]
         );
@@ -279,8 +279,30 @@ final class PollEditFormTest extends TestCase
         (new PollEditForm())->save(self::POLL_ID);
 
         $this->assertSame([
-            ['id' => 'uuid-1', 'label' => 'Ja'],
-            ['id' => '', 'label' => 'Nee'],
+            ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 0],
+            ['id' => '', 'label' => 'Nee', 'imageId' => 0],
+        ], $writes[PollPostType::META_OPTIONS][1]);
+    }
+
+    #[Test]
+    public function save_normalizes_option_image_ids(): void
+    {
+        $this->submitForm([
+            'zw_poll_options' => [
+                ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => '321'],
+                ['id' => 'uuid-2', 'label' => 'Nee', 'imageId' => '-123'],
+            ],
+        ]);
+        Functions\when('wp_verify_nonce')->justReturn(1);
+        Functions\when('current_user_can')->justReturn(true);
+        $writes = [];
+        $this->captureMetaWrites($writes);
+
+        (new PollEditForm())->save(self::POLL_ID);
+
+        $this->assertSame([
+            ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 321],
+            ['id' => 'uuid-2', 'label' => 'Nee', 'imageId' => 0],
         ], $writes[PollPostType::META_OPTIONS][1]);
     }
 
@@ -333,8 +355,8 @@ final class PollEditFormTest extends TestCase
         (new PollEditForm())->save(self::POLL_ID);
 
         $this->assertSame([
-            ['id' => '', 'label' => ''],
-            ['id' => 'valid-id', 'label' => 'Valid label'],
+            ['id' => '', 'label' => '', 'imageId' => 0],
+            ['id' => 'valid-id', 'label' => 'Valid label', 'imageId' => 0],
         ], $writes[PollPostType::META_OPTIONS][1]);
     }
 
@@ -397,6 +419,36 @@ final class PollEditFormTest extends TestCase
         (new PollEditForm())->save(self::POLL_ID);
 
         $this->assertArrayNotHasKey(PollPostType::META_TOTAL_VISIBILITY, $writes);
+    }
+
+    #[Test]
+    public function options_box_round_trips_images_and_renders_media_controls(): void
+    {
+        Functions\when('wp_nonce_field')->justReturn('');
+        Functions\when('__')->returnArg();
+        Functions\when('esc_html')->returnArg();
+        Functions\when('esc_attr')->returnArg();
+        Functions\when('esc_html_e')->echoArg();
+        Functions\when('esc_attr_e')->echoArg();
+        Functions\when('_prime_post_caches')->justReturn(null);
+        Functions\when('get_post_meta')->justReturn([
+            ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 123],
+            ['id' => 'uuid-2', 'label' => 'Nee'],
+        ]);
+        Functions\when('wp_get_attachment_image')->justReturn(
+            '<img class="zw-poll-edit-option__thumbnail" src="image.jpg" alt="">'
+        );
+
+        ob_start();
+        (new PollEditForm())->renderOptions($this->pollPost('publish'));
+        $html = (string) ob_get_clean();
+
+        $this->assertStringContainsString('name="zw_poll_options[0][imageId]"', $html);
+        $this->assertStringContainsString('value="123"', $html);
+        $this->assertStringContainsString('zw-poll-edit-option__thumbnail', $html);
+        $this->assertStringContainsString('name="zw_poll_options[1][imageId]"', $html);
+        $this->assertStringContainsString('Afbeelding kiezen', $html);
+        $this->assertStringContainsString('name="zw_poll_options[__INDEX__][imageId]"', $html);
     }
 
     #[Test]

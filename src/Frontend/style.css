@@ -17,6 +17,10 @@
 	--zw-poll-warning-color: color-mix(in srgb, #8a6200 55%, currentcolor);
 	--zw-poll-warning-background: color-mix(in srgb, var(--zw-poll-warning-color) 14%, transparent);
 	--zw-poll-card-radius: 6px;
+	--zw-poll-image-ratio: 4 / 3;
+	--zw-poll-image-background: var(--zw-poll-soft);
+	--zw-poll-image-badge-background: #1d2327;
+	--zw-poll-image-badge-color: #fff;
 
 	/* Typography */
 	--zw-poll-font-weight-bold: 700;
@@ -171,6 +175,7 @@
 }
 
 .zw-poll__option {
+	box-sizing: border-box;
 	display: grid;
 	grid-template-columns: auto 1fr;
 	align-items: center;
@@ -185,6 +190,15 @@
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease;
+}
+
+.zw-poll--images .zw-poll__option {
+	flex: 0 0 var(--zw-poll-image-card-basis);
+	grid-template-columns: auto minmax(0, 1fr);
+	align-content: start;
+	min-height: 0;
+	padding: 0 0 0.75em;
+	overflow: hidden;
 }
 
 .zw-poll__option input[type="radio"] {
@@ -208,6 +222,34 @@
 
 .zw-poll__option-label {
 	font-weight: var(--zw-poll-font-weight-bold);
+}
+
+/* Spans the option card's grid and the result bar's flex column alike. */
+.zw-poll__media {
+	display: block;
+	grid-column: 1 / -1;
+	flex: 0 0 auto;
+	width: 100%;
+	aspect-ratio: var(--zw-poll-image-ratio);
+	overflow: hidden;
+	background: var(--zw-poll-image-background);
+}
+
+.zw-poll .zw-poll__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+}
+
+.zw-poll--images .zw-poll__option input[type="radio"] {
+	margin-left: 0.875em;
+}
+
+.zw-poll--images .zw-poll__option-label {
+	padding-right: 0.875em;
+	overflow-wrap: anywhere;
 }
 
 .zw-poll__option input[type="radio"]:focus-visible {
@@ -276,6 +318,7 @@
 
 .zw-poll__bar {
 	position: relative;
+	box-sizing: border-box;
 	display: grid;
 	grid-template-columns: 1fr auto;
 	gap: 0.375em 0.75em;
@@ -338,12 +381,72 @@
 	white-space: nowrap;
 }
 
+/*
+ * Image cards. The layout modifier sets the column count once; option cards
+ * and result bars share the width derived from it, minus the containers'
+ * 0.5em gap. Flex (not grid) so an orphan last row stays centred.
+ */
+.zw-poll--images {
+	--zw-poll-image-card-basis: calc((100% - (var(--zw-poll-image-columns) - 1) * 0.5em) / var(--zw-poll-image-columns));
+}
+
+.zw-poll--image-layout-two-column {
+	--zw-poll-image-columns: 2;
+}
+
+.zw-poll--image-layout-three-column {
+	--zw-poll-image-columns: 3;
+}
+
+.zw-poll--images .zw-poll__options,
+.zw-poll--images .zw-poll__results {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.zw-poll--images .zw-poll__bar {
+	flex: 0 0 var(--zw-poll-image-card-basis);
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.5em;
+	padding: 0;
+	overflow: hidden;
+}
+
+.zw-poll--images .zw-poll__bar-label {
+	flex: 1 1 auto;
+	padding: 0 0.75em;
+	overflow-wrap: anywhere;
+}
+
+.zw-poll--images .zw-poll__bar-track {
+	width: auto;
+	margin: 0 0.75em 0.75em;
+}
+
+.zw-poll--images .zw-poll__bar-value {
+	position: absolute;
+	top: 0.5em;
+	right: 0.5em;
+	padding: 0.25em 0.5em;
+	background: var(--zw-poll-image-badge-background);
+	border-radius: 999px;
+	color: var(--zw-poll-image-badge-color);
+	line-height: 1.2;
+}
+
 .zw-poll__results-foot {
 	display: flex;
 	align-items: baseline;
 	justify-content: space-between;
 	gap: 1em;
 	margin: 0.333em 0 0;
+}
+
+.zw-poll--images .zw-poll__results-foot {
+	flex: 0 0 100%;
 }
 
 /* An open poll below its threshold hides the total and nothing else remains. */
@@ -391,6 +494,34 @@
 }
 
 /* Responsive */
+
+@media (max-width: 760px) {
+
+	.zw-poll--image-layout-three-column {
+		--zw-poll-image-columns: 2;
+	}
+}
+
+@media (max-width: 520px) {
+
+	.zw-poll--images {
+		--zw-poll-image-columns: 1;
+	}
+
+	.zw-poll--images .zw-poll__option {
+		gap: 0.45em;
+		padding-bottom: 0.625em;
+	}
+
+	.zw-poll--images .zw-poll__option input[type="radio"] {
+		margin-left: 0.625em;
+	}
+
+	.zw-poll--images .zw-poll__option-label {
+		padding-right: 0.625em;
+		font-size: 0.925em;
+	}
+}
 
 @media (max-width: 480px) {
 

@@ -88,21 +88,28 @@ final class PollEditForm
             return;
         }
 
-        if (PollPostType::isComplete($post->post_title, PollPostType::options($post->ID))) {
+        $options = PollPostType::options($post->ID);
+        if (!PollPostType::isComplete($post->post_title, $options)) {
+            printf(
+                '<div class="notice notice-warning zw-poll-incomplete-notice"><p>%s</p></div>',
+                esc_html(sprintf(
+                    /* translators: %d: minimum number of answers. */
+                    __(
+                        'Deze poll is onvolledig en wordt niet aan lezers getoond. Geef de poll een vraag als titel en voeg minstens %d antwoorden toe.',
+                        'zw-poll'
+                    ),
+                    PollPostType::MIN_OPTIONS
+                ))
+            );
             return;
         }
 
-        printf(
-            '<div class="notice notice-warning zw-poll-incomplete-notice"><p>%s</p></div>',
-            esc_html(sprintf(
-                /* translators: %d: minimum number of answers. */
-                __(
-                    'Deze poll is onvolledig en wordt niet aan lezers getoond. Geef de poll een vraag als titel en voeg minstens %d antwoorden toe.',
-                    'zw-poll'
-                ),
-                PollPostType::MIN_OPTIONS
-            ))
-        );
+        if (array_filter(array_column($options, 'imageId')) !== [] && !PollPostType::hasCompleteImages($options)) {
+            printf(
+                '<div class="notice notice-warning"><p>%s</p></div>',
+                esc_html__('Afbeeldingen worden pas getoond als alle antwoorden een geldige afbeelding hebben.', 'zw-poll')
+            );
+        }
     }
 
     /**
@@ -114,8 +121,10 @@ final class PollEditForm
     {
         $options = PollPostType::options($post->ID);
         while (count($options) < PollPostType::MIN_OPTIONS) {
-            $options[] = ['id' => '', 'label' => ''];
+            $options[] = ['id' => '', 'label' => '', 'imageId' => 0];
         }
+
+        _prime_post_caches(array_filter(array_column($options, 'imageId')), false);
 
         // Every box this class renders emits the same nonce, so save() keeps
         // working when another plugin removes one of the boxes.
@@ -129,7 +138,7 @@ final class PollEditForm
     <legend class="screen-reader-text"><?php esc_html_e('Antwoorden', 'zw-poll'); ?></legend>
     <ol class="zw-poll-edit-options__list">
         <?php foreach ($options as $index => $opt) : ?>
-            <?php $this->renderOptionRow((string) $index, $opt['id'], $opt['label'], (int) $index + 1); ?>
+            <?php $this->renderOptionRow((string) $index, $opt['id'], $opt['label'], $opt['imageId'], (int) $index + 1); ?>
         <?php endforeach; ?>
     </ol>
     <button type="button" class="button zw-poll-edit-options__add">
@@ -151,7 +160,7 @@ final class PollEditForm
 <template class="zw-poll-edit-options__template">
     <?php
     // The row number is refreshed by admin.js as soon as a row is added.
-    $this->renderOptionRow('__INDEX__', '', '', 1);
+    $this->renderOptionRow('__INDEX__', '', '', 0, 1);
     ?>
 </template>
         <?php
@@ -307,10 +316,10 @@ final class PollEditForm
     }
 
     /**
-     * Reduces submitted option rows to sanitized id/label pairs.
+     * Reduces submitted option rows to sanitized option fields.
      *
      * @param array<int|string, mixed> $rows Submitted option rows.
-     * @return array<int, array{id: string, label: string}>
+     * @return array<int, array{id: string, label: string, imageId: int}>
      */
     private static function readOptionRows(array $rows): array
     {
@@ -326,6 +335,7 @@ final class PollEditForm
                 'label' => isset($row['label']) && is_string($row['label'])
                     ? sanitize_text_field($row['label'])
                     : '',
+                'imageId' => PollPostType::normalizeImageId($row['imageId'] ?? 0),
             ];
         }
         return $out;
@@ -337,15 +347,22 @@ final class PollEditForm
      * @param string $index    Field index or the template placeholder.
      * @param string $id       Existing option UUID, or empty for new rows.
      * @param string $label    Option label.
+     * @param int    $image_id Attachment ID, or zero without an image.
      * @param int    $position One-based row number for the accessible name.
      */
-    private function renderOptionRow(string $index, string $id, string $label, int $position): void
+    private function renderOptionRow(string $index, string $id, string $label, int $image_id, int $position): void
     {
         /* translators: %d: answer number. */
         $option_name = sprintf(__('Antwoord %d', 'zw-poll'), $position);
         ?>
 <li class="zw-poll-edit-option">
     <input type="hidden" name="zw_poll_options[<?php echo esc_attr($index); ?>][id]" value="<?php echo esc_attr($id); ?>">
+    <input
+        type="hidden"
+        class="zw-poll-edit-option__image-id"
+        name="zw_poll_options[<?php echo esc_attr($index); ?>][imageId]"
+        value="<?php echo esc_attr((string) $image_id); ?>"
+    >
     <input
         type="text"
         name="zw_poll_options[<?php echo esc_attr($index); ?>][label]"
@@ -358,6 +375,33 @@ final class PollEditForm
     <button type="button" class="button-link zw-poll-edit-option__move-up" aria-label="<?php esc_attr_e('Omhoog', 'zw-poll'); ?>">&uarr;</button>
     <button type="button" class="button-link zw-poll-edit-option__move-down" aria-label="<?php esc_attr_e('Omlaag', 'zw-poll'); ?>">&darr;</button>
     <button type="button" class="button-link zw-poll-edit-option__remove" aria-label="<?php esc_attr_e('Antwoord verwijderen', 'zw-poll'); ?>">&times;</button>
+    <div class="zw-poll-edit-option__image">
+        <?php // No whitespace inside the span: admin.css hides an :empty preview. ?>
+        <span class="zw-poll-edit-option__preview"><?php
+        if ($image_id > 0) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core generates the complete image markup.
+            echo wp_get_attachment_image(
+                $image_id,
+                'thumbnail',
+                false,
+                [
+                    'class' => 'zw-poll-edit-option__thumbnail',
+                    'alt' => '',
+                ]
+            );
+        }
+        ?></span>
+        <button type="button" class="button zw-poll-edit-option__choose-image">
+            <?php esc_html_e('Afbeelding kiezen', 'zw-poll'); ?>
+        </button>
+        <button
+            type="button"
+            class="button-link-delete zw-poll-edit-option__remove-image"
+            <?php if ($image_id === 0) : ?>hidden<?php endif; ?>
+        >
+            <?php esc_html_e('Afbeelding verwijderen', 'zw-poll'); ?>
+        </button>
+    </div>
 </li>
         <?php
     }
