@@ -374,7 +374,7 @@ final class PollEditForm
     >
     <button type="button" class="button-link zw-poll-edit-option__move-up" aria-label="<?php esc_attr_e('Omhoog', 'zw-poll'); ?>">&uarr;</button>
     <button type="button" class="button-link zw-poll-edit-option__move-down" aria-label="<?php esc_attr_e('Omlaag', 'zw-poll'); ?>">&darr;</button>
-    <button type="button" class="button-link zw-poll-edit-option__remove" aria-label="<?php esc_attr_e('Antwoord verwijderen', 'zw-poll'); ?>">&times;</button>
+    <button type="button" class="button-link button-link-delete zw-poll-edit-option__remove" aria-label="<?php esc_attr_e('Antwoord verwijderen', 'zw-poll'); ?>">&times;</button>
     <div class="zw-poll-edit-option__image">
         <?php // No whitespace inside the span: admin.css hides an :empty preview. ?>
         <span class="zw-poll-edit-option__preview"><?php
