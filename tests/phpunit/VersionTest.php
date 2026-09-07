@@ -44,10 +44,7 @@ final class VersionTest extends TestCase
     {
         $version = $this->pluginHeaderVersion();
 
-        $this->assertMatchesRegularExpression(
-            '/^\d+\.\d+\.\d+(?:\.\d+)?(?:-(?:alpha|beta|rc)\.\d+)?$/',
-            $version
-        );
+        $this->assertMatchesRegularExpression('/^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$/', $version);
         $this->assertSame($version, ZW_POLL_VERSION);
         $this->assertSame($version, Activation::DB_VERSION);
     }

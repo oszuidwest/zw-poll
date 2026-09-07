@@ -54,7 +54,7 @@ VERSION="$(awk '
 	}
 ' "$MAIN_FILE")"
 
-if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
 	echo "Invalid Version header in $MAIN_FILE: '$VERSION'" >&2
 	exit 1
 fi
