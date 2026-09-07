@@ -36,5 +36,5 @@ runs:
         wp-env run cli wp plugin check zw-poll \
           --slug=zw-poll \
           --exclude-files=phpstan-bootstrap.php \
-          --exclude-directories=node_modules,playground,scripts,tests,vendor \
+          --exclude-directories=.phpstan-cache,node_modules,playground,scripts,stubs,tests,vendor \
           --exclude-checks=late_escaping,plugin_review_phpcs,file_type,plugin_readme
