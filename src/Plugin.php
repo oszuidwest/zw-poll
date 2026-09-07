@@ -78,7 +78,7 @@ final class Plugin
                 wp_register_script(
                     'zw-poll-admin',
                     ZW_POLL_URL . 'src/Admin/admin.js',
-                    ['clipboard', 'wp-i18n'],
+                    ['clipboard', 'wp-i18n', 'wp-tooltip'],
                     ZW_POLL_VERSION,
                     true
                 );

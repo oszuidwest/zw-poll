@@ -246,29 +246,29 @@ msgstr[1] ""
 
 #. translators: %d: answer number.
 #: src/Admin/PollEditForm.php:357
-#: src/Admin/admin.js:156
+#: src/Admin/admin.js:187
 #, php-format,js-format
 msgid "Antwoord %d"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:380
+#: src/Admin/PollEditForm.php:382
 msgid "Omhoog"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:381
+#: src/Admin/PollEditForm.php:383
 msgid "Omlaag"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:382
+#: src/Admin/PollEditForm.php:384
 msgid "Antwoord verwijderen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:387
-#: src/Admin/admin.js:196
+#: src/Admin/PollEditForm.php:405
+#: src/Admin/admin.js:231
 msgid "Afbeelding kiezen"
 msgstr ""
 
-#: src/Admin/PollEditForm.php:394
+#: src/Admin/PollEditForm.php:412
 msgid "Afbeelding verwijderen"
 msgstr ""
 
@@ -610,35 +610,35 @@ msgstr ""
 msgid "The zw_poll_rate_limit filter returned a non-positive %s value; the default was used."
 msgstr ""
 
-#: src/Admin/admin.js:21
+#: src/Admin/admin.js:52
 msgid "Bezig…"
 msgstr ""
 
-#: src/Admin/admin.js:39
+#: src/Admin/admin.js:70
 msgid "onbekende fout"
 msgstr ""
 
-#: src/Admin/admin.js:55
+#: src/Admin/admin.js:86
 msgid "Status wijzigen mislukt:"
 msgstr ""
 
-#: src/Admin/admin.js:63
+#: src/Admin/admin.js:94
 msgid "Verwijderen mislukt:"
 msgstr ""
 
-#: src/Admin/admin.js:64
+#: src/Admin/admin.js:95
 msgid "Alle stemmen voor deze poll worden permanent verwijderd. Dit kan niet ongedaan gemaakt worden. Doorgaan?"
 msgstr ""
 
-#: src/Admin/admin.js:87
+#: src/Admin/admin.js:118
 msgid "Gekopieerd!"
 msgstr ""
 
-#: src/Admin/admin.js:90
+#: src/Admin/admin.js:121
 msgid "Kopiëren mislukt"
 msgstr ""
 
-#: src/Admin/admin.js:198
+#: src/Admin/admin.js:233
 msgid "Afbeelding gebruiken"
 msgstr ""
 

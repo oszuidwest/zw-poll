@@ -370,6 +370,13 @@ final class PollEditFormTest extends TestCase
         Functions\when('esc_url')->returnArg();
         Functions\when('esc_html_e')->echoArg();
         Functions\when('esc_attr_e')->echoArg();
+        Functions\when('wp_get_tooltip')->alias(
+            static fn (string $content, array $args): string => sprintf(
+                '<span id="%s">%s</span>',
+                $args['id'] ?? '',
+                $args['button'] ?? ''
+            )
+        );
     }
 
     /**
@@ -432,6 +439,7 @@ final class PollEditFormTest extends TestCase
     #[Test]
     public function options_box_round_trips_images_and_renders_media_controls(): void
     {
+        $tooltips = [];
         $this->stubMetaBoxRendering();
         Functions\when('_prime_post_caches')->justReturn(null);
         Functions\when('get_post_meta')->justReturn([
@@ -439,6 +447,16 @@ final class PollEditFormTest extends TestCase
             ['id' => 'uuid-2', 'label' => 'Nee'],
         ]);
         Functions\expect('wp_get_attachment_image_url')->once()->with(123, 'thumbnail')->andReturn('image.jpg');
+        Functions\when('wp_get_tooltip')->alias(
+            static function (string $content, array $args) use (&$tooltips): string {
+                $tooltips[] = [
+                    'content' => $content,
+                    'id' => $args['id'] ?? '',
+                    'button' => $args['button'] ?? '',
+                ];
+                return sprintf('<span id="%s">%s</span>', $args['id'], $args['button']);
+            }
+        );
 
         ob_start();
         (new PollEditForm())->renderOptions($this->pollPost('publish'));
@@ -450,6 +468,32 @@ final class PollEditFormTest extends TestCase
         $this->assertStringContainsString('name="zw_poll_options[1][imageId]"', $html);
         $this->assertStringContainsString('Afbeelding kiezen', $html);
         $this->assertStringContainsString('name="zw_poll_options[__INDEX__][imageId]"', $html);
+
+        $expected = [];
+        foreach (['0', '1', '__INDEX__'] as $index) {
+            foreach ([
+                ['move-up', 'Omhoog'],
+                ['move-down', 'Omlaag'],
+                ['remove', 'Antwoord verwijderen'],
+            ] as [$action, $label]) {
+                $expected[] = [
+                    'content' => $label,
+                    'id' => sprintf('zw-poll-option-%s-%s-tooltip', $index, $action),
+                    'class' => sprintf('zw-poll-edit-option__%s', $action),
+                ];
+            }
+        }
+
+        $this->assertCount(9, $tooltips);
+        foreach ($expected as $offset => $tooltip) {
+            $this->assertSame($tooltip['content'], $tooltips[$offset]['content']);
+            $this->assertSame($tooltip['id'], $tooltips[$offset]['id']);
+            $this->assertStringContainsString($tooltip['class'], $tooltips[$offset]['button']);
+            $this->assertStringContainsString(
+                sprintf('aria-label="%s"', $tooltip['content']),
+                $tooltips[$offset]['button']
+            );
+        }
     }
 
     #[Test]
