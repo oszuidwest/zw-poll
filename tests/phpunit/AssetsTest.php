@@ -41,7 +41,11 @@ final class AssetsTest extends TestCase
                 Assets::MODULE_ID,
                 ZW_POLL_URL . 'src/Frontend/view.js',
                 [['id' => '@wordpress/interactivity', 'import' => 'static']],
-                ZW_POLL_VERSION
+                ZW_POLL_VERSION,
+                [
+                    'in_footer' => true,
+                    'fetchpriority' => 'low',
+                ]
             );
         Functions\expect('wp_set_script_module_translations')
             ->once()

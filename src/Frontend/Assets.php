@@ -40,7 +40,11 @@ final class Assets
             self::MODULE_ID,
             ZW_POLL_URL . 'src/Frontend/view.js',
             [['id' => '@wordpress/interactivity', 'import' => 'static']],
-            ZW_POLL_VERSION
+            ZW_POLL_VERSION,
+            [
+                'in_footer' => true,
+                'fetchpriority' => 'low',
+            ]
         );
         wp_set_script_module_translations(
             self::MODULE_ID,
