@@ -56,20 +56,15 @@ const currentVotedOptionIdFromCookie = ( ctx ) => {
 	);
 };
 
+// Reader-friendlier copy for codes whose REST message is terse; other codes
+// show the (already translated) message the endpoint returns.
 const errorMessages = {
 	rate_limited: __(
 		'Even rustig aan — probeer over een minuutje opnieuw.',
 		'zw-poll'
 	),
 	poll_not_found: __( 'Deze poll bestaat niet meer.', 'zw-poll' ),
-	poll_closed: __( 'Deze poll is gesloten.', 'zw-poll' ),
 	invalid_option: __( 'Kies eerst een optie.', 'zw-poll' ),
-	already_voted: __( 'Je hebt al gestemd op deze poll.', 'zw-poll' ),
-	invalid_origin: __(
-		'Stemmen vanaf deze pagina is niet toegestaan.',
-		'zw-poll'
-	),
-	vote_forbidden: __( 'Stemmen op deze poll is niet toegestaan.', 'zw-poll' ),
 	insert_failed: __(
 		'Stem niet opgeslagen. Probeer het later opnieuw.',
 		'zw-poll'
@@ -80,6 +75,9 @@ const errorMessages = {
 const errorMessage = ( code, fallback = '' ) => {
 	return errorMessages[ code ] || fallback || errorMessages.default;
 };
+
+/* translators: %s: total number of votes. */
+const totalTemplate = __( 'Totaal aantal stemmen: %s', 'zw-poll' );
 
 // Voting hides the focused submit; move focus to revealed live results.
 const focusResults = ( poll ) => {
@@ -118,10 +116,10 @@ const { state } = store( 'zw-poll', {
 		},
 		get totalText() {
 			const ctx = getContext();
-			const n = ctx.total || 0;
-			/* translators: %s: total number of votes. */
-			const template = __( 'Totaal aantal stemmen: %s', 'zw-poll' );
-			return template.replace( '%s', formatNumber( n ) );
+			return totalTemplate.replace(
+				'%s',
+				formatNumber( ctx.total || 0 )
+			);
 		},
 		get isVotedOption() {
 			const ctx = getContext();

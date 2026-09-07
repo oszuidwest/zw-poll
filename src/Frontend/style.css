@@ -194,9 +194,7 @@
 
 .zw-poll--images .zw-poll__option {
 	flex: 0 0 var(--zw-poll-image-card-basis);
-	grid-template-columns: auto minmax(0, 1fr);
 	align-content: start;
-	min-height: 0;
 	padding: 0 0 0.75em;
 	overflow: hidden;
 }
@@ -224,11 +222,9 @@
 	font-weight: var(--zw-poll-font-weight-bold);
 }
 
-/* Spans the option card's grid and the result bar's flex column alike. */
+/* Spans the option card's grid; the result bar's flex column stretches it. */
 .zw-poll__media {
-	display: block;
 	grid-column: 1 / -1;
-	flex: 0 0 auto;
 	width: 100%;
 	aspect-ratio: var(--zw-poll-image-ratio);
 	overflow: hidden;
@@ -240,15 +236,16 @@
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	object-position: center;
 }
 
+/* The card's own horizontal padding is zeroed so the image can bleed to the
+ * edge; the controls get the inset back. */
 .zw-poll--images .zw-poll__option input[type="radio"] {
-	margin-left: 0.875em;
+	margin-left: var(--zw-poll-image-card-inset);
 }
 
 .zw-poll--images .zw-poll__option-label {
-	padding-right: 0.875em;
+	padding-right: var(--zw-poll-image-card-inset);
 	overflow-wrap: anywhere;
 }
 
@@ -382,20 +379,20 @@
 }
 
 /*
- * Image cards. The layout modifier sets the column count once; option cards
- * and result bars share the width derived from it, minus the containers'
- * 0.5em gap. Flex (not grid) so an orphan last row stays centred.
+ * Image cards. Three columns, or two when the option count would otherwise
+ * leave an orphan or a half-empty row; option cards and result bars share the
+ * width derived from the column count, minus the containers' 0.5em gap. Flex
+ * (not grid) so an orphan last row stays centred. :where() keeps the count
+ * rule at class specificity so the responsive overrides below still win.
  */
 .zw-poll--images {
-	--zw-poll-image-card-basis: calc((100% - (var(--zw-poll-image-columns) - 1) * 0.5em) / var(--zw-poll-image-columns));
-}
-
-.zw-poll--image-layout-two-column {
-	--zw-poll-image-columns: 2;
-}
-
-.zw-poll--image-layout-three-column {
 	--zw-poll-image-columns: 3;
+	--zw-poll-image-card-basis: calc((100% - (var(--zw-poll-image-columns) - 1) * 0.5em) / var(--zw-poll-image-columns));
+	--zw-poll-image-card-inset: 0.875em;
+}
+
+.zw-poll--images:where([data-option-count="2"], [data-option-count="4"]) {
+	--zw-poll-image-columns: 2;
 }
 
 .zw-poll--images .zw-poll__options,
@@ -422,7 +419,6 @@
 }
 
 .zw-poll--images .zw-poll__bar-track {
-	width: auto;
 	margin: 0 0.75em 0.75em;
 }
 
@@ -497,7 +493,7 @@
 
 @media (max-width: 760px) {
 
-	.zw-poll--image-layout-three-column {
+	.zw-poll--images {
 		--zw-poll-image-columns: 2;
 	}
 }
@@ -506,6 +502,7 @@
 
 	.zw-poll--images {
 		--zw-poll-image-columns: 1;
+		--zw-poll-image-card-inset: 0.625em;
 	}
 
 	.zw-poll--images .zw-poll__option {
@@ -513,12 +510,7 @@
 		padding-bottom: 0.625em;
 	}
 
-	.zw-poll--images .zw-poll__option input[type="radio"] {
-		margin-left: 0.625em;
-	}
-
 	.zw-poll--images .zw-poll__option-label {
-		padding-right: 0.625em;
 		font-size: 0.925em;
 	}
 }

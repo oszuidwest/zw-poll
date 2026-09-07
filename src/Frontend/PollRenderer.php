@@ -142,13 +142,14 @@ final class PollRenderer
         $results_id = $instance_id . '-results';
         $radio_name = $instance_id . '-option';
         $wrapper_class = 'zw-poll'
-            . ($media !== [] ? ' zw-poll--images ' . self::imageLayoutClass(count($options)) : '')
+            . ($media !== [] ? ' zw-poll--images' : '')
             . ($is_closed ? ' zw-poll--closed' : '');
 
         ob_start();
         ?>
 <aside
     class="<?php echo esc_attr($wrapper_class); ?>"
+    data-option-count="<?php echo esc_attr((string) count($options)); ?>"
     data-wp-interactive="zw-poll"
     <?php echo wp_interactivity_data_wp_context($context); ?>
     data-wp-init="callbacks.init"
@@ -330,18 +331,6 @@ final class PollRenderer
 </aside>
 <?php
         return (string) ob_get_clean();
-    }
-
-    /**
-     * Chooses a two- or three-column image-card layout.
-     *
-     * @param int $option_count Number of poll options.
-     */
-    private static function imageLayoutClass(int $option_count): string
-    {
-        return in_array($option_count, [2, 4], true)
-            ? 'zw-poll--image-layout-two-column'
-            : 'zw-poll--image-layout-three-column';
     }
 
     /**

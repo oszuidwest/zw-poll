@@ -360,16 +360,24 @@ final class PollEditFormTest extends TestCase
         ], $writes[PollPostType::META_OPTIONS][1]);
     }
 
+    /** Stubs the escaping and nonce functions every meta box render goes through. */
+    private function stubMetaBoxRendering(): void
+    {
+        Functions\when('wp_nonce_field')->justReturn('');
+        Functions\when('__')->returnArg();
+        Functions\when('esc_html')->returnArg();
+        Functions\when('esc_attr')->returnArg();
+        Functions\when('esc_url')->returnArg();
+        Functions\when('esc_html_e')->echoArg();
+        Functions\when('esc_attr_e')->echoArg();
+    }
+
     /**
      * Render the display meta box with a controlled stored hide flag.
      */
     private function renderDisplayBox(bool $hidden): string
     {
-        Functions\when('wp_nonce_field')->justReturn('');
-        Functions\when('__')->returnArg();
-        Functions\when('esc_html_e')->echoArg();
-        Functions\when('esc_html')->returnArg();
-        Functions\when('esc_attr')->returnArg();
+        $this->stubMetaBoxRendering();
         Functions\when('_n')->alias(static fn (string $single, string $plural, int $count): string => $count === 1 ? $single : $plural);
         Functions\when('number_format_i18n')->alias(static fn (int $number): string => (string) $number);
         Functions\when('checked')->alias(static function (mixed $checked, mixed $current): void {
@@ -424,20 +432,13 @@ final class PollEditFormTest extends TestCase
     #[Test]
     public function options_box_round_trips_images_and_renders_media_controls(): void
     {
-        Functions\when('wp_nonce_field')->justReturn('');
-        Functions\when('__')->returnArg();
-        Functions\when('esc_html')->returnArg();
-        Functions\when('esc_attr')->returnArg();
-        Functions\when('esc_html_e')->echoArg();
-        Functions\when('esc_attr_e')->echoArg();
+        $this->stubMetaBoxRendering();
         Functions\when('_prime_post_caches')->justReturn(null);
         Functions\when('get_post_meta')->justReturn([
             ['id' => 'uuid-1', 'label' => 'Ja', 'imageId' => 123],
             ['id' => 'uuid-2', 'label' => 'Nee'],
         ]);
-        Functions\when('wp_get_attachment_image')->justReturn(
-            '<img class="zw-poll-edit-option__thumbnail" src="image.jpg" alt="">'
-        );
+        Functions\expect('wp_get_attachment_image_url')->once()->with(123, 'thumbnail')->andReturn('image.jpg');
 
         ob_start();
         (new PollEditForm())->renderOptions($this->pollPost('publish'));
@@ -445,7 +446,7 @@ final class PollEditFormTest extends TestCase
 
         $this->assertStringContainsString('name="zw_poll_options[0][imageId]"', $html);
         $this->assertStringContainsString('value="123"', $html);
-        $this->assertStringContainsString('zw-poll-edit-option__thumbnail', $html);
+        $this->assertStringContainsString('<img class="zw-poll-edit-option__thumbnail" src="image.jpg" alt="">', $html);
         $this->assertStringContainsString('name="zw_poll_options[1][imageId]"', $html);
         $this->assertStringContainsString('Afbeelding kiezen', $html);
         $this->assertStringContainsString('name="zw_poll_options[__INDEX__][imageId]"', $html);
