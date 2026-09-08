@@ -247,8 +247,11 @@ not make a client header trustworthy. An edge rate limit on
 
 ## Theming
 
-The neutral default styles in `src/Frontend/style.css` use CSS custom properties
-on `.zw-poll`. To set a custom accent color:
+The poll renders as a single card: a header band with the question, then the
+answer options, vote button, and results inside the same border. The neutral
+default styles in `src/Frontend/style.css` follow `currentColor`, so the card
+adapts to light and dark themes without configuration. Everything is exposed as
+CSS custom properties on `.zw-poll`. To set a custom accent color:
 
 ```css
 .zw-poll {
@@ -256,8 +259,11 @@ on `.zw-poll`. To set a custom accent color:
 }
 ```
 
-Choose a color with sufficient contrast. The full token list, including header
-and vote-button tokens, is documented at the top of
+Choose a color with sufficient contrast. Other commonly overridden tokens are
+`--zw-poll-radius` and `--zw-poll-padding` for the card, `--zw-poll-line` and
+`--zw-poll-surface` for its border and background, and the
+`--zw-poll-header-*` and `--zw-poll-button-*` groups for the header band and
+the vote button. The full list is documented at the top of
 `src/Frontend/style.css`.
 
 ## Release process
