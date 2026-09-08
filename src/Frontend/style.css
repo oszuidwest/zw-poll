@@ -39,8 +39,8 @@
 	--zw-poll-header-font-family: inherit;
 	--zw-poll-header-question-size: 1.12em;
 	--zw-poll-header-question-weight: var(--zw-poll-font-weight-bold);
-	--zw-poll-header-action-font-weight: var(--zw-poll-font-weight-bold);
-	--zw-poll-header-action-font-size: 0.78em;
+	--zw-poll-closed-font-weight: var(--zw-poll-font-weight-bold);
+	--zw-poll-closed-font-size: 0.78em;
 
 	/* Neutral outline button, independent of theme.json. */
 	--zw-poll-button-background: transparent;
@@ -62,32 +62,27 @@
 	border-radius: var(--zw-poll-radius);
 	color: var(--zw-poll-color);
 	font-family: inherit;
-	overflow: hidden;
 }
 
-/* One card: header band on top, form/results/error share the same inset. */
+/* One card: header band on top, form/results/error share the same inset. The
+ * band's top corners follow the card radius minus its 1px border, so the card
+ * itself needs no clipping context (which would cut off focus rings). */
 .zw-poll__header {
-	box-sizing: border-box;
-	display: flex;
-	align-items: center;
-	gap: 0.6em;
-	min-height: var(--zw-poll-control-height);
 	margin: 0;
 	padding: 0.85em var(--zw-poll-padding);
 	background: var(--zw-poll-header-background);
 	border-bottom: 1px solid var(--zw-poll-header-border-color);
+	border-radius: calc(var(--zw-poll-radius) - 1px) calc(var(--zw-poll-radius) - 1px) 0 0;
 	color: var(--zw-poll-header-color);
 	font-family: var(--zw-poll-header-font-family);
 }
 
 .zw-poll__form,
 .zw-poll__results {
-	padding: 1em var(--zw-poll-padding) var(--zw-poll-padding);
+	padding: var(--zw-poll-padding);
 }
 
 .zw-poll__question {
-	flex: 1 1 auto;
-	min-width: 0;
 	display: flex;
 	align-items: flex-start;
 	gap: 0.5em;
@@ -110,7 +105,6 @@
 	height: var(--zw-poll-header-icon-size);
 	margin-top: 0.1em;
 	color: var(--zw-poll-header-icon-color);
-	overflow: visible;
 }
 
 /* Closed status below the header band. */
@@ -121,8 +115,8 @@
 	padding: 0.55em var(--zw-poll-padding) 0;
 }
 
-/* Shared reset/typography for the poll's closed badge. */
-.zw-poll__header-action {
+/* Reset/typography for the closed badge. */
+.zw-poll__closed {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.4em;
@@ -133,8 +127,8 @@
 	box-shadow: none;
 	color: var(--zw-poll-meta-color);
 	font: inherit;
-	font-size: var(--zw-poll-header-action-font-size);
-	font-weight: var(--zw-poll-header-action-font-weight);
+	font-size: var(--zw-poll-closed-font-size);
+	font-weight: var(--zw-poll-closed-font-weight);
 	letter-spacing: 0.04em;
 	line-height: 1.2;
 	opacity: 0.8;
@@ -306,12 +300,6 @@
 .zw-poll__results {
 	display: grid;
 	gap: 0.5em;
-	margin-top: 0;
-}
-
-/* The closed badge replaces the form, so the results move up a little. */
-.zw-poll--closed .zw-poll__results {
-	padding-top: 0.6em;
 }
 
 .zw-poll__bar {

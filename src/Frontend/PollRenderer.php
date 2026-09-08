@@ -179,7 +179,7 @@ final class PollRenderer
 
     <?php if ($is_closed) : ?>
     <div class="zw-poll__meta">
-        <span class="zw-poll__closed zw-poll__header-action">
+        <span class="zw-poll__closed">
             <svg
                 class="zw-poll__closed-icon"
                 aria-hidden="true"

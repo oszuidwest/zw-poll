@@ -240,8 +240,8 @@ i.mce-i-zw-poll {
 }
 
 i.mce-i-zw-poll::before {
-	content: "\f223";
-	content: "\f223" / "";
+	content: "\f185";
+	content: "\f185" / "";
 }
 
 .zw-poll-picker {

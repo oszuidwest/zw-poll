@@ -338,7 +338,7 @@ final class PollRendererTest extends TestCase
         $html = $this->renderPoll('closed');
 
         $this->assertStringContainsString('zw-poll--closed', $html);
-        $this->assertStringContainsString('class="zw-poll__closed zw-poll__header-action"', $html);
+        $this->assertStringContainsString('class="zw-poll__closed"', $html);
         $this->assertStringContainsString('Gesloten', $html);
         $this->assertStringContainsString('class="zw-poll__final"', $html);
         $this->assertStringContainsString('Einduitslag', $html);
@@ -372,7 +372,7 @@ final class PollRendererTest extends TestCase
         $this->assertStringContainsString('data-wp-bind--hidden="!state.isVotedOption"', $html);
         $this->assertStringContainsString('Gestemd', $html);
         $this->assertStringContainsString('data-wp-bind--hidden="!state.showResults"', $html);
-        $this->assertStringNotContainsString('class="zw-poll__closed zw-poll__header-action"', $html);
+        $this->assertStringNotContainsString('class="zw-poll__closed"', $html);
         $this->assertStringNotContainsString('class="zw-poll__final"', $html);
         $this->assertStringNotContainsString('Einduitslag', $html);
         $this->assertStringNotContainsString('zw-poll__status-badge', $html);
