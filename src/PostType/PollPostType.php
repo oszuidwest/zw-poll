@@ -76,7 +76,7 @@ final class PollPostType
             'supports' => ['title', 'custom-fields'],
             'has_archive' => false,
             'rewrite' => false,
-            'menu_icon' => 'dashicons-editor-help',
+            'menu_icon' => 'dashicons-chart-bar',
             'menu_position' => 26,
             'capability_type' => [self::CAP_SINGULAR, self::CAP_PLURAL],
             'map_meta_cap' => true,

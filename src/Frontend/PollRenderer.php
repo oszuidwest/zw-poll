@@ -165,12 +165,13 @@ final class PollRenderer
                 height="24"
                 viewBox="0 0 24 24"
             >
-                <circle class="zw-poll__question-icon-circle" cx="12" cy="12" r="10"></circle>
                 <path
-                    class="zw-poll__question-icon-mark"
-                    d="M8.9 9.15C9.35 7.7 10.55 6.85 12.25 6.85C14.1 6.85 15.35 7.95 15.35 9.5C15.35 10.75 14.62 11.5 13.45 12.2C12.45 12.8 12.1 13.25 12.1 14.25"
+                    d="M5 20V12M12 20V5M19 20V9"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.6"
+                    stroke-linecap="round"
                 ></path>
-                <circle class="zw-poll__question-icon-dot" cx="12.1" cy="17.15" r="1.2"></circle>
             </svg>
             <span class="zw-poll__question-text"><?php echo esc_html($question); ?></span>
         </h3>
@@ -178,7 +179,7 @@ final class PollRenderer
 
     <?php if ($is_closed) : ?>
     <div class="zw-poll__meta">
-        <span class="zw-poll__closed zw-poll__header-action">
+        <span class="zw-poll__closed">
             <svg
                 class="zw-poll__closed-icon"
                 aria-hidden="true"

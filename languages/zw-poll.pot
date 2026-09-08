@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: ZuidWest Poll 0.3.1\n"
+"Project-Id-Version: ZuidWest Poll 0.4.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/zw-poll\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -120,7 +120,7 @@ msgstr ""
 
 #: src/Admin/PollAdminColumns.php:65
 #: src/Admin/PollMetaBoxes.php:96
-#: src/Frontend/PollRenderer.php:193
+#: src/Frontend/PollRenderer.php:194
 #: src/Admin/classic-editor.js:202
 msgid "Gesloten"
 msgstr ""
@@ -273,7 +273,7 @@ msgid "Afbeelding verwijderen"
 msgstr ""
 
 #: src/Admin/PollMetaBoxes.php:46
-#: src/Frontend/PollRenderer.php:250
+#: src/Frontend/PollRenderer.php:251
 msgid "Resultaten"
 msgstr ""
 
@@ -478,25 +478,25 @@ msgstr ""
 msgid "Poll onvolledig: geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:201
+#: src/Frontend/PollRenderer.php:202
 msgid "Kies een optie"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:230
+#: src/Frontend/PollRenderer.php:231
 msgid "Stem"
 msgstr ""
 
 #. translators: %s: poll closing date and time.
-#: src/Frontend/PollRenderer.php:238
+#: src/Frontend/PollRenderer.php:239
 #, php-format
 msgid "Stemmen kan tot %s"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:294
+#: src/Frontend/PollRenderer.php:295
 msgid "Gestemd"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:312
+#: src/Frontend/PollRenderer.php:313
 msgid "Einduitslag"
 msgstr ""
 
