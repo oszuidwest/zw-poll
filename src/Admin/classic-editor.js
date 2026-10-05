@@ -199,8 +199,8 @@
 			'</span>' +
 			( closed
 				? '<span class="zw-poll-mce__closed">' +
-				  escapeHTML( __( 'Gesloten', 'zw-poll' ) ) +
-				  '</span>'
+					escapeHTML( __( 'Gesloten', 'zw-poll' ) ) +
+					'</span>'
 				: '' ) +
 			'<span class="zw-poll-mce__question">' +
 			escapeHTML( text ) +
