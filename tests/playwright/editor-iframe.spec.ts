@@ -27,6 +27,19 @@ async function selectReplacement( page: Page ) {
 
 test.describe( 'Picker keyboard and iframe compatibility', () => {
 	test.beforeEach( async ( { page } ) => {
+		// The welcome guide can appear after preferences finish hydrating.
+		// Dismiss it through the UI whenever it blocks an editor action.
+		await page.addLocatorHandler(
+			page.getByRole( 'dialog', {
+				name: 'Welcome to the editor',
+				exact: true,
+			} ),
+			async ( guide ) => {
+				await guide
+					.getByRole( 'button', { name: 'Close', exact: true } )
+					.click();
+			}
+		);
 		await login( page );
 	} );
 
@@ -44,9 +57,6 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		);
 		const pollId = await page.evaluate( async () => {
 			const wp = ( window as any ).wp;
-			wp.data
-				.dispatch( 'core/preferences' )
-				.set( 'core/edit-post', 'welcomeGuide', false );
 			const polls = await wp.apiFetch( {
 				path: '/wp/v2/zw-polls?search=redactie&_fields=id',
 			} );
@@ -96,9 +106,6 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		);
 		await page.evaluate( () => {
 			const wp = ( window as any ).wp;
-			wp.data
-				.dispatch( 'core/preferences' )
-				.set( 'core/edit-post', 'welcomeGuide', false );
 			wp.data
 				.dispatch( 'core/block-editor' )
 				.resetBlocks( [ wp.blocks.createBlock( 'core/freeform' ) ] );
