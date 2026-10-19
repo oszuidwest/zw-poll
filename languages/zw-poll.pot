@@ -39,37 +39,37 @@ msgstr ""
 msgid "https://www.zuidwesttv.nl/"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:134
-#: src/Admin/ClassicEditor.php:150
+#: src/Admin/ClassicEditor.php:135
+#: src/Admin/ClassicEditor.php:151
 msgid "Poll invoegen"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:135
+#: src/Admin/ClassicEditor.php:136
 msgid "De pollkiezer kan niet worden geopend."
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:137
+#: src/Admin/ClassicEditor.php:138
 msgid "poll"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:152
+#: src/Admin/ClassicEditor.php:153
 #: src/PostType/PollPostType.php:63
 msgid "Polls zoeken"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:157
+#: src/Admin/ClassicEditor.php:158
 msgid "Zoek een poll…"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:163
+#: src/Admin/ClassicEditor.php:164
 msgid "Nieuwe poll maken"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:164
+#: src/Admin/ClassicEditor.php:165
 msgid "(opent in een nieuw venster)"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:166
+#: src/Admin/ClassicEditor.php:167
 msgid "Annuleren"
 msgstr ""
 
@@ -121,7 +121,7 @@ msgstr ""
 #: src/Admin/PollAdminColumns.php:65
 #: src/Admin/PollMetaBoxes.php:96
 #: src/Frontend/PollRenderer.php:195
-#: src/Admin/classic-editor.js:202
+#: src/Admin/classic-editor.js:262
 msgid "Gesloten"
 msgstr ""
 
@@ -429,7 +429,7 @@ msgstr ""
 
 #: src/Block/PollBlock.php:49
 #: src/PostType/PollPostType.php:57
-#: src/Admin/classic-editor.js:198
+#: src/Admin/classic-editor.js:258
 msgid "Poll"
 msgstr ""
 
@@ -452,7 +452,7 @@ msgid "Aggregaat herbouwd voor poll %1$d: %2$d stemmen over %3$d opties."
 msgstr ""
 
 #: src/Cli/Commands.php:141
-#: src/Admin/classic-editor.js:62
+#: src/Admin/classic-editor.js:92
 msgid "Geen polls gevonden."
 msgstr ""
 
@@ -655,31 +655,31 @@ msgstr ""
 msgid "Afbeelding gebruiken"
 msgstr ""
 
-#: src/Admin/classic-editor.js:78
+#: src/Admin/classic-editor.js:108
 msgid "(zonder titel)"
 msgstr ""
 
-#: src/Admin/classic-editor.js:91
+#: src/Admin/classic-editor.js:122
 msgid "Invoegen mislukt. Kopieer de shortcode handmatig:"
 msgstr ""
 
-#: src/Admin/classic-editor.js:106
+#: src/Admin/classic-editor.js:137
 msgid "Laden…"
 msgstr ""
 
-#: src/Admin/classic-editor.js:123
+#: src/Admin/classic-editor.js:154
 msgid "Polls laden mislukt."
 msgstr ""
 
-#: src/Admin/classic-editor.js:231
+#: src/Admin/classic-editor.js:291
 msgid "Geen poll-ID opgegeven."
 msgstr ""
 
-#: src/Admin/classic-editor.js:258
+#: src/Admin/classic-editor.js:318
 msgid "Poll niet gevonden."
 msgstr ""
 
-#: src/Admin/classic-editor.js:270
+#: src/Admin/classic-editor.js:330
 msgid "Poll laden mislukt."
 msgstr ""
 
