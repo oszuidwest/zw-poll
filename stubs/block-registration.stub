@@ -1,0 +1,41 @@
+<?php
+
+class WP_Block_Type {}
+
+/**
+ * Correct the upstream WordPress stub's api_version string type.
+ * Core expects the integer block API version (as in block.json apiVersion).
+ *
+ * @param string|WP_Block_Type $block_type Block name, path, or instance.
+ * @param array{
+ *   api_version?: int,
+ *   title?: string,
+ *   category?: string|null,
+ *   parent?: string[]|null,
+ *   ancestor?: string[]|null,
+ *   allowed_blocks?: string[]|null,
+ *   icon?: string|null,
+ *   description?: string,
+ *   keywords?: string[],
+ *   textdomain?: string|null,
+ *   styles?: array<mixed>[],
+ *   variations?: array<mixed>[],
+ *   selectors?: array<mixed>,
+ *   supports?: array<mixed>|null,
+ *   example?: array<mixed>|null,
+ *   render_callback?: callable|null,
+ *   variation_callback?: callable|null,
+ *   attributes?: array<mixed>|null,
+ *   uses_context?: string[],
+ *   provides_context?: string[]|null,
+ *   block_hooks?: string[],
+ *   editor_script_handles?: string[],
+ *   script_handles?: string[],
+ *   view_script_handles?: string[],
+ *   editor_style_handles?: string[],
+ *   style_handles?: string[],
+ *   view_style_handles?: string[]
+ * } $args Block settings.
+ * @return WP_Block_Type|false
+ */
+function register_block_type($block_type, $args = []) {}

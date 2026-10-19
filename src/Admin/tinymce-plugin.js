@@ -31,6 +31,14 @@
 	}
 
 	window.tinymce.PluginManager.add( 'zwPoll', function ( editor ) {
+		editor.on( 'init', () => {
+			// The Classic block's edit modal overrides mce_css. Load the
+			// preview stylesheet in this editor's own document as well.
+			const stylesheet = config().previewStyles;
+			if ( stylesheet ) {
+				editor.dom.loadCSS( stylesheet );
+			}
+		} );
 		editor.addButton( 'zw_poll', {
 			icon: 'zw-poll',
 			// TinyMCE loads this file itself, so wp_set_script_translations
@@ -39,7 +47,7 @@
 			onclick() {
 				const openPicker = config().openPicker;
 				if ( typeof openPicker === 'function' ) {
-					openPicker( editor.id );
+					openPicker( editor.id, editor );
 					return;
 				}
 				notifyMissingPicker( editor );
