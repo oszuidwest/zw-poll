@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T17:59:38+00:00\n"
+"POT-Creation-Date: 2026-10-19T19:24:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -39,37 +39,37 @@ msgstr ""
 msgid "https://www.zuidwesttv.nl/"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:134
-#: src/Admin/ClassicEditor.php:150
+#: src/Admin/ClassicEditor.php:135
+#: src/Admin/ClassicEditor.php:151
 msgid "Poll invoegen"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:135
+#: src/Admin/ClassicEditor.php:136
 msgid "De pollkiezer kan niet worden geopend."
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:137
+#: src/Admin/ClassicEditor.php:138
 msgid "poll"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:152
+#: src/Admin/ClassicEditor.php:153
 #: src/PostType/PollPostType.php:63
 msgid "Polls zoeken"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:157
+#: src/Admin/ClassicEditor.php:158
 msgid "Zoek een poll…"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:163
+#: src/Admin/ClassicEditor.php:164
 msgid "Nieuwe poll maken"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:164
+#: src/Admin/ClassicEditor.php:165
 msgid "(opent in een nieuw venster)"
 msgstr ""
 
-#: src/Admin/ClassicEditor.php:166
+#: src/Admin/ClassicEditor.php:167
 msgid "Annuleren"
 msgstr ""
 
@@ -120,8 +120,8 @@ msgstr ""
 
 #: src/Admin/PollAdminColumns.php:65
 #: src/Admin/PollMetaBoxes.php:96
-#: src/Frontend/PollRenderer.php:194
-#: src/Admin/classic-editor.js:202
+#: src/Frontend/PollRenderer.php:195
+#: src/Admin/classic-editor.js:262
 msgid "Gesloten"
 msgstr ""
 
@@ -273,7 +273,7 @@ msgid "Afbeelding verwijderen"
 msgstr ""
 
 #: src/Admin/PollMetaBoxes.php:46
-#: src/Frontend/PollRenderer.php:251
+#: src/Frontend/PollRenderer.php:252
 msgid "Resultaten"
 msgstr ""
 
@@ -311,7 +311,7 @@ msgstr[1] ""
 
 #. translators: %s: total number of votes.
 #: src/Admin/PollMetaBoxes.php:165
-#: src/Frontend/PollRenderer.php:96
+#: src/Frontend/PollRenderer.php:97
 #: src/Frontend/view.js:80
 #, php-format,js-format
 msgid "Totaal aantal stemmen: %s"
@@ -427,21 +427,21 @@ msgstr ""
 msgid "Geen (REMOTE_ADDR)"
 msgstr ""
 
-#: src/Block/PollBlock.php:45
+#: src/Block/PollBlock.php:49
 #: src/PostType/PollPostType.php:57
-#: src/Admin/classic-editor.js:198
+#: src/Admin/classic-editor.js:258
 msgid "Poll"
 msgstr ""
 
-#: src/Block/PollBlock.php:46
+#: src/Block/PollBlock.php:50
 msgid "Toon een bestaande poll. Vul de poll-ID uit het overzicht Polls in."
 msgstr ""
 
-#: src/Block/PollBlock.php:53
+#: src/Block/PollBlock.php:57
 msgid "Poll-ID"
 msgstr ""
 
-#: src/Block/PollBlock.php:78
+#: src/Block/PollBlock.php:82
 msgid "Vul een poll-ID in bij de blokinstellingen om een poll te tonen."
 msgstr ""
 
@@ -452,7 +452,7 @@ msgid "Aggregaat herbouwd voor poll %1$d: %2$d stemmen over %3$d opties."
 msgstr ""
 
 #: src/Cli/Commands.php:141
-#: src/Admin/classic-editor.js:62
+#: src/Admin/classic-editor.js:92
 msgid "Geen polls gevonden."
 msgstr ""
 
@@ -486,35 +486,35 @@ msgstr ""
 msgid "Elke vijf minuten"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:47
+#: src/Frontend/PollRenderer.php:48
 msgid "Poll niet beschikbaar (alleen zichtbaar voor redacteuren)."
 msgstr ""
 
 #. translators: %d: minimum number of answers.
-#: src/Frontend/PollRenderer.php:60
+#: src/Frontend/PollRenderer.php:61
 #, php-format
 msgid "Poll onvolledig: geef de poll een vraag als titel en voeg minstens %d antwoorden toe."
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:202
+#: src/Frontend/PollRenderer.php:203
 msgid "Kies een optie"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:231
+#: src/Frontend/PollRenderer.php:232
 msgid "Stem"
 msgstr ""
 
 #. translators: %s: poll closing date and time.
-#: src/Frontend/PollRenderer.php:239
+#: src/Frontend/PollRenderer.php:240
 #, php-format
 msgid "Stemmen kan tot %s"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:295
+#: src/Frontend/PollRenderer.php:296
 msgid "Gestemd"
 msgstr ""
 
-#: src/Frontend/PollRenderer.php:313
+#: src/Frontend/PollRenderer.php:314
 msgid "Einduitslag"
 msgstr ""
 
@@ -655,31 +655,31 @@ msgstr ""
 msgid "Afbeelding gebruiken"
 msgstr ""
 
-#: src/Admin/classic-editor.js:78
+#: src/Admin/classic-editor.js:108
 msgid "(zonder titel)"
 msgstr ""
 
-#: src/Admin/classic-editor.js:91
+#: src/Admin/classic-editor.js:122
 msgid "Invoegen mislukt. Kopieer de shortcode handmatig:"
 msgstr ""
 
-#: src/Admin/classic-editor.js:106
+#: src/Admin/classic-editor.js:137
 msgid "Laden…"
 msgstr ""
 
-#: src/Admin/classic-editor.js:123
+#: src/Admin/classic-editor.js:154
 msgid "Polls laden mislukt."
 msgstr ""
 
-#: src/Admin/classic-editor.js:231
+#: src/Admin/classic-editor.js:291
 msgid "Geen poll-ID opgegeven."
 msgstr ""
 
-#: src/Admin/classic-editor.js:258
+#: src/Admin/classic-editor.js:318
 msgid "Poll niet gevonden."
 msgstr ""
 
-#: src/Admin/classic-editor.js:270
+#: src/Admin/classic-editor.js:330
 msgid "Poll laden mislukt."
 msgstr ""
 
