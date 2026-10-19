@@ -194,7 +194,7 @@ final class PollAbilities
      */
     public function listPolls(array $input): array
     {
-        $polls = get_posts([
+        $query = [
             'post_type' => PollPostType::POST_TYPE,
             'post_status' => ['publish', 'draft', 'pending', 'private', 'future'],
             'posts_per_page' => $input['per_page'] ?? 20,
@@ -203,7 +203,12 @@ final class PollAbilities
             'orderby' => 'ID',
             'order' => 'DESC',
             'suppress_filters' => false,
-        ]);
+        ];
+        // Limit the result set before pagination, keeping later editable polls reachable.
+        if (!current_user_can('edit_others_' . PollPostType::CAP_PLURAL)) {
+            $query['author'] = get_current_user_id();
+        }
+        $polls = get_posts($query);
         $rows = [];
         foreach ($polls as $poll) {
             if (current_user_can('edit_post', $poll->ID)) {

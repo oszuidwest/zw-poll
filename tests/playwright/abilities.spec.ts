@@ -127,10 +127,8 @@ test( 'aangemelde abonnees mogen geen poll-abilities uitvoeren', async ( {
 		const subscriberNonce = await ( await subscriber.request.get(
 			'/wp-admin/admin-ajax.php?action=rest-nonce'
 		) ).text();
-		const polls = await ( await page.request.get( '/wp-json/wp/v2/zw-polls', {
-			headers,
-		} ) ).json();
-		const id = polls[ 0 ].id;
+		// Global ability authorization runs before any target lookup.
+		const id = 1;
 		for ( const [ name, input, readonly ] of [
 			[ 'list-polls', {}, true ],
 			[ 'get-results', { id }, true ],
@@ -151,6 +149,7 @@ test( 'aangemelde abonnees mogen geen poll-abilities uitvoeren', async ( {
 					data: { input },
 				} );
 			expect( denied.status(), `${ name }: ${ await denied.text() }` ).toBe( 403 );
+			expect( ( await denied.json() ).code, name ).toBe( 'rest_ability_cannot_execute' );
 		}
 	} finally {
 		await subscriber.close();

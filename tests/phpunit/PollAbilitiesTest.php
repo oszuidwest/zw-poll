@@ -121,10 +121,57 @@ final class PollAbilitiesTest extends TestCase
     {
         Functions\when('get_posts')->justReturn([$this->poll(42), $this->poll(43)]);
         Functions\when('get_post_meta')->justReturn('');
-        Functions\when('current_user_can')->alias(static fn (string $cap, int $id): bool => $id === 42);
+        Functions\when('current_user_can')->alias(static fn (string $cap, int $id = 0): bool =>
+            $cap === 'edit_others_zw_polls' || $id === 42);
         $rows = $this->abilities->listPolls([]);
         $this->assertSame([42], array_column($rows, 'id'));
         $this->assertSame('draft', $rows[0]['post_status']);
+    }
+
+    #[Test]
+    public function managers_without_edit_others_page_through_their_own_polls(): void
+    {
+        Functions\when('get_current_user_id')->justReturn(7);
+        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('current_user_can')->alias(static fn (string $cap, int $id = 0): bool =>
+            $cap === 'manage_zw_polls' || ($cap === 'edit_post' && $id <= 43));
+        // Two newer polls by another author must not consume the first page.
+        $records = [
+            ['author' => 99, 'poll' => $this->poll(45)],
+            ['author' => 99, 'poll' => $this->poll(44)],
+            ['author' => 7, 'poll' => $this->poll(43)],
+            ['author' => 7, 'poll' => $this->poll(42)],
+            ['author' => 7, 'poll' => $this->poll(41)],
+        ];
+        Functions\when('get_posts')->alias(function (array $query) use ($records): array {
+            $this->assertSame(7, $query['author']);
+            $this->assertSame(2, $query['posts_per_page']);
+            $this->assertSame('Vraag', $query['s']);
+            $visible = array_values(array_filter($records,
+                static fn (array $record): bool => $record['author'] === $query['author']));
+            return array_column(array_slice($visible, ($query['paged'] - 1) * 2, 2), 'poll');
+        });
+
+        $this->assertSame([43, 42], array_column($this->abilities->listPolls([
+            'page' => 1, 'per_page' => 2, 'search' => 'Vraag',
+        ]), 'id'));
+        $this->assertSame([41], array_column($this->abilities->listPolls([
+            'page' => 2, 'per_page' => 2, 'search' => 'Vraag',
+        ]), 'id'));
+    }
+
+    #[Test]
+    public function managers_with_edit_others_keep_an_unrestricted_author_query(): void
+    {
+        Functions\when('current_user_can')->justReturn(true);
+        Functions\expect('get_current_user_id')->never();
+        Functions\expect('get_posts')->once()->with(\Mockery::on(static fn (array $query): bool =>
+            !array_key_exists('author', $query)
+            && $query['paged'] === 3
+            && $query['posts_per_page'] === 10
+            && $query['s'] === 'Vraag'
+        ))->andReturn([]);
+        $this->assertSame([], $this->abilities->listPolls(['page' => 3, 'per_page' => 10, 'search' => 'Vraag']));
     }
 
     #[Test]
