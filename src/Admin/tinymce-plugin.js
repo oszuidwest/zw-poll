@@ -39,7 +39,7 @@
 			onclick() {
 				const openPicker = config().openPicker;
 				if ( typeof openPicker === 'function' ) {
-					openPicker( editor.id );
+					openPicker( editor.id, editor );
 					return;
 				}
 				notifyMissingPicker( editor );

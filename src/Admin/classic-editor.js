@@ -23,15 +23,20 @@
 		return '[' + CONFIG.shortcodeTag + ' id="' + pollId + '"]';
 	}
 
-	function insertIntoEditor( editorId, text ) {
-		window.wpActiveEditor = editorId;
-		if ( window.wp.media?.editor?.insert ) {
-			window.wp.media.editor.insert( text );
+	function insertIntoEditor( target, text ) {
+		if ( target.editor && ! target.editor.isHidden() ) {
+			target.editor.selection.moveToBookmark( target.bookmark );
+			target.editor.insertContent( text );
 			return true;
 		}
-		const textarea = document.getElementById( editorId );
-		if ( textarea && 'value' in textarea ) {
-			textarea.value += '\n' + text + '\n';
+		const textarea = target.canvas;
+		if ( textarea?.isConnected ) {
+			textarea.setRangeText( text, target.start, target.end, 'end' );
+			textarea.dispatchEvent(
+				new textarea.ownerDocument.defaultView.Event( 'input', {
+					bubbles: true,
+				} )
+			);
 			return true;
 		}
 		return false;
@@ -44,13 +49,38 @@
 	function setupPicker() {
 		const results = dialog.querySelector( '.zw-poll-picker__results' );
 		const search = dialog.querySelector( '#zw-poll-picker-search' );
-		let activeEditor = '';
+		const pickerDocument = dialog.ownerDocument;
+		const pickerParent = dialog.parentNode;
+		let target;
+		let inserted = false;
 		let searchTimer = 0;
 		let requestSeq = 0;
 
+		dialog.addEventListener( 'close', () => {
+			clearTimeout( searchTimer );
+			++requestSeq;
+			pickerParent.append( dialog );
+			if ( inserted ) {
+				if ( target.editor && ! target.editor.isHidden() ) {
+					target.editor.focus();
+				} else {
+					target.canvas?.focus();
+				}
+			} else if ( target.trigger?.isConnected ) {
+				target.trigger.focus();
+			}
+		} );
+
+		dialog.addEventListener( 'keydown', ( event ) => {
+			// Escape closes this native dialog, not the Classic block's modal.
+			if ( event.key === 'Escape' ) {
+				event.stopPropagation();
+			}
+		} );
+
 		function showMessage( text ) {
 			results.replaceChildren();
-			const li = document.createElement( 'li' );
+			const li = pickerDocument.createElement( 'li' );
 			li.className = 'zw-poll-picker__empty';
 			li.textContent = text;
 			results.append( li );
@@ -63,13 +93,13 @@
 				return;
 			}
 			polls.forEach( ( poll ) => {
-				const li = document.createElement( 'li' );
-				const btn = document.createElement( 'button' );
+				const li = pickerDocument.createElement( 'li' );
+				const btn = pickerDocument.createElement( 'button' );
 				btn.type = 'button';
 				btn.className = 'zw-poll-picker__poll';
 				btn.dataset.pollId = String( poll.id );
 
-				const title = document.createElement( 'strong' );
+				const title = pickerDocument.createElement( 'strong' );
 				// REST title.rendered is entity-encoded; decode before
 				// textContent so "Papier &amp; digitaal" reads correctly.
 				title.textContent =
@@ -80,7 +110,8 @@
 
 				btn.addEventListener( 'click', () => {
 					const shortcode = shortcodeFor( poll.id );
-					if ( insertIntoEditor( activeEditor, shortcode ) ) {
+					if ( insertIntoEditor( target, shortcode ) ) {
+						inserted = true;
 						dialog.close();
 						return;
 					}
@@ -144,10 +175,37 @@
 			);
 		} );
 
-		function openPicker( editorId ) {
-			activeEditor = editorId;
+		function openPicker( editorId, editor, canvas ) {
+			// The Classic block's canvas and toolbar can belong to a different
+			// document than this admin dialog. Retain the actual editor instance.
+			const editorDocument =
+				editor?.getContainer().ownerDocument ||
+				canvas?.ownerDocument ||
+				pickerDocument;
+			canvas = canvas || editorDocument.getElementById( editorId );
+			target = {
+				editor,
+				canvas,
+				bookmark:
+					editor && ! editor.isHidden()
+						? editor.selection.getBookmark( 2, true )
+						: null,
+				start: canvas?.selectionStart || 0,
+				end: canvas?.selectionEnd || 0,
+				trigger: editorDocument.activeElement,
+			};
+			inserted = false;
 			search.value = '';
+			// WordPress hides siblings of the Classic block's modal from
+			// assistive technology. Keep the picker inside that modal while open.
+			const editorModal =
+				editor?.getContainer().closest( '[role="dialog"]' ) ||
+				canvas?.closest( '[role="dialog"]' );
+			if ( editorModal ) {
+				editorModal.append( dialog );
+			}
 			dialog.showModal();
+			search.focus();
 			loadPolls( '' );
 		}
 
@@ -165,7 +223,9 @@
 						editor?.id ||
 							canvas?.id ||
 							window.wpActiveEditor ||
-							'content'
+							'content',
+						undefined,
+						canvas
 					);
 				},
 				'',
