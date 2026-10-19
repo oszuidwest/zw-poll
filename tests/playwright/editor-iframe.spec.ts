@@ -87,6 +87,10 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		await page.screenshot( {
 			path: test.info().outputPath( 'native-poll-iframe.png' ),
 		} );
+		await test.info().attach( 'Native Poll block in the editor iframe', {
+			path: test.info().outputPath( 'native-poll-iframe.png' ),
+			contentType: 'image/png',
+		} );
 		expect( errors ).toEqual( [] );
 	} );
 
@@ -162,6 +166,14 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		await page.screenshot( {
 			path: test.info().outputPath( 'classic-block-picker-preview.png' ),
 		} );
+		await test
+			.info()
+			.attach( 'Classic block shortcode preview after insertion', {
+				path: test
+					.info()
+					.outputPath( 'classic-block-picker-preview.png' ),
+				contentType: 'image/png',
+			} );
 		expect( errors ).toEqual( [] );
 	} );
 
