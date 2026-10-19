@@ -30,6 +30,56 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		await login( page );
 	} );
 
+	test( 'native Poll block renders a styled preview inside the editor iframe', async ( {
+		page,
+	} ) => {
+		const errors = captureErrors( page );
+		await page.goto(
+			'/wp-admin/post-new.php?block-editor&classic-editor__forget'
+		);
+		await page.waitForFunction( () =>
+			Boolean(
+				( window as any ).wp?.blocks?.getBlockType( 'zw-poll/poll' )
+			)
+		);
+		const pollId = await page.evaluate( async () => {
+			const wp = ( window as any ).wp;
+			wp.data
+				.dispatch( 'core/preferences' )
+				.set( 'core/edit-post', 'welcomeGuide', false );
+			const polls = await wp.apiFetch( {
+				path: '/wp/v2/zw-polls?search=redactie&_fields=id',
+			} );
+			wp.data.dispatch( 'core/block-editor' ).resetBlocks( [
+				wp.blocks.createBlock( 'zw-poll/poll', {
+					pollId: polls[ 0 ].id,
+				} ),
+			] );
+			return polls[ 0 ].id;
+		} );
+		expect( pollId ).toBeGreaterThan( 0 );
+		const canvas = page.frameLocator( 'iframe[name="editor-canvas"]' );
+		const preview = canvas.locator( '.zw-poll' );
+		await expect( preview.locator( '.zw-poll__question' ) ).toContainText(
+			/op de redactie/i
+		);
+		await expect( preview.locator( '.zw-poll__option' ) ).toHaveCount( 3 );
+		await expect(
+			canvas.locator( 'link[href*="src/Frontend/style.css"]' )
+		).toHaveCount( 1 );
+		expect(
+			await preview.evaluate( ( element ) =>
+				element.ownerDocument.defaultView?.frameElement?.getAttribute(
+					'name'
+				)
+			)
+		).toBe( 'editor-canvas' );
+		await page.screenshot( {
+			path: test.info().outputPath( 'native-poll-iframe.png' ),
+		} );
+		expect( errors ).toEqual( [] );
+	} );
+
 	test( 'Classic block inserts and previews a poll in the WordPress 7.1 iframe', async ( {
 		page,
 	} ) => {
@@ -91,6 +141,10 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		await expect( editor.locator( '.zw-poll-mce' ) ).toContainText(
 			/op de redactie/i
 		);
+		await expect( editor.locator( '.zw-poll-mce' ) ).toHaveCSS(
+			'display',
+			'flex'
+		);
 		await expect( editor.locator( 'body' ) ).toBeFocused();
 		const content = await page.evaluate( () =>
 			( window as any ).tinymce.activeEditor.getContent()
@@ -138,9 +192,7 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		const content = await page.evaluate( () =>
 			( window as any ).tinymce.activeEditor.getContent()
 		);
-		expect( content ).toMatch(
-			/Voor[\s\S]*\[zw_poll id="\d+"\][\s\S]*Na/
-		);
+		expect( content ).toMatch( /Voor[\s\S]*\[zw_poll id="\d+"\][\s\S]*Na/ );
 		expect( content ).not.toContain( 'Vervangen' );
 		expect( errors ).toEqual( [] );
 	} );
