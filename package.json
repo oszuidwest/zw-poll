@@ -14,7 +14,7 @@
         "make-pot": "scripts/pot.sh"
     },
     "devDependencies": {
-        "@axe-core/playwright": "^4.13.0",
+        "@axe-core/playwright": "^4.14.0",
         "@playwright/test": "^1.63.0",
         "@wordpress/scripts": "^36.1.0",
         "@wp-playground/cli": "^3.1.56"
