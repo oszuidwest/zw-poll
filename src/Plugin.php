@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll;
 
+use ZuidWest\Poll\Abilities\PollAbilities;
 use ZuidWest\Poll\Admin\ClassicEditor;
 use ZuidWest\Poll\Admin\DeleteGuard;
 use ZuidWest\Poll\Admin\PollAdminColumns;
@@ -52,6 +53,7 @@ final class Plugin
         $repository = new VoteRepository($wpdb);
         $cache = new AggregateCache($repository);
         $resetter = new PollReset($repository, $cache);
+        (new PollAbilities($cache, $resetter, $close_sweep))->register();
         $settings = Settings::get();
 
         (new VoteController(

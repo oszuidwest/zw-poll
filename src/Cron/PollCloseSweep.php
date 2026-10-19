@@ -64,9 +64,10 @@ final class PollCloseSweep
     /**
      * Closes all published, open polls whose deadline has passed.
      *
+     * @param callable(int): bool|null $can_close Optional object permission check for authenticated callers.
      * @return int Number of polls changed by this invocation.
      */
-    public function sweep(): int
+    public function sweep(?callable $can_close = null): int
     {
         $polls = get_posts([
             'post_type' => PollPostType::POST_TYPE,
@@ -100,6 +101,9 @@ final class PollCloseSweep
 
         $closed = 0;
         foreach ($polls as $poll_id) {
+            if ($can_close !== null && !$can_close((int) $poll_id)) {
+                continue;
+            }
             if (update_post_meta((int) $poll_id, PollPostType::META_STATUS, 'closed') !== false) {
                 ++$closed;
             }

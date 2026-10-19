@@ -121,6 +121,30 @@ The public vote endpoint intentionally does not use a REST nonce. Protection is
 provided by same-origin validation, schema validation, rate limiting, and a
 unique deduplication index.
 
+### Abilities API
+
+Authenticated automation clients can discover six abilities in the `zw-poll`
+category through `/wp-json/wp-abilities/v1/abilities`. Each ability has
+`meta.public` enabled for client discovery; execution still requires
+`manage_zw_polls`. Object operations additionally require `edit_post` on the
+target poll. Lists and expiration sweeps exclude objects the user cannot edit.
+
+| Ability | Input | Behavior |
+|---|---|---|
+| `zw-poll/list-polls` | `page`, `per_page` (max 100), `search`, all optional | Read-only page of editable polls |
+| `zw-poll/get-results` | `id` | Read-only counts for current options |
+| `zw-poll/set-status` | `id`, `status` (`open` or `closed`) | Changes voting status |
+| `zw-poll/rebuild-aggregate` | `id` | Rebuilds the stored aggregate |
+| `zw-poll/reset-votes` | `id`, `confirm: true` | Irreversibly deletes votes and invalidates voting cookies |
+| `zw-poll/close-expired` | Empty object | Closes editable expired polls |
+
+All inputs reject unknown properties. Call `GET .../{ability}/run` for reads
+(for example `?input[id]=123`) and `POST` with `{"input": {...}}` for writes.
+Reset is destructive and not idempotent because every invocation advances the
+cookie epoch. Rebuild also refreshes its timestamp. The existing admin reset
+endpoint and anonymous voting flow remain available; WP-CLI keeps using the
+same maintenance services.
+
 ## Development and testing
 
 ```bash
