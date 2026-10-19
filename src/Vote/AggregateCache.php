@@ -38,6 +38,18 @@ final class AggregateCache
     }
 
     /**
+     * Reads counts without writing a missing cache (for readonly abilities).
+     *
+     * @param int $poll_id Poll post ID.
+     * @return array{counts: array<string, int>, total: int, updated_at: string}
+     */
+    public function read(int $poll_id): array
+    {
+        return self::decode(get_post_meta($poll_id, PollPostType::META_AGGREGATE, true))
+            ?? self::payload($this->repository->countByOption($poll_id));
+    }
+
+    /**
      * Normalizes a stored aggregate meta value without rebuilding.
      *
      * @param mixed $stored Raw aggregate meta value.

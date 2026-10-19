@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll;
 
+use ZuidWest\Poll\Abilities\PollAbilities;
 use ZuidWest\Poll\Admin\ClassicEditor;
 use ZuidWest\Poll\Admin\DeleteGuard;
 use ZuidWest\Poll\Admin\PollAdminColumns;
@@ -16,6 +17,7 @@ use ZuidWest\Poll\Admin\PollEditForm;
 use ZuidWest\Poll\Admin\PollMetaBoxes;
 use ZuidWest\Poll\Admin\SettingsPage;
 use ZuidWest\Poll\Admin\UsageTracker;
+use ZuidWest\Poll\Block\PollBlock;
 use ZuidWest\Poll\Cli\Commands;
 use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Frontend\Assets;
@@ -47,11 +49,13 @@ final class Plugin
         $close_sweep->register();
         (new Assets())->register();
         (new PollShortcode())->register();
+        (new PollBlock())->register();
 
         global $wpdb;
         $repository = new VoteRepository($wpdb);
         $cache = new AggregateCache($repository);
         $resetter = new PollReset($repository, $cache);
+        (new PollAbilities($cache, $resetter, $close_sweep))->register();
         $settings = Settings::get();
 
         (new VoteController(
