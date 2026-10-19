@@ -14,7 +14,7 @@ use ZuidWest\Poll\Frontend\Assets;
 use ZuidWest\Poll\Frontend\PollRenderer;
 
 /**
- * Renders [zw_poll id="..."]: the single frontend entry point for polls.
+ * Renders [zw_poll id="..."] for existing content and classic editors.
  */
 final class PollShortcode
 {
