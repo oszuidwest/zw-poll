@@ -21,7 +21,7 @@ This repository is the ZuidWest Poll WordPress plugin (`zw-poll`). The main plug
 
 ## Coding Style & Naming Conventions
 
-Use PHP 8.3+ with `declare(strict_types=1)` and PSR-4 classes under `ZuidWest\Poll\`. Follow the existing four-space PHP indentation and tab-indented WordPress JavaScript style. Keep WordPress globals prefixed with `zw_poll`, `ZW_POLL`, or the project namespace. Use the `zw-poll` text domain for all translated strings. User-facing strings are Dutch and use the word "poll" (not "lezerspoll").
+Use PHP 8.4+ with `declare(strict_types=1)` and PSR-4 classes under `ZuidWest\Poll\`. Follow the existing four-space PHP indentation and tab-indented WordPress JavaScript style. Keep WordPress globals prefixed with `zw_poll`, `ZW_POLL`, or the project namespace. Use the `zw-poll` text domain for all translated strings. User-facing strings are Dutch and use the word "poll" (not "lezerspoll").
 
 ## Testing Guidelines
 
