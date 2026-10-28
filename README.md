@@ -9,7 +9,7 @@ compatibility, and made interactive with the WordPress Interactivity API.
 | Component | Version |
 |---|---|
 | WordPress | 7.1+ |
-| PHP | 8.3+ |
+| PHP | 8.4+ |
 | Node.js | 20+ locally, 24 in CI |
 
 Node.js is only required for linting, WordPress Playground, and Playwright. The
