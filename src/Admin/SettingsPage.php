@@ -138,6 +138,8 @@ final class SettingsPage
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Instellingen', 'zw-poll') . '</h1>';
+        // Core only prints these on pages under the Settings menu.
+        settings_errors();
         echo '<form method="post" action="' . esc_url(admin_url('options.php')) . '">';
         settings_fields(self::OPTION_GROUP);
         do_settings_sections(self::PAGE);

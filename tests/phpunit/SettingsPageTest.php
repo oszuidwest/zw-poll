@@ -112,6 +112,28 @@ final class SettingsPageTest extends TestCase
     }
 
     #[Test]
+    public function render_prints_settings_notices_below_the_heading(): void
+    {
+        Functions\when('current_user_can')->justReturn(true);
+        Functions\when('admin_url')->returnArg();
+        Functions\when('esc_url')->returnArg();
+        Functions\when('settings_fields')->justReturn(null);
+        Functions\when('do_settings_sections')->justReturn(null);
+        Functions\when('submit_button')->justReturn(null);
+        Functions\expect('settings_errors')->once()->withNoArgs()->andReturnUsing(
+            static function (): void {
+                echo 'NOTICES';
+            }
+        );
+
+        ob_start();
+        (new SettingsPage())->render();
+        $html = (string) ob_get_clean();
+
+        $this->assertStringContainsString('</h1>NOTICES<form', $html);
+    }
+
+    #[Test]
     public function number_fields_render_stable_ids_and_server_bounds(): void
     {
         Functions\when('get_option')->alias(

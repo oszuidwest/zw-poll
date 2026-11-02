@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-07T08:52:21+00:00\n"
+"POT-Creation-Date: 2026-11-02T12:21:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -379,51 +379,51 @@ msgstr ""
 msgid "Je hebt geen rechten om deze instellingen te beheren."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:152
+#: src/Admin/SettingsPage.php:154
 msgid "Bepaal hoeveel stemmen er per IP-adres binnen een periode zijn toegestaan en welke header het IP-adres van de stemmer levert. De limiet remt misbruik af, maar is geen waterdichte garantie."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:161
+#: src/Admin/SettingsPage.php:163
 msgid "Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd bij polls die de site-instelling volgen."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:174
+#: src/Admin/SettingsPage.php:176
 msgid "Per poll kan hiervan worden afgeweken."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:181
+#: src/Admin/SettingsPage.php:183
 msgid "De polls zelf blijven altijd bestaan. Deze optie bepaalt alleen of de stemtabel, de salt, de instellingen en de pluginrechten worden verwijderd."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:192
+#: src/Admin/SettingsPage.php:194
 msgid "Rate limiting inschakelen"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:193
+#: src/Admin/SettingsPage.php:195
 msgid "Uitgeschakeld: er geldt geen limiet op stemmen per IP-adres."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:210
+#: src/Admin/SettingsPage.php:212
 msgid "Wijzigingen gelden pas voor nieuwe periodes."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:243
+#: src/Admin/SettingsPage.php:245
 msgid "Deze instelling wordt in code bepaald door het zw_poll_client_ip-filter."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:250
+#: src/Admin/SettingsPage.php:252
 msgid "Standaard gebruikt de plugin REMOTE_ADDR. Kies alleen een header die je proxy gegarandeerd zelf zet. Gebruik X-Forwarded-For alleen als je proxy die header volledig overschrijft en geen door de bezoeker meegestuurde waarden doorlaat."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:261
+#: src/Admin/SettingsPage.php:263
 msgid "Verwijder bij de-installatie ook de stemtabel, de salt, de instellingen en de pluginrechten."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:262
+#: src/Admin/SettingsPage.php:264
 msgid "Standaard blijven deze gegevens behouden."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:327
+#: src/Admin/SettingsPage.php:329
 msgid "Geen (REMOTE_ADDR)"
 msgstr ""
 
