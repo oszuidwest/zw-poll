@@ -184,13 +184,22 @@ final class AggregateCacheTest extends TestCase
     }
 
     #[Test]
-    public function increment_falls_back_to_rebuild_after_retry_failures(): void
+    public function increment_logs_and_leaves_the_aggregate_after_retry_failures(): void
     {
-        Functions\when('get_post_meta')->justReturn([
+        $stored = [
             'counts' => ['optA' => 2],
             'total' => 2,
-        ]);
-        Functions\when('update_post_meta')->justReturn(false);
+        ];
+        $previous_values = [];
+        Functions\when('get_post_meta')->justReturn($stored);
+        Functions\when('update_post_meta')->alias(
+            static function (int $post_id, string $key, array $value, mixed $previous = '') use (&$previous_values): bool {
+                $previous_values[] = $previous;
+
+                return false;
+            }
+        );
+        Functions\expect('error_log')->once()->with('zw-poll: aggregate increment failed for poll 42; run wp zw-poll rebuild 42.');
         $this->repository->shouldReceive('countByOption')
             ->once()
             ->with(self::POLL_ID)
@@ -199,7 +208,7 @@ final class AggregateCacheTest extends TestCase
         $result = (new AggregateCache($this->repository))->increment(self::POLL_ID, 'optA');
 
         $this->assertSame(['optA' => 10], $result['counts']);
-        $this->assertSame(10, $result['total']);
+        $this->assertSame(array_fill(0, 10, $stored), $previous_values);
     }
 
     // Public aggregate shape shared by SSR and REST.

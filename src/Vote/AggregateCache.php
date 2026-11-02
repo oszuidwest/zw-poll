@@ -16,7 +16,7 @@ use ZuidWest\Poll\PostType\PollPostType;
  */
 final class AggregateCache
 {
-    private const MAX_INCREMENT_ATTEMPTS = 3;
+    private const MAX_INCREMENT_ATTEMPTS = 10;
 
     /**
      * Stores the vote counter used for rebuilds.
@@ -150,7 +150,10 @@ final class AggregateCache
             wp_cache_delete($poll_id, 'post_meta');
         }
 
-        return $this->rebuild($poll_id);
+        // Rebuilding here could count votes whose own increment is still pending.
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- A skipped increment needs server-side diagnostics.
+        error_log(sprintf('zw-poll: aggregate increment failed for poll %d; run wp zw-poll rebuild %d.', $poll_id, $poll_id));
+        return self::payload($this->repository->countByOption($poll_id));
     }
 
     /**
