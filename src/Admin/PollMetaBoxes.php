@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace ZuidWest\Poll\Admin;
 
 use ZuidWest\Poll\PostType\PollPostType;
-use ZuidWest\Poll\Rest\AdminController;
 use ZuidWest\Poll\Shortcode\PollShortcode;
 use ZuidWest\Poll\Vote\AggregateCache;
 use WP_Post;
@@ -170,12 +169,12 @@ final class PollMetaBoxes
 
         if ($total > 0) {
             $nonce = wp_create_nonce('wp_rest');
-            $url = AdminController::resetUrl($post->ID);
             echo '<hr style="margin: 16px 0;" />';
             printf(
-                '<button type="button" class="button button-secondary zw-poll-admin-reset" data-rest-url="%s" data-rest-nonce="%s">%s</button>',
-                esc_url($url),
+                '<button type="button" class="button button-secondary zw-poll-admin-reset" data-rest-url="%s" data-rest-nonce="%s" data-poll-id="%d">%s</button>',
+                esc_url(rest_url('wp-abilities/v1/abilities/zw-poll/reset-votes/run')),
                 esc_attr($nonce),
+                absint($post->ID),
                 esc_html__('Alle stemmen verwijderen…', 'zw-poll')
             );
             echo '<p class="description">'

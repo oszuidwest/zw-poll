@@ -19,8 +19,11 @@ test.describe( 'Zichtbaarheid stemtotaal', () => {
 		expect( nonce ).toBeTruthy();
 
 		const reset = await admin.request.post(
-			`/wp-json/zw-poll/v1/poll/${ pollId }/reset`,
-			{ headers: { 'X-WP-Nonce': nonce ?? '' } }
+			'/wp-json/wp-abilities/v1/abilities/zw-poll/reset-votes/run',
+			{
+				headers: { 'X-WP-Nonce': nonce ?? '' },
+				data: { input: { id: Number( pollId ), confirm: true } },
+			}
 		);
 		expect( reset.ok() ).toBeTruthy();
 		await admin.close();

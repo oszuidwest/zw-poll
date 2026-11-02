@@ -91,6 +91,9 @@
 	document.querySelectorAll( '.zw-poll-admin-reset' ).forEach( ( btn ) => {
 		btn.addEventListener( 'click', () =>
 			runButtonAction( btn, {
+				body: {
+					input: { id: Number( btn.dataset.pollId ), confirm: true },
+				},
 				errorPrefix: __( 'Verwijderen mislukt:', 'zw-poll' ),
 				confirmMessage: __(
 					'Alle stemmen voor deze poll worden permanent verwijderd. Dit kan niet ongedaan gemaakt worden. Doorgaan?',

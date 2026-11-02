@@ -22,7 +22,6 @@ use ZuidWest\Poll\Cli\Commands;
 use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Frontend\Assets;
 use ZuidWest\Poll\PostType\PollPostType;
-use ZuidWest\Poll\Rest\AdminController;
 use ZuidWest\Poll\Rest\VoteController;
 use ZuidWest\Poll\Shortcode\PollShortcode;
 use ZuidWest\Poll\Support\Settings;
@@ -68,7 +67,6 @@ final class Plugin
             $repository,
             $cache,
         ))->register();
-        (new AdminController($resetter))->register();
 
         // Admin UI hooks stay out of frontend and REST requests.
         if (is_admin()) {

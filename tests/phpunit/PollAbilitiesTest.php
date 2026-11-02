@@ -81,8 +81,13 @@ final class PollAbilitiesTest extends TestCase
     public function rebuild_uses_the_shared_cache_writer_and_reset_propagates_storage_failure(): void
     {
         Functions\when('get_post_meta')->justReturn('');
-        Functions\expect('update_post_meta')->once()->with(42, PollPostType::META_AGGREGATE, \Mockery::type('array'))->andReturn(true);
+        $writes = [];
+        Functions\when('update_post_meta')->alias(static function (int $id, string $key) use (&$writes): bool {
+            $writes[] = [$id, $key];
+            return true;
+        });
         $this->assertSame(0, $this->abilities->rebuild(['id' => 42])['total']);
+        $this->assertSame([[42, PollPostType::META_AGGREGATE]], $writes);
         $repository = new VoteRepository(new class extends wpdb {
             public function delete(string $table, array $where, array $formats): int|false
             {
@@ -91,7 +96,10 @@ final class PollAbilitiesTest extends TestCase
         });
         $cache = new AggregateCache($repository);
         $abilities = new PollAbilities($cache, new PollReset($repository, $cache), new PollCloseSweep());
-        $this->assertInstanceOf(WP_Error::class, $abilities->resetVotes(['id' => 42, 'confirm' => true]));
+        $result = $abilities->resetVotes(['id' => 42, 'confirm' => true]);
+        $this->assertSame('vote_delete_failed', $result instanceof WP_Error ? $result->get_error_code() : null);
+        // A failed delete must not invalidate cookies or touch the aggregate.
+        $this->assertSame([[42, PollPostType::META_AGGREGATE]], $writes);
     }
 
     #[Test]
