@@ -145,6 +145,7 @@ final class ClassicEditorTest extends TestCase
             ->with('zw-poll-classic-editor', 'zwPollClassic', [
                 'shortcodeTag'              => PollShortcode::TAG,
                 'editUrl'                   => 'http://example.test/wp-admin/post.php',
+                'previewStyles'             => ZW_POLL_URL . 'src/Admin/editor.css',
                 'insertLabel'               => 'Poll invoegen',
                 'pickerUnavailableMessage'  => 'De pollkiezer kan niet worden geopend.',
                 'quicktags'                 => true,
@@ -183,6 +184,7 @@ final class ClassicEditorTest extends TestCase
             ->with('zw-poll-classic-editor', 'zwPollClassic', [
                 'shortcodeTag'              => PollShortcode::TAG,
                 'editUrl'                   => 'http://example.test/wp-admin/post.php',
+                'previewStyles'             => ZW_POLL_URL . 'src/Admin/editor.css',
                 'insertLabel'               => 'Poll invoegen',
                 'pickerUnavailableMessage'  => 'De pollkiezer kan niet worden geopend.',
                 'quicktags'                 => false,
@@ -221,6 +223,7 @@ final class ClassicEditorTest extends TestCase
             ->with('zw-poll-classic-editor', 'zwPollClassic', [
                 'shortcodeTag'              => PollShortcode::TAG,
                 'editUrl'                   => 'http://example.test/wp-admin/post.php',
+                'previewStyles'             => ZW_POLL_URL . 'src/Admin/editor.css',
                 'insertLabel'               => 'Poll invoegen',
                 'pickerUnavailableMessage'  => 'De pollkiezer kan niet worden geopend.',
                 'quicktags'                 => false,

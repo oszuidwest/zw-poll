@@ -131,6 +131,7 @@ final class ClassicEditor
         wp_localize_script(self::SCRIPT_HANDLE, 'zwPollClassic', [
             'shortcodeTag'              => PollShortcode::TAG,
             'editUrl'                   => admin_url('post.php'),
+            'previewStyles'             => ZW_POLL_URL . 'src/Admin/editor.css',
             'insertLabel'               => __('Poll invoegen', 'zw-poll'),
             'pickerUnavailableMessage'  => __('De pollkiezer kan niet worden geopend.', 'zw-poll'),
             'quicktags'                 => $can_edit_polls && $has_quicktags,
