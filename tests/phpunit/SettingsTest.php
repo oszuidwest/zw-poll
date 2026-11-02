@@ -17,6 +17,7 @@ final class SettingsTest extends TestCase
         parent::setUp();
         Monkey\setUp();
         Functions\when('__')->returnArg();
+        Functions\when('esc_html')->alias('htmlspecialchars');
     }
 
     protected function tearDown(): void
@@ -151,6 +152,25 @@ final class SettingsTest extends TestCase
         $this->assertSame(Settings::RATE_LIMIT_MAX_MIN, $settings['rate_limit_max']);
         $this->assertSame(Settings::RATE_LIMIT_WINDOW_MAX, $settings['rate_limit_window']);
         $this->assertSame(Settings::PROXY_HEADER_NONE, $settings['proxy_header']);
+    }
+
+    #[Test]
+    public function sanitize_for_save_escapes_the_submitted_value_in_notices(): void
+    {
+        $messages = [];
+        Functions\when('current_user_can')->justReturn(true);
+        Functions\when('add_settings_error')->alias(
+            static function (string $setting, string $code, string $message) use (&$messages): void {
+                $messages[] = $message;
+            }
+        );
+
+        Settings::sanitizeForSave(['proxy_header' => '<b>x</b>']);
+
+        $this->assertSame(
+            ['Ongeldige waarde voor Proxy-header (&lt;b&gt;x&lt;/b&gt;); opgeslagen als none.'],
+            $messages
+        );
     }
 
     #[Test]
