@@ -306,7 +306,7 @@ final class Settings
                 /* translators: 1: settings field label, 2: submitted value, 3: stored value. */
                 __('Ongeldige waarde voor %1$s (%2$s); opgeslagen als %3$s.', 'zw-poll'),
                 $label,
-                $submitted,
+                esc_html($submitted),
                 (string) $stored
             )
         );
