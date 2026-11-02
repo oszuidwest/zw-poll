@@ -18,6 +18,7 @@ final class UsageTrackerTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        Functions\when('parse_blocks')->justReturn([]);
     }
 
     protected function tearDown(): void
@@ -56,6 +57,51 @@ final class UsageTrackerTest extends TestCase
             [5, 9],
             UsageTracker::extractPollIds('[zw_poll id="5"] tekst [zw_poll id="9"] [zw_poll id="5"]')
         );
+    }
+
+    #[Test]
+    public function extracts_nested_block_references_and_deduplicates_shortcodes(): void
+    {
+        Functions\when('parse_blocks')->justReturn([
+            ['blockName' => 'core/group', 'attrs' => [], 'innerBlocks' => [
+                ['blockName' => 'zw-poll/poll', 'attrs' => ['pollId' => 9], 'innerBlocks' => []],
+                ['blockName' => 'zw-poll/poll', 'attrs' => ['pollId' => 5], 'innerBlocks' => []],
+                ['blockName' => 'zw-poll/poll', 'attrs' => ['pollId' => 0], 'innerBlocks' => []],
+                ['blockName' => 'zw-poll/poll', 'attrs' => [], 'innerBlocks' => []],
+                ['blockName' => 'zw-poll/poll', 'attrs' => ['pollId' => '7abc'], 'innerBlocks' => []],
+                ['blockName' => 'zw-poll/poll', 'attrs' => ['pollId' => [7]], 'innerBlocks' => []],
+                ['blockName' => 'zw-poll/poll', 'attrs' => ['pollId' => 7.5], 'innerBlocks' => []],
+                ['blockName' => 'core/paragraph', 'attrs' => ['pollId' => 2], 'innerBlocks' => []],
+            ]],
+        ]);
+
+        $this->assertSame([5, 9], UsageTracker::extractPollIds('[zw_poll id="5"]'));
+    }
+
+    #[Test]
+    public function changing_a_block_poll_removes_the_previous_usage_and_adds_the_new_one(): void
+    {
+        $this->stubSave();
+        Functions\when('parse_blocks')->justReturn([
+            ['blockName' => 'zw-poll/poll', 'attrs' => ['pollId' => 8], 'innerBlocks' => []],
+        ]);
+        Functions\when('get_post_meta')->alias(
+            static fn (int $id, string $key): mixed => match (true) {
+                $id === 100 && $key === UsageTracker::REFERENCED_META => [7],
+                $id === 7 && $key === UsageTracker::USAGE_META => [100, 200],
+                default => '',
+            }
+        );
+        $writes = $this->captureUpdates();
+
+        (new UsageTracker())->trackOnSave(
+            100,
+            $this->post(100, 'post', 'publish', '<!-- wp:zw-poll/poll {"pollId":8} /-->')
+        );
+
+        $this->assertContains([7, UsageTracker::USAGE_META, [200]], $writes);
+        $this->assertContains([8, UsageTracker::USAGE_META, [100]], $writes);
+        $this->assertContains([100, UsageTracker::REFERENCED_META, [8]], $writes);
     }
 
     #[Test]

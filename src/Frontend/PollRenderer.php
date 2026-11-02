@@ -17,10 +17,11 @@ use ZuidWest\Poll\Vote\VoteEpoch;
 use WP_Post;
 
 /**
- * Server-side render for the poll shortcode.
+ * Shared server-side render for the poll shortcode and block.
  *
  * Returns unprocessed Interactivity API markup; PollShortcode runs the server
- * directive pass. Class-method rendering keeps template locals visible to
+ * directive pass, while WordPress processes block directives. Class-method
+ * rendering keeps template locals visible to
  * static analysers and Plugin Check.
  */
 final class PollRenderer

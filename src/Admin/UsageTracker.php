@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ZuidWest\Poll\Admin;
 
 use ZuidWest\Poll\PostType\PollPostType;
+use ZuidWest\Poll\Block\PollBlock;
 use ZuidWest\Poll\Shortcode\PollShortcode;
 use WP_Post;
 
@@ -149,7 +150,7 @@ final class UsageTracker
     }
 
     /**
-     * Extracts poll IDs from saved shortcodes.
+     * Extracts poll IDs from saved shortcodes and nested poll blocks.
      *
      * @param string $content Saved post content.
      * @return array<int, int>
@@ -158,7 +159,27 @@ final class UsageTracker
     {
         $ids = [];
         self::collectShortcodeIds($content, $ids);
+        self::collectBlockIds(parse_blocks($content), $ids);
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * Collects poll references at every nesting level.
+     *
+     * @param array<array<string, mixed>> $blocks Parsed blocks.
+     * @param array<int, int>             $ids    Collected poll IDs.
+     */
+    private static function collectBlockIds(array $blocks, array &$ids): void
+    {
+        foreach ($blocks as $block) {
+            if ($block['blockName'] === PollBlock::NAME) {
+                $id = $block['attrs']['pollId'] ?? 0;
+                if (is_int($id) && $id > 0) {
+                    $ids[] = $id;
+                }
+            }
+            self::collectBlockIds($block['innerBlocks'], $ids);
+        }
     }
 
     /**

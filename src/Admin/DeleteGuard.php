@@ -132,7 +132,7 @@ final class DeleteGuard
         $edit_url = get_edit_post_link($blocked_id);
         $message = ($blocked['reason'] ?? '') === 'in_use'
             ? __(
-                'Deze poll wordt nog gebruikt in een of meer artikelen en kan niet permanent verwijderd worden. Verwijder eerst de shortcode uit die artikelen.',
+                'Deze poll wordt nog gebruikt in een of meer artikelen en kan niet permanent verwijderd worden. Verwijder eerst de poll uit die artikelen.',
                 'zw-poll'
             )
             : __(

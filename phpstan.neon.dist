@@ -8,6 +8,8 @@ parameters:
         - zw-poll.php
         - uninstall.php
     tmpDir: .phpstan-cache
+    stubFiles:
+        - stubs/block-registration.stub
     # Defines the ZW_POLL_* constants (set in zw-poll.php at runtime).
     bootstrapFiles:
         - phpstan-bootstrap.php

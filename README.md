@@ -1,7 +1,7 @@
 # ZuidWest Poll
 
 A WordPress plugin for anonymous, single-choice polls. Polls are embedded in
-posts and pages with a shortcode, rendered server-side for page-cache
+posts and pages with a Poll block or shortcode, rendered server-side for page-cache
 compatibility, and made interactive with the WordPress Interactivity API.
 
 ## Requirements
@@ -44,8 +44,11 @@ The generated files are written to `dist/`. The version is read from
 
 1. Create a poll under **Polls** and provide a question, answer options, and a
    status.
-2. Copy the shortcode from the **Embed** panel or the poll list.
-3. Add it to a post or page:
+2. In the block editor, insert **Poll** and enter the poll's numeric ID from
+   the poll list in the **Poll-ID** block setting. The preview uses the same
+   renderer as the published page, and usage tracking includes nested blocks.
+3. Existing content and classic editors can still use the shortcode from the
+   **Embed** panel or the poll list:
 
 ```text
 [zw_poll id="123"]

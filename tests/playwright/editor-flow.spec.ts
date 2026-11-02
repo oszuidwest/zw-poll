@@ -4,8 +4,7 @@ import { login, publishAndReopen, startNewPoll } from './utils';
 /**
  * Covers the custom poll admin surface against the seeded demo poll.
  *
- * Block-editor insertion is intentionally excluded: it is slow and flaky to
- * drive, while these assertions cover the plugin-owned admin UI.
+ * Native block insertion is covered separately in native-block.spec.ts.
  */
 test.describe( 'Admin / poll-beheer', () => {
 	test.beforeEach( async ( { page } ) => {
