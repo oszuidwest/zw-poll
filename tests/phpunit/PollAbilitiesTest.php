@@ -69,6 +69,9 @@ final class PollAbilitiesTest extends TestCase
             $this->assertIsCallable($args['execute_callback']);
             $this->assertIsCallable($args['permission_callback']);
         }
+        foreach (['get-results', 'set-status', 'rebuild-aggregate', 'reset-votes'] as $name) {
+            $this->assertSame([$this->abilities, 'canEditPoll'], $registered['zw-poll/' . $name]['permission_callback']);
+        }
         $this->assertSame(['readonly' => false, 'destructive' => true, 'idempotent' => false],
             $registered['zw-poll/reset-votes']['meta']['annotations']);
         $this->assertSame([true], $registered['zw-poll/reset-votes']['input_schema']['properties']['confirm']['enum']);
@@ -175,13 +178,20 @@ final class PollAbilitiesTest extends TestCase
     }
 
     #[Test]
-    public function readonly_results_with_missing_cache_do_not_write_meta(): void
+    public function readonly_results_with_missing_cache_count_stored_votes_without_writing_meta(): void
     {
-        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('get_post_meta')->alias(static fn (int $id, string $key): mixed =>
+            $key === PollPostType::META_OPTIONS ? [['id' => 'a', 'label' => 'A', 'imageId' => 0]] : '');
         Functions\expect('update_post_meta')->never();
-        $results = $this->abilities->getResults(['id' => 42]);
-        $this->assertSame(0, $results['total']);
-        $this->assertEquals((object) [], $results['counts']);
+        $repository = new VoteRepository(new class extends wpdb {
+            public function get_results(string $query, string $output = ARRAY_A): array
+            {
+                return [['option_id' => 'a', 'c' => 2]];
+            }
+        });
+        $cache = new AggregateCache($repository);
+        $abilities = new PollAbilities($cache, new PollReset($repository, $cache), new PollCloseSweep());
+        $this->assertEquals((object) ['a' => 2], $abilities->getResults(['id' => 42])['counts']);
     }
 
     #[Test]
