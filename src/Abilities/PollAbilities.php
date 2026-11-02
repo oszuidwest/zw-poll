@@ -112,11 +112,14 @@ final class PollAbilities
      */
     private static function objectSchema(array $properties, ?array $required = null): array
     {
+        $required ??= array_keys($properties);
         return [
             'type' => 'object',
             'properties' => $properties,
-            'required' => $required ?? array_keys($properties),
+            'required' => $required,
             'additionalProperties' => false,
+            // Core passes null when a client omits input; an empty default lets that through.
+            ...($required === [] ? ['default' => []] : []),
         ];
     }
 

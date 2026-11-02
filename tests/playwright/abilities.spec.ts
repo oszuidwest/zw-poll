@@ -25,6 +25,7 @@ test( 'abilities zijn vindbaar en de resetknop gebruikt reset-votes', async ( {
 	const discovery = await page.request.get( '/wp-json/wp-abilities/v1/abilities?per_page=100', { headers } );
 	const names = ( await discovery.json() ).map( ( ability: { name: string } ) => ability.name );
 	expect( names.filter( ( name: string ) => name.startsWith( 'zw-poll/' ) ) ).toHaveLength( 6 );
+	expect( ( await page.request.get( `${ base }list-polls/run`, { headers } ) ).ok() ).toBeTruthy();
 	const results = await page.request.get( `${ base }get-results/run`, { headers, params: { 'input[id]': id } } );
 	expect( ( await results.json() ).total ).toBe( 1 );
 	const anonymous = await request.post( `${ base }reset-votes/run`, { data: { input: { id, confirm: true } } } );
