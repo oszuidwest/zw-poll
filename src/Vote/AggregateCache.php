@@ -145,6 +145,7 @@ final class AggregateCache
         // Rebuilding here could count votes whose own increment is still pending.
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- A skipped increment needs server-side diagnostics.
         error_log(sprintf('zw-poll: aggregate increment failed for poll %d; run wp zw-poll rebuild %d.', $poll_id, $poll_id));
+        // Best-effort response counts, not authoritative when the count fails too.
         return self::payload($this->repository->countByOption($poll_id) ?? $payload['counts']);
     }
 
