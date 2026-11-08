@@ -37,12 +37,13 @@ final class DeleteGuardTest extends TestCase
         parent::tearDown();
     }
 
-    private function guard(array $tally = []): DeleteGuard
+    private function guard(array $tally = [], bool $fails = false): DeleteGuard
     {
-        $db = new class($tally) extends wpdb {
-            public function __construct(private array $tally)
+        $db = new class($tally, $fails) extends wpdb {
+            public function __construct(private array $tally, bool $fails)
             {
                 $this->prefix = 'wp_';
+                $this->queryFails = $fails;
             }
 
             public function get_results(string $query, string $output = ARRAY_A): array
@@ -94,6 +95,14 @@ final class DeleteGuardTest extends TestCase
 
         $this->assertFalse($this->guard(tally: [['option_id' => 'optA', 'c' => 3]])
             ->guard(null, $this->poll(), false));
+    }
+
+    #[Test]
+    public function blocks_force_delete_when_the_vote_count_fails(): void
+    {
+        $this->expectBlockedTransient('votes');
+
+        $this->assertFalse($this->guard(fails: true)->guard(null, $this->poll(), true));
     }
 
     #[Test]

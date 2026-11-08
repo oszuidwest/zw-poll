@@ -42,12 +42,13 @@ final class AdminControllerTest extends TestCase
         parent::tearDown();
     }
 
-    private function controller(int|false $deleted = 0, array $tally = []): AdminController
+    private function controller(int|false $deleted = 0, array $tally = [], bool $fails = false): AdminController
     {
-        $db = new class($deleted, $tally) extends wpdb {
-            public function __construct(private int|false $deleted, private array $tally)
+        $db = new class($deleted, $tally, $fails) extends wpdb {
+            public function __construct(private int|false $deleted, private array $tally, bool $fails)
             {
                 $this->prefix = 'wp_';
+                $this->queryFails = $fails;
             }
 
             public function delete(string $table, array $where, array $formats): int|false
@@ -173,6 +174,19 @@ final class AdminControllerTest extends TestCase
         $this->assertSame(7, $data['deleted']);
         $this->assertArrayNotHasKey('voteEpoch', $data);
         $this->assertSame(0, $data['total']);
+    }
+
+    #[Test]
+    public function reset_reports_a_failed_count_after_deleting_votes(): void
+    {
+        Functions\when('get_post')->justReturn($this->poll());
+
+        $result = $this->controller(deleted: 7, fails: true)->reset($this->request());
+
+        $this->assertInstanceOf(WP_Error::class, $result);
+        $this->assertSame('vote_count_failed', $result->get_error_code());
+        $this->assertSame('Stemmen verwijderd, maar de telling kon niet worden bijgewerkt.', $result->get_error_message());
+        $this->assertSame(500, $result->get_error_data()['status']);
     }
 
     #[Test]

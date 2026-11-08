@@ -26,18 +26,6 @@ final class AggregateCache
     public function __construct(private readonly VoteCounter $repository) {}
 
     /**
-     * Returns a cached aggregate, rebuilding missing or malformed meta.
-     *
-     * @param int $poll_id Poll post ID.
-     * @return array{counts: array<string, int>, total: int, updated_at: string}
-     */
-    public function get(int $poll_id): array
-    {
-        $stored = get_post_meta($poll_id, PollPostType::META_AGGREGATE, true);
-        return self::decode($stored) ?? $this->rebuild($poll_id);
-    }
-
-    /**
      * Normalizes a stored aggregate meta value without rebuilding.
      *
      * @param mixed $stored Raw aggregate meta value.
@@ -121,11 +109,15 @@ final class AggregateCache
      * Rebuilds and persists the aggregate from the vote store.
      *
      * @param int $poll_id Poll post ID.
-     * @return array{counts: array<string, int>, total: int, updated_at: string}
+     * @return array{counts: array<string, int>, total: int, updated_at: string}|null Null when the count failed.
      */
-    public function rebuild(int $poll_id): array
+    public function rebuild(int $poll_id): ?array
     {
-        $payload = self::payload($this->repository->countByOption($poll_id));
+        $counts = $this->repository->countByOption($poll_id);
+        if ($counts === null) {
+            return null;
+        }
+        $payload = self::payload($counts);
         update_post_meta($poll_id, PollPostType::META_AGGREGATE, $payload);
         return $payload;
     }
@@ -153,7 +145,7 @@ final class AggregateCache
         // Rebuilding here could count votes whose own increment is still pending.
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- A skipped increment needs server-side diagnostics.
         error_log(sprintf('zw-poll: aggregate increment failed for poll %d; run wp zw-poll rebuild %d.', $poll_id, $poll_id));
-        return self::payload($this->repository->countByOption($poll_id));
+        return self::payload($this->repository->countByOption($poll_id) ?? $payload['counts']);
     }
 
     /**

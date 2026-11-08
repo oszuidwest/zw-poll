@@ -101,7 +101,8 @@ final class DeleteGuard
         if (count($usage) > 0) {
             return 'in_use';
         }
-        if (count($this->repository->countByOption($poll_id)) > 0) {
+        // A failed count (null) blocks too: it cannot prove the poll has no votes.
+        if ($this->repository->countByOption($poll_id) !== []) {
             return 'votes';
         }
         return null;
