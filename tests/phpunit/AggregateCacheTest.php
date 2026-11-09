@@ -162,7 +162,11 @@ final class AggregateCacheTest extends TestCase
                 return false;
             }
         );
-        Functions\expect('error_log')->once()->with('zw-poll: aggregate increment failed for poll 42; run wp zw-poll rebuild 42.');
+        $logs = [];
+        Functions\when('error_log')->alias(static function (string $message) use (&$logs): bool {
+            $logs[] = $message;
+            return true;
+        });
         $this->repository->shouldReceive('countByOption')
             ->once()
             ->with(self::POLL_ID)
@@ -172,6 +176,7 @@ final class AggregateCacheTest extends TestCase
 
         $this->assertSame(['optA' => 10], $result['counts']);
         $this->assertSame(array_fill(0, 10, $stored), $previous_values);
+        $this->assertSame(['zw-poll: aggregate increment failed for poll 42; run wp zw-poll rebuild 42.'], $logs);
     }
 
     #[Test]
@@ -179,12 +184,17 @@ final class AggregateCacheTest extends TestCase
     {
         Functions\when('get_post_meta')->justReturn(['counts' => ['optA' => 2], 'total' => 2]);
         Functions\when('update_post_meta')->justReturn(false);
-        Functions\when('error_log')->justReturn(true);
+        $logs = [];
+        Functions\when('error_log')->alias(static function (string $message) use (&$logs): bool {
+            $logs[] = $message;
+            return true;
+        });
         $this->repository->shouldReceive('countByOption')->once()->andReturn(null);
 
         $result = (new AggregateCache($this->repository))->increment(self::POLL_ID, 'optA');
 
         $this->assertSame(['optA' => 3], $result['counts']);
+        $this->assertSame('zw-poll: vote count failed for poll 42; the vote response shows estimated counts.', $logs[1] ?? null);
     }
 
     // Public aggregate shape shared by SSR and REST.
