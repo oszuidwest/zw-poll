@@ -17,7 +17,7 @@
         "@axe-core/playwright": "^4.14.0",
         "@playwright/test": "^1.65.0",
         "@wordpress/scripts": "^37.1.0",
-        "@wp-playground/cli": "^3.1.61"
+        "@wp-playground/cli": "^3.1.62"
     },
     "overrides": {
         "linkify-it": "^5.0.2",
