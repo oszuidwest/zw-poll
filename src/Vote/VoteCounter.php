@@ -18,7 +18,7 @@ interface VoteCounter
      * Counts votes grouped by option.
      *
      * @param int $poll_id Poll post ID.
-     * @return array<string, int> Map of option_id to vote count.
+     * @return array<string, int>|null Map of option_id to vote count, or null when the query failed.
      */
-    public function countByOption(int $poll_id): array;
+    public function countByOption(int $poll_id): ?array;
 }

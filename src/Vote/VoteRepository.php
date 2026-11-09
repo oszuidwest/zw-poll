@@ -92,23 +92,26 @@ final class VoteRepository implements VoteCounter
      * Counts votes grouped by option.
      *
      * @param int $poll_id Poll post ID.
-     * @return array<string, int>
+     * @return array<string, int>|null Null when the query failed.
      */
-    public function countByOption(int $poll_id): array
+    public function countByOption(int $poll_id): ?array
     {
         $table = $this->table();
+        // get_results() hides failures: it returns no rows, or stale ones, when query() fails.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Aggregate source is plugin-owned votes table.
-        $rows = $this->db->get_results(
-            $this->db->prepare(
+        $ok = $this->db->query(
+            (string) $this->db->prepare(
                 'SELECT option_id, COUNT(*) AS c FROM %i WHERE poll_id = %d GROUP BY option_id',
                 $table,
                 $poll_id
-            ),
-            ARRAY_A
+            )
         );
+        if ($ok === false) {
+            return null;
+        }
         $out = [];
-        foreach ((array) $rows as $row) {
-            $out[(string) $row['option_id']] = (int) $row['c'];
+        foreach ((array) $this->db->last_result as $row) {
+            $out[(string) $row->option_id] = (int) $row->c;
         }
         return $out;
     }

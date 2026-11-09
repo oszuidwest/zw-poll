@@ -44,6 +44,13 @@ final class PollReset
 
         VoteEpoch::increment($poll_id);
         $aggregate = $this->cache->rebuild($poll_id);
+        if ($aggregate === null) {
+            return new WP_Error(
+                'vote_count_failed',
+                __('Stemmen verwijderd, maar de telling kon niet worden bijgewerkt.', 'zw-poll'),
+                ['status' => 500]
+            );
+        }
 
         return ['deleted' => $deleted, 'aggregate' => $aggregate];
     }

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-02T12:21:09+00:00\n"
+"POT-Creation-Date: 2026-11-08T23:57:35+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -73,15 +73,15 @@ msgstr ""
 msgid "Annuleren"
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:134
+#: src/Admin/DeleteGuard.php:135
 msgid "Deze poll wordt nog gebruikt in een of meer artikelen en kan niet permanent verwijderd worden. Verwijder eerst de poll uit die artikelen."
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:138
+#: src/Admin/DeleteGuard.php:139
 msgid "Deze poll bevat stemmen en kan niet permanent verwijderd worden. Verwijder eerst de stemmen via de poll-editor, of laat de poll in de prullenbak staan."
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:146
+#: src/Admin/DeleteGuard.php:147
 #: src/PostType/PollPostType.php:60
 msgid "Poll bewerken"
 msgstr ""
@@ -246,7 +246,7 @@ msgstr[1] ""
 
 #. translators: %d: answer number.
 #: src/Admin/PollEditForm.php:357
-#: src/Admin/admin.js:187
+#: src/Admin/admin.js:189
 #, php-format,js-format
 msgid "Antwoord %d"
 msgstr ""
@@ -264,7 +264,7 @@ msgid "Antwoord verwijderen"
 msgstr ""
 
 #: src/Admin/PollEditForm.php:405
-#: src/Admin/admin.js:231
+#: src/Admin/admin.js:233
 msgid "Afbeelding kiezen"
 msgstr ""
 
@@ -445,19 +445,23 @@ msgstr ""
 msgid "Vul een poll-ID in bij de blokinstellingen om een poll te tonen."
 msgstr ""
 
+#: src/Cli/Commands.php:75
+msgid "Stemmen konden niet worden geteld."
+msgstr ""
+
 #. translators: 1: poll ID, 2: total votes, 3: number of options.
-#: src/Cli/Commands.php:77
+#: src/Cli/Commands.php:81
 #, php-format
 msgid "Aggregaat herbouwd voor poll %1$d: %2$d stemmen over %3$d opties."
 msgstr ""
 
-#: src/Cli/Commands.php:141
+#: src/Cli/Commands.php:142
 #: src/Admin/classic-editor.js:92
 msgid "Geen polls gevonden."
 msgstr ""
 
 #. translators: %d: number of expired polls closed.
-#: src/Cli/Commands.php:171
+#: src/Cli/Commands.php:172
 #, php-format
 msgid "%d verlopen poll gesloten."
 msgid_plural "%d verlopen polls gesloten."
@@ -465,19 +469,19 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: poll ID, 2: poll title.
-#: src/Cli/Commands.php:203
+#: src/Cli/Commands.php:204
 #, php-format
 msgid "Alle stemmen voor poll %1$d (%2$s) verwijderen?"
 msgstr ""
 
 #. translators: 1: number of deleted votes, 2: poll ID.
-#: src/Cli/Commands.php:218
+#: src/Cli/Commands.php:219
 #, php-format
 msgid "%1$d stemmen verwijderd voor poll %2$d."
 msgstr ""
 
 #. translators: %d: the post ID that was supplied.
-#: src/Cli/Commands.php:237
+#: src/Cli/Commands.php:238
 #, php-format
 msgid "Geen poll gevonden met ID %d."
 msgstr ""
@@ -607,6 +611,10 @@ msgstr ""
 msgid "Stemmen konden niet worden verwijderd."
 msgstr ""
 
+#: src/Vote/PollReset.php:50
+msgid "Stemmen verwijderd, maar de telling kon niet worden bijgewerkt."
+msgstr ""
+
 #: src/Vote/RateLimiter.php:125
 msgid "The zw_poll_rate_limit filter must return an array; defaults were used."
 msgstr ""
@@ -627,31 +635,31 @@ msgstr ""
 msgid "Bezig…"
 msgstr ""
 
-#: src/Admin/admin.js:70
+#: src/Admin/admin.js:72
 msgid "onbekende fout"
 msgstr ""
 
-#: src/Admin/admin.js:86
+#: src/Admin/admin.js:88
 msgid "Status wijzigen mislukt:"
 msgstr ""
 
-#: src/Admin/admin.js:94
+#: src/Admin/admin.js:96
 msgid "Verwijderen mislukt:"
 msgstr ""
 
-#: src/Admin/admin.js:95
+#: src/Admin/admin.js:97
 msgid "Alle stemmen voor deze poll worden permanent verwijderd. Dit kan niet ongedaan gemaakt worden. Doorgaan?"
 msgstr ""
 
-#: src/Admin/admin.js:118
+#: src/Admin/admin.js:120
 msgid "Gekopieerd!"
 msgstr ""
 
-#: src/Admin/admin.js:121
+#: src/Admin/admin.js:123
 msgid "Kopiëren mislukt"
 msgstr ""
 
-#: src/Admin/admin.js:233
+#: src/Admin/admin.js:235
 msgid "Afbeelding gebruiken"
 msgstr ""
 

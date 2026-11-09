@@ -62,7 +62,9 @@
 				...( body ? { body: JSON.stringify( body ) } : {} ),
 			} );
 			if ( ! res.ok ) {
-				throw new Error( 'HTTP ' + res.status );
+				// Show the REST error message; some errors report partial work.
+				const data = await res.json().catch( () => null );
+				throw new Error( data?.message || 'HTTP ' + res.status );
 			}
 			window.location.reload();
 		} catch ( e ) {

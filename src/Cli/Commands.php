@@ -71,6 +71,10 @@ final class Commands
     {
         $poll = $this->requirePoll($args[0] ?? '');
         $aggregate = $this->cache->rebuild($poll->ID);
+        if ($aggregate === null) {
+            WP_CLI::error(__('Stemmen konden niet worden geteld.', 'zw-poll'));
+            return;
+        }
 
         WP_CLI::success(sprintf(
             /* translators: 1: poll ID, 2: total votes, 3: number of options. */
@@ -123,10 +127,7 @@ final class Commands
 
         $rows = [];
         foreach ($polls as $poll) {
-            $aggregate = AggregateCache::projectAggregate(
-                $this->cache->get($poll->ID),
-                PollPostType::options($poll->ID)
-            );
+            $aggregate = AggregateCache::forDisplay($poll->ID, PollPostType::options($poll->ID));
             $rows[] = [
                 'id' => $poll->ID,
                 'title' => $poll->post_title,
