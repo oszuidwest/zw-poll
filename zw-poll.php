@@ -5,7 +5,7 @@
  * Description:       Poll voor WordPress: laat lezers stemmen via een shortcode in artikelen en pagina's.
  * Version:           0.4.0
  * Requires at least: 7.1
- * Requires PHP:      8.3
+ * Requires PHP:      8.4
  * Author:            Streekomroep ZuidWest
  * Author URI:        https://www.zuidwesttv.nl/
  * License:           GPL-2.0-or-later

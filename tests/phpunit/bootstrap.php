@@ -126,6 +126,14 @@ if (!class_exists('wpdb', false)) {
     {
         public string $prefix = 'wp_';
 
+        public string $last_error = '';
+
+        /** Makes query() fail the way core can: false, with no last_error. */
+        public bool $queryFails = false;
+
+        /** @var array<int, object> */
+        public array $last_result = [];
+
         public function prepare(string $query, mixed ...$args): string
         {
             return $query;
@@ -146,6 +154,20 @@ if (!class_exists('wpdb', false)) {
         public function get_results(string $query, string $output = ARRAY_A): array
         {
             return [];
+        }
+
+        /**
+         * Mirror wpdb: false on error, otherwise fill last_result from get_results().
+         *
+         * @param string $query SQL query.
+         */
+        public function query(string $query): int|false
+        {
+            if ($this->queryFails) {
+                return false;
+            }
+            $this->last_result = array_map(static fn (array $row): object => (object) $row, $this->get_results($query));
+            return count($this->last_result);
         }
 
         /**

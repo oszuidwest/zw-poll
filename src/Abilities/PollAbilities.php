@@ -231,9 +231,9 @@ final class PollAbilities
      * Reads results without a cache write, even when the aggregate is absent.
      *
      * @param array{id: int} $input Validated target.
-     * @return array<string, mixed>
+     * @return array<string, mixed>|WP_Error
      */
-    public function getResults(array $input): array
+    public function getResults(array $input): array|WP_Error
     {
         $id = (int) $input['id'];
         return $this->results($id, $this->cache->read($id));
@@ -260,9 +260,9 @@ final class PollAbilities
      * Rebuilds through the same service as WP-CLI.
      *
      * @param array{id: int} $input Validated target.
-     * @return array<string, mixed>
+     * @return array<string, mixed>|WP_Error
      */
-    public function rebuild(array $input): array
+    public function rebuild(array $input): array|WP_Error
     {
         $id = (int) $input['id'];
         return $this->results($id, $this->cache->rebuild($id));
@@ -297,12 +297,15 @@ final class PollAbilities
     /**
      * Projects counts onto the current options and preserves an object for empty counts.
      *
-     * @param int                                                               $id        Poll ID.
-     * @param array{counts: array<string, int>, total: int, updated_at: string} $aggregate Full aggregate.
-     * @return array<string, mixed>
+     * @param int                                                                    $id        Poll ID.
+     * @param array{counts: array<string, int>, total: int, updated_at: string}|null $aggregate Full aggregate, or null when the count failed.
+     * @return array<string, mixed>|WP_Error
      */
-    private function results(int $id, array $aggregate): array
+    private function results(int $id, ?array $aggregate): array|WP_Error
     {
+        if ($aggregate === null) {
+            return new WP_Error('vote_count_failed', __('Stemmen konden niet worden geteld.', 'zw-poll'));
+        }
         $projected = AggregateCache::projectAggregate($aggregate, PollPostType::options($id));
         return ['id' => $id, 'counts' => (object) $projected['counts'],
             'total' => $projected['total'], 'updated_at' => $projected['updated_at']];

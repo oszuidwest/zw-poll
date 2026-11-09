@@ -342,13 +342,14 @@ final class VoteControllerTest extends TestCase
     }
 
     #[Test]
-    public function vote_response_projects_rebuild_fallback_to_visible_options(): void
+    public function vote_response_projects_failed_increment_count_to_visible_options(): void
     {
         $this->stubMeta('open', $this->options(), aggregate: [
             'counts' => ['optA' => 2, 'removed' => 99],
             'total' => 101,
         ]);
         Functions\when('update_post_meta')->justReturn(false);
+        Functions\when('error_log')->justReturn(true);
 
         $result = $this->controller(tally: [
             ['option_id' => 'optA', 'c' => 3],

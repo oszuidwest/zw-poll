@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-03T01:14:41+00:00\n"
+"POT-Creation-Date: 2026-11-09T08:36:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -101,6 +101,11 @@ msgstr ""
 msgid "Pollstatus kon niet worden opgeslagen."
 msgstr ""
 
+#: src/Abilities/PollAbilities.php:307
+#: src/Cli/Commands.php:75
+msgid "Stemmen konden niet worden geteld."
+msgstr ""
+
 #: src/Admin/ClassicEditor.php:135
 #: src/Admin/ClassicEditor.php:151
 msgid "Poll invoegen"
@@ -135,15 +140,15 @@ msgstr ""
 msgid "Annuleren"
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:134
+#: src/Admin/DeleteGuard.php:135
 msgid "Deze poll wordt nog gebruikt in een of meer artikelen en kan niet permanent verwijderd worden. Verwijder eerst de poll uit die artikelen."
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:138
+#: src/Admin/DeleteGuard.php:139
 msgid "Deze poll bevat stemmen en kan niet permanent verwijderd worden. Verwijder eerst de stemmen via de poll-editor, of laat de poll in de prullenbak staan."
 msgstr ""
 
-#: src/Admin/DeleteGuard.php:146
+#: src/Admin/DeleteGuard.php:147
 #: src/PostType/PollPostType.php:60
 msgid "Poll bewerken"
 msgstr ""
@@ -308,7 +313,7 @@ msgstr[1] ""
 
 #. translators: %d: answer number.
 #: src/Admin/PollEditForm.php:357
-#: src/Admin/admin.js:190
+#: src/Admin/admin.js:192
 #, php-format,js-format
 msgid "Antwoord %d"
 msgstr ""
@@ -326,7 +331,7 @@ msgid "Antwoord verwijderen"
 msgstr ""
 
 #: src/Admin/PollEditForm.php:405
-#: src/Admin/admin.js:234
+#: src/Admin/admin.js:236
 msgid "Afbeelding kiezen"
 msgstr ""
 
@@ -441,51 +446,51 @@ msgstr ""
 msgid "Je hebt geen rechten om deze instellingen te beheren."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:152
+#: src/Admin/SettingsPage.php:154
 msgid "Bepaal hoeveel stemmen er per IP-adres binnen een periode zijn toegestaan en welke header het IP-adres van de stemmer levert. De limiet remt misbruik af, maar is geen waterdichte garantie."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:161
+#: src/Admin/SettingsPage.php:163
 msgid "Bepaal vanaf hoeveel stemmen het totale aantal standaard zichtbaar wordt. Een waarde van 0 toont het totaal altijd bij polls die de site-instelling volgen."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:174
+#: src/Admin/SettingsPage.php:176
 msgid "Per poll kan hiervan worden afgeweken."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:181
+#: src/Admin/SettingsPage.php:183
 msgid "De polls zelf blijven altijd bestaan. Deze optie bepaalt alleen of de stemtabel, de salt, de instellingen en de pluginrechten worden verwijderd."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:192
+#: src/Admin/SettingsPage.php:194
 msgid "Rate limiting inschakelen"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:193
+#: src/Admin/SettingsPage.php:195
 msgid "Uitgeschakeld: er geldt geen limiet op stemmen per IP-adres."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:210
+#: src/Admin/SettingsPage.php:212
 msgid "Wijzigingen gelden pas voor nieuwe periodes."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:243
+#: src/Admin/SettingsPage.php:245
 msgid "Deze instelling wordt in code bepaald door het zw_poll_client_ip-filter."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:250
+#: src/Admin/SettingsPage.php:252
 msgid "Standaard gebruikt de plugin REMOTE_ADDR. Kies alleen een header die je proxy gegarandeerd zelf zet. Gebruik X-Forwarded-For alleen als je proxy die header volledig overschrijft en geen door de bezoeker meegestuurde waarden doorlaat."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:261
+#: src/Admin/SettingsPage.php:263
 msgid "Verwijder bij de-installatie ook de stemtabel, de salt, de instellingen en de pluginrechten."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:262
+#: src/Admin/SettingsPage.php:264
 msgid "Standaard blijven deze gegevens behouden."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:327
+#: src/Admin/SettingsPage.php:329
 msgid "Geen (REMOTE_ADDR)"
 msgstr ""
 
@@ -508,18 +513,18 @@ msgid "Vul een poll-ID in bij de blokinstellingen om een poll te tonen."
 msgstr ""
 
 #. translators: 1: poll ID, 2: total votes, 3: number of options.
-#: src/Cli/Commands.php:77
+#: src/Cli/Commands.php:81
 #, php-format
 msgid "Aggregaat herbouwd voor poll %1$d: %2$d stemmen over %3$d opties."
 msgstr ""
 
-#: src/Cli/Commands.php:141
+#: src/Cli/Commands.php:142
 #: src/Admin/classic-editor.js:92
 msgid "Geen polls gevonden."
 msgstr ""
 
 #. translators: %d: number of expired polls closed.
-#: src/Cli/Commands.php:171
+#: src/Cli/Commands.php:172
 #, php-format
 msgid "%d verlopen poll gesloten."
 msgid_plural "%d verlopen polls gesloten."
@@ -527,19 +532,19 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: poll ID, 2: poll title.
-#: src/Cli/Commands.php:203
+#: src/Cli/Commands.php:204
 #, php-format
 msgid "Alle stemmen voor poll %1$d (%2$s) verwijderen?"
 msgstr ""
 
 #. translators: 1: number of deleted votes, 2: poll ID.
-#: src/Cli/Commands.php:218
+#: src/Cli/Commands.php:219
 #, php-format
 msgid "%1$d stemmen verwijderd voor poll %2$d."
 msgstr ""
 
 #. translators: %d: the post ID that was supplied.
-#: src/Cli/Commands.php:237
+#: src/Cli/Commands.php:238
 #, php-format
 msgid "Geen poll gevonden met ID %d."
 msgstr ""
@@ -664,6 +669,10 @@ msgstr ""
 msgid "Stemmen konden niet worden verwijderd."
 msgstr ""
 
+#: src/Vote/PollReset.php:50
+msgid "Stemmen verwijderd, maar de telling kon niet worden bijgewerkt."
+msgstr ""
+
 #: src/Vote/RateLimiter.php:125
 msgid "The zw_poll_rate_limit filter must return an array; defaults were used."
 msgstr ""
@@ -684,31 +693,31 @@ msgstr ""
 msgid "Bezig…"
 msgstr ""
 
-#: src/Admin/admin.js:70
+#: src/Admin/admin.js:72
 msgid "onbekende fout"
 msgstr ""
 
-#: src/Admin/admin.js:86
+#: src/Admin/admin.js:88
 msgid "Status wijzigen mislukt:"
 msgstr ""
 
-#: src/Admin/admin.js:97
+#: src/Admin/admin.js:99
 msgid "Verwijderen mislukt:"
 msgstr ""
 
-#: src/Admin/admin.js:98
+#: src/Admin/admin.js:100
 msgid "Alle stemmen voor deze poll worden permanent verwijderd. Dit kan niet ongedaan gemaakt worden. Doorgaan?"
 msgstr ""
 
-#: src/Admin/admin.js:121
+#: src/Admin/admin.js:123
 msgid "Gekopieerd!"
 msgstr ""
 
-#: src/Admin/admin.js:124
+#: src/Admin/admin.js:126
 msgid "Kopiëren mislukt"
 msgstr ""
 
-#: src/Admin/admin.js:236
+#: src/Admin/admin.js:238
 msgid "Afbeelding gebruiken"
 msgstr ""
 

@@ -9,15 +9,15 @@
         "lint": "npm run lint:js && npm run lint:css",
         "lint:js": "wp-scripts lint-js \"src/**/*.js\"",
         "lint:css": "wp-scripts lint-style \"src/**/*.css\"",
-        "playground": "wp-playground-cli server --port=9400 --workers=1 --mount=./:/wordpress/wp-content/plugins/zw-poll --blueprint=./playground/blueprint.json",
+        "playground": "wp-playground-cli server --port=9400 --workers=1 --define-bool DISALLOW_FILE_MODS true --mount=./:/wordpress/wp-content/plugins/zw-poll --blueprint=./playground/blueprint.json",
         "test:e2e": "playwright test",
         "make-pot": "scripts/pot.sh"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.14.0",
-        "@playwright/test": "^1.64.1",
-        "@wordpress/scripts": "^36.1.0",
-        "@wp-playground/cli": "^3.1.58"
+        "@playwright/test": "^1.65.0",
+        "@wordpress/scripts": "^37.1.0",
+        "@wp-playground/cli": "^3.1.62"
     },
     "overrides": {
         "linkify-it": "^5.0.2",

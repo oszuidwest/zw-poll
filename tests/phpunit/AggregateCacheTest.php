@@ -36,52 +36,6 @@ final class AggregateCacheTest extends TestCase
     }
 
     #[Test]
-    public function get_returns_cached_payload(): void
-    {
-        Functions\when('get_post_meta')->justReturn([
-            'counts' => ['a' => 5, 'b' => 3],
-            'total' => 8,
-            'updated_at' => '2026-01-01 00:00:00',
-        ]);
-
-        $result = (new AggregateCache($this->repository))->get(self::POLL_ID);
-
-        $this->assertSame(['a' => 5, 'b' => 3], $result['counts']);
-        $this->assertSame(8, $result['total']);
-        $this->assertSame('2026-01-01 00:00:00', $result['updated_at']);
-    }
-
-    #[Test]
-    public function get_rebuilds_when_meta_missing(): void
-    {
-        Functions\when('get_post_meta')->justReturn('');
-        Functions\when('update_post_meta')->justReturn(true);
-        $this->repository->shouldReceive('countByOption')
-            ->once()
-            ->with(self::POLL_ID)
-            ->andReturn(['a' => 2, 'b' => 4]);
-
-        $result = (new AggregateCache($this->repository))->get(self::POLL_ID);
-
-        $this->assertSame(['a' => 2, 'b' => 4], $result['counts']);
-        $this->assertSame(6, $result['total']);
-    }
-
-    #[Test]
-    public function get_rebuilds_when_payload_malformed(): void
-    {
-        Functions\when('get_post_meta')->justReturn(['only_total' => 5]);
-        Functions\when('update_post_meta')->justReturn(true);
-        $this->repository->shouldReceive('countByOption')
-            ->once()
-            ->andReturn(['x' => 1]);
-
-        $result = (new AggregateCache($this->repository))->get(self::POLL_ID);
-        $this->assertSame(['x' => 1], $result['counts']);
-        $this->assertSame(1, $result['total']);
-    }
-
-    #[Test]
     public function rebuild_pulls_truth_from_repository(): void
     {
         Functions\when('update_post_meta')->justReturn(true);
@@ -94,6 +48,15 @@ final class AggregateCacheTest extends TestCase
 
         $this->assertSame(['a' => 10, 'b' => 7, 'c' => 3], $result['counts']);
         $this->assertSame(20, $result['total']);
+    }
+
+    #[Test]
+    public function rebuild_keeps_the_stored_aggregate_when_the_count_fails(): void
+    {
+        Functions\expect('update_post_meta')->never();
+        $this->repository->shouldReceive('countByOption')->once()->andReturn(null);
+
+        $this->assertNull((new AggregateCache($this->repository))->rebuild(self::POLL_ID));
     }
 
     #[Test]
@@ -184,13 +147,22 @@ final class AggregateCacheTest extends TestCase
     }
 
     #[Test]
-    public function increment_falls_back_to_rebuild_after_retry_failures(): void
+    public function increment_logs_and_leaves_the_aggregate_after_retry_failures(): void
     {
-        Functions\when('get_post_meta')->justReturn([
+        $stored = [
             'counts' => ['optA' => 2],
             'total' => 2,
-        ]);
-        Functions\when('update_post_meta')->justReturn(false);
+        ];
+        $previous_values = [];
+        Functions\when('get_post_meta')->justReturn($stored);
+        Functions\when('update_post_meta')->alias(
+            static function (int $post_id, string $key, array $value, mixed $previous = '') use (&$previous_values): bool {
+                $previous_values[] = $previous;
+
+                return false;
+            }
+        );
+        Functions\expect('error_log')->once()->with('zw-poll: aggregate increment failed for poll 42; run wp zw-poll rebuild 42.');
         $this->repository->shouldReceive('countByOption')
             ->once()
             ->with(self::POLL_ID)
@@ -199,7 +171,20 @@ final class AggregateCacheTest extends TestCase
         $result = (new AggregateCache($this->repository))->increment(self::POLL_ID, 'optA');
 
         $this->assertSame(['optA' => 10], $result['counts']);
-        $this->assertSame(10, $result['total']);
+        $this->assertSame(array_fill(0, 10, $stored), $previous_values);
+    }
+
+    #[Test]
+    public function increment_returns_the_attempted_payload_when_the_fallback_count_fails(): void
+    {
+        Functions\when('get_post_meta')->justReturn(['counts' => ['optA' => 2], 'total' => 2]);
+        Functions\when('update_post_meta')->justReturn(false);
+        Functions\when('error_log')->justReturn(true);
+        $this->repository->shouldReceive('countByOption')->once()->andReturn(null);
+
+        $result = (new AggregateCache($this->repository))->increment(self::POLL_ID, 'optA');
+
+        $this->assertSame(['optA' => 3], $result['counts']);
     }
 
     // Public aggregate shape shared by SSR and REST.

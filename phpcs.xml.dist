@@ -13,7 +13,7 @@
     <arg name="parallel" value="8"/>
     <arg value="sp"/>
 
-    <config name="testVersion" value="8.3-"/>
+    <config name="testVersion" value="8.4-"/>
 
     <!--
         Modern PSR-4, strict-types codebase: skip classic WordPress style sniffs

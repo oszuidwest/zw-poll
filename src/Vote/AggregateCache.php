@@ -16,7 +16,7 @@ use ZuidWest\Poll\PostType\PollPostType;
  */
 final class AggregateCache
 {
-    private const MAX_INCREMENT_ATTEMPTS = 3;
+    private const MAX_INCREMENT_ATTEMPTS = 10;
 
     /**
      * Stores the vote counter used for rebuilds.
@@ -26,27 +26,19 @@ final class AggregateCache
     public function __construct(private readonly VoteCounter $repository) {}
 
     /**
-     * Returns a cached aggregate, rebuilding missing or malformed meta.
-     *
-     * @param int $poll_id Poll post ID.
-     * @return array{counts: array<string, int>, total: int, updated_at: string}
-     */
-    public function get(int $poll_id): array
-    {
-        $stored = get_post_meta($poll_id, PollPostType::META_AGGREGATE, true);
-        return self::decode($stored) ?? $this->rebuild($poll_id);
-    }
-
-    /**
      * Reads counts without writing a missing cache (for readonly abilities).
      *
      * @param int $poll_id Poll post ID.
-     * @return array{counts: array<string, int>, total: int, updated_at: string}
+     * @return array{counts: array<string, int>, total: int, updated_at: string}|null Null when the count failed.
      */
-    public function read(int $poll_id): array
+    public function read(int $poll_id): ?array
     {
-        return self::decode(get_post_meta($poll_id, PollPostType::META_AGGREGATE, true))
-            ?? self::payload($this->repository->countByOption($poll_id));
+        $stored = self::decode(get_post_meta($poll_id, PollPostType::META_AGGREGATE, true));
+        if ($stored !== null) {
+            return $stored;
+        }
+        $counts = $this->repository->countByOption($poll_id);
+        return $counts === null ? null : self::payload($counts);
     }
 
     /**
@@ -133,11 +125,15 @@ final class AggregateCache
      * Rebuilds and persists the aggregate from the vote store.
      *
      * @param int $poll_id Poll post ID.
-     * @return array{counts: array<string, int>, total: int, updated_at: string}
+     * @return array{counts: array<string, int>, total: int, updated_at: string}|null Null when the count failed.
      */
-    public function rebuild(int $poll_id): array
+    public function rebuild(int $poll_id): ?array
     {
-        $payload = self::payload($this->repository->countByOption($poll_id));
+        $counts = $this->repository->countByOption($poll_id);
+        if ($counts === null) {
+            return null;
+        }
+        $payload = self::payload($counts);
         update_post_meta($poll_id, PollPostType::META_AGGREGATE, $payload);
         return $payload;
     }
@@ -162,7 +158,11 @@ final class AggregateCache
             wp_cache_delete($poll_id, 'post_meta');
         }
 
-        return $this->rebuild($poll_id);
+        // Rebuilding here could count votes whose own increment is still pending.
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- A skipped increment needs server-side diagnostics.
+        error_log(sprintf('zw-poll: aggregate increment failed for poll %d; run wp zw-poll rebuild %d.', $poll_id, $poll_id));
+        // Best-effort response counts, not authoritative when the count fails too.
+        return self::payload($this->repository->countByOption($poll_id) ?? $payload['counts']);
     }
 
     /**

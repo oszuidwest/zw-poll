@@ -41,12 +41,13 @@ final class CommandsTest extends TestCase
     }
 
     /** Build CLI commands over a fake tally. */
-    private function commands(array $tally = [], int|false $deleted = 0): Commands
+    private function commands(array $tally = [], int|false $deleted = 0, bool $fails = false): Commands
     {
-        $db = new class($tally, $deleted) extends wpdb {
-            public function __construct(private array $tally, private int|false $deleted)
+        $db = new class($tally, $deleted, $fails) extends wpdb {
+            public function __construct(private array $tally, private int|false $deleted, bool $fails)
             {
                 $this->prefix = 'wp_';
+                $this->queryFails = $fails;
             }
 
             public function get_results(string $query, string $output = ARRAY_A): array
@@ -90,6 +91,17 @@ final class CommandsTest extends TestCase
             [['level' => 'success', 'message' => 'Aggregaat herbouwd voor poll 42: 4 stemmen over 2 opties.']],
             WP_CLI::$log
         );
+    }
+
+    #[Test]
+    public function rebuild_aborts_when_the_count_fails(): void
+    {
+        Functions\when('get_post')->justReturn($this->poll());
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Stemmen konden niet worden geteld.');
+
+        $this->commands(fails: true)->rebuild([(string) self::POLL_ID]);
     }
 
     #[Test]
@@ -179,6 +191,25 @@ final class CommandsTest extends TestCase
         $this->assertSame(self::POLL_ID, $captured[0]['id']);
         $this->assertSame('open', $captured[0]['status']);
         $this->assertSame(2, $captured[0]['votes']);
+    }
+
+    #[Test]
+    public function list_shows_stored_counts_without_recounting_missing_meta(): void
+    {
+        Functions\when('get_posts')->justReturn([$this->poll()]);
+        Functions\when('get_post_meta')->alias(
+            static fn (int $id, string $key): mixed => $key === PollPostType::META_OPTIONS ? [['id' => 'a', 'label' => 'A']] : ''
+        );
+        $captured = [];
+        Functions\when('WP_CLI\Utils\format_items')->alias(
+            static function (string $format, array $rows) use (&$captured): void {
+                $captured = $rows;
+            }
+        );
+
+        $this->commands(tally: [['option_id' => 'a', 'c' => 5]])->list_polls([], ['format' => 'table']);
+
+        $this->assertSame(0, $captured[0]['votes']);
     }
 
     #[Test]

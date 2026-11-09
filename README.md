@@ -9,7 +9,7 @@ compatibility, and made interactive with the WordPress Interactivity API.
 | Component | Version |
 |---|---|
 | WordPress | 7.1+ |
-| PHP | 8.3+ |
+| PHP | 8.4+ |
 | Node.js | 20+ locally, 24 in CI |
 
 Node.js is only required for linting, WordPress Playground, and Playwright. The
@@ -112,6 +112,12 @@ and the next sweep. Sites that need more precise closing can run
 `zw_poll_closed` to purge caches or perform other follow-up work; the action
 receives the poll ID and its tracked content IDs. Use `rebuild` after manual
 database changes or to restore the aggregate cache from the votes table.
+
+`rebuild` and `reset`, including the reset button in wp-admin, do not wait for
+votes that are still being processed. Votes at the same moment can leave the
+total too high or too low (#71). Close the poll first, and run them only after
+every vote already in progress has finished. That usually takes a few seconds,
+but nothing enforces it.
 
 REST endpoints:
 

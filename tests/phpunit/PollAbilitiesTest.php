@@ -203,6 +203,29 @@ final class PollAbilitiesTest extends TestCase
     }
 
     #[Test]
+    public function failed_counts_return_errors_without_writing_the_aggregate(): void
+    {
+        Functions\when('get_post_meta')->justReturn('');
+        $writes = [];
+        Functions\when('update_post_meta')->alias(static function (int $id, string $key) use (&$writes): bool {
+            $writes[] = $key;
+            return true;
+        });
+        $db = new wpdb();
+        $db->queryFails = true;
+        $repository = new VoteRepository($db);
+        $cache = new AggregateCache($repository);
+        $abilities = new PollAbilities($cache, new PollReset($repository, $cache), new PollCloseSweep());
+
+        $this->assertSame('vote_count_failed', $abilities->getResults(['id' => 42])->get_error_code());
+        $this->assertSame('vote_count_failed', $abilities->rebuild(['id' => 42])->get_error_code());
+        $reset = $abilities->resetVotes(['id' => 42, 'confirm' => true]);
+        $this->assertSame('Stemmen verwijderd, maar de telling kon niet worden bijgewerkt.', $reset->get_error_message());
+        $this->assertSame(500, $reset->get_error_data()['status']);
+        $this->assertNotContains(PollPostType::META_AGGREGATE, $writes);
+    }
+
+    #[Test]
     public function direct_php_execution_accepts_numeric_strings_allowed_by_core_integer_validation(): void
     {
         Functions\when('get_post_meta')->justReturn('');
