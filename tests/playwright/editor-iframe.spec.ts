@@ -205,6 +205,29 @@ test.describe( 'Picker keyboard and iframe compatibility', () => {
 		await search.press( 'Escape' );
 		await expect( trigger ).toBeFocused();
 		await trigger.press( 'Enter' );
+		// Reopen before the queued close event of the previous close fires.
+		await page.evaluate(
+			() =>
+				new Promise( ( resolve ) => {
+					const dialog = document.querySelector(
+						'.zw-poll-picker'
+					) as HTMLDialogElement;
+					dialog.addEventListener(
+						'close',
+						() => setTimeout( resolve ),
+						{
+							once: true,
+						}
+					);
+					dialog.close();
+					(
+						document.querySelector(
+							'.mce-toolbar-grp [aria-label="Poll invoegen"]'
+						) as HTMLElement
+					 ).click();
+				} )
+		);
+		await expect( search ).toBeFocused();
 		await search.fill( 'redactie' );
 		const match = picker.locator( '.zw-poll-picker__poll' );
 		await expect( match ).toHaveCount( 1 );

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-09T08:36:49+00:00\n"
+"POT-Creation-Date: 2026-11-09T19:24:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: zw-poll\n"
@@ -188,7 +188,7 @@ msgstr ""
 #: src/Admin/PollAdminColumns.php:65
 #: src/Admin/PollMetaBoxes.php:95
 #: src/Frontend/PollRenderer.php:195
-#: src/Admin/classic-editor.js:262
+#: src/Admin/classic-editor.js:266
 msgid "Gesloten"
 msgstr ""
 
@@ -496,7 +496,7 @@ msgstr ""
 
 #: src/Block/PollBlock.php:49
 #: src/PostType/PollPostType.php:57
-#: src/Admin/classic-editor.js:258
+#: src/Admin/classic-editor.js:262
 msgid "Poll"
 msgstr ""
 
@@ -519,7 +519,7 @@ msgid "Aggregaat herbouwd voor poll %1$d: %2$d stemmen over %3$d opties."
 msgstr ""
 
 #: src/Cli/Commands.php:142
-#: src/Admin/classic-editor.js:92
+#: src/Admin/classic-editor.js:96
 msgid "Geen polls gevonden."
 msgstr ""
 
@@ -721,31 +721,31 @@ msgstr ""
 msgid "Afbeelding gebruiken"
 msgstr ""
 
-#: src/Admin/classic-editor.js:108
+#: src/Admin/classic-editor.js:112
 msgid "(zonder titel)"
 msgstr ""
 
-#: src/Admin/classic-editor.js:122
+#: src/Admin/classic-editor.js:126
 msgid "Invoegen mislukt. Kopieer de shortcode handmatig:"
 msgstr ""
 
-#: src/Admin/classic-editor.js:137
+#: src/Admin/classic-editor.js:141
 msgid "Laden…"
 msgstr ""
 
-#: src/Admin/classic-editor.js:154
+#: src/Admin/classic-editor.js:158
 msgid "Polls laden mislukt."
 msgstr ""
 
-#: src/Admin/classic-editor.js:291
+#: src/Admin/classic-editor.js:295
 msgid "Geen poll-ID opgegeven."
 msgstr ""
 
-#: src/Admin/classic-editor.js:318
+#: src/Admin/classic-editor.js:322
 msgid "Poll niet gevonden."
 msgstr ""
 
-#: src/Admin/classic-editor.js:330
+#: src/Admin/classic-editor.js:334
 msgid "Poll laden mislukt."
 msgstr ""
 

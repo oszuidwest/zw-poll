@@ -57,6 +57,10 @@
 		let requestSeq = 0;
 
 		dialog.addEventListener( 'close', () => {
+			// The close event is queued; ignore it when the picker was reopened since.
+			if ( dialog.open ) {
+				return;
+			}
 			clearTimeout( searchTimer );
 			++requestSeq;
 			pickerParent.append( dialog );
