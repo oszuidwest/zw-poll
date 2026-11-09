@@ -153,6 +153,10 @@ cookie epoch. Rebuild also refreshes its timestamp. The reset button on the
 poll edit screen calls `zw-poll/reset-votes`; WP-CLI keeps using the same
 maintenance services.
 
+The old `POST /wp-json/zw-poll/v1/poll/{id}/reset` route is removed. Use
+`POST /wp-json/wp-abilities/v1/abilities/zw-poll/reset-votes/run` with
+`{"input": {"id": 123, "confirm": true}}` instead.
+
 ## Development and testing
 
 ```bash
