@@ -26,6 +26,22 @@ final class AggregateCache
     public function __construct(private readonly VoteCounter $repository) {}
 
     /**
+     * Reads counts without writing a missing cache (for readonly abilities).
+     *
+     * @param int $poll_id Poll post ID.
+     * @return array{counts: array<string, int>, total: int, updated_at: string}|null Null when the count failed.
+     */
+    public function read(int $poll_id): ?array
+    {
+        $stored = self::decode(get_post_meta($poll_id, PollPostType::META_AGGREGATE, true));
+        if ($stored !== null) {
+            return $stored;
+        }
+        $counts = $this->repository->countByOption($poll_id);
+        return $counts === null ? null : self::payload($counts);
+    }
+
+    /**
      * Normalizes a stored aggregate meta value without rebuilding.
      *
      * @param mixed $stored Raw aggregate meta value.

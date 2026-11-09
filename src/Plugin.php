@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ZuidWest\Poll;
 
+use ZuidWest\Poll\Abilities\PollAbilities;
 use ZuidWest\Poll\Admin\ClassicEditor;
 use ZuidWest\Poll\Admin\DeleteGuard;
 use ZuidWest\Poll\Admin\PollAdminColumns;
@@ -21,7 +22,6 @@ use ZuidWest\Poll\Cli\Commands;
 use ZuidWest\Poll\Cron\PollCloseSweep;
 use ZuidWest\Poll\Frontend\Assets;
 use ZuidWest\Poll\PostType\PollPostType;
-use ZuidWest\Poll\Rest\AdminController;
 use ZuidWest\Poll\Rest\VoteController;
 use ZuidWest\Poll\Shortcode\PollShortcode;
 use ZuidWest\Poll\Support\Settings;
@@ -54,6 +54,7 @@ final class Plugin
         $repository = new VoteRepository($wpdb);
         $cache = new AggregateCache($repository);
         $resetter = new PollReset($repository, $cache);
+        (new PollAbilities($cache, $resetter, $close_sweep))->register();
         $settings = Settings::get();
 
         (new VoteController(
@@ -66,7 +67,6 @@ final class Plugin
             $repository,
             $cache,
         ))->register();
-        (new AdminController($resetter))->register();
 
         // Admin UI hooks stay out of frontend and REST requests.
         if (is_admin()) {
