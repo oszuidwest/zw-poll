@@ -1,10 +1,17 @@
 import { test, expect, Page } from '@playwright/test';
 import { login } from './utils';
 
+const UNLOAD_POLICY_VIOLATION =
+	'Permissions policy violation: unload is not allowed in this document.';
+
 function captureErrors( page: Page ): string[] {
 	const errors: string[] = [];
 	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
 	page.on( 'console', ( message ) => {
+		// WordPress core registers unload handlers that newer Chromium blocks.
+		if ( message.text() === UNLOAD_POLICY_VIOLATION ) {
+			return;
+		}
 		if ( message.type() === 'error' ) {
 			errors.push( message.text() );
 		}
