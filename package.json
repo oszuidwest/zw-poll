@@ -20,12 +20,18 @@
         "@wp-playground/cli": "^3.1.62"
     },
     "overrides": {
+        "isomorphic-git": "^1.38.6",
         "linkify-it": "^5.0.2",
         "markdown-it": "^14.3.0",
         "markdownlint-cli": {
-            "minimatch": "^3.1.5"
+            "js-yaml": "^5.4.1",
+            "smol-toml": "^1.9.0"
         },
-        "qs": "6.16.0",
-        "serialize-javascript": "^7.0.7"
+        "micromark-extension-math": {
+            "katex": "^0.18.2"
+        },
+        "minimatch@^10": "^11.0.1",
+        "qs": "^6.16.1",
+        "serialize-javascript": "^7.1.3"
     }
 }
