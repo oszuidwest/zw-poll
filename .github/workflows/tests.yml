@@ -82,7 +82,7 @@ jobs:
           if-no-files-found: error
 
   playwright:
-    name: Playwright (WordPress 7.1)
+    name: Playwright (WordPress latest)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -101,9 +101,8 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start WordPress Playground
-        env:
-          WP_VERSION: '7.1'
-        run: nohup npm run playground -- --wp="$WP_VERSION" > playground.log 2>&1 &
+        # The WordPress version comes from playground/blueprint.json.
+        run: nohup npm run playground > playground.log 2>&1 &
 
       - name: Wait for Playground to be ready
         run: |
@@ -140,7 +139,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.0
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-wp-7.1
+          name: playwright-report-wp-latest
           path: |
             playwright-report/
             test-results/
