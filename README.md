@@ -186,7 +186,7 @@ npm run test:e2e
 ```
 
 CI also runs WordPress Plugin Check, verifies the translation template, and runs
-Playwright against WordPress 7.1 and the latest WordPress release.
+Playwright against the latest WordPress release.
 
 ## Architecture
 
