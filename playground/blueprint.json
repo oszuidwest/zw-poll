@@ -5,7 +5,7 @@
         "author": "oszuidwest"
     },
     "landingPage": "/poll-demo/",
-    "preferredVersions": { "php": "8.4", "wp": "latest" },
+    "preferredVersions": { "php": "8.4", "wp": "7.1" },
     "siteOptions": {
         "blogname": "ZuidWest Poll demo",
         "permalink_structure": "/%postname%/",

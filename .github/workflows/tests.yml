@@ -101,9 +101,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start WordPress Playground
-        env:
-          WP_VERSION: '7.1'
-        run: nohup npm run playground -- --wp="$WP_VERSION" > playground.log 2>&1 &
+        run: nohup npm run playground > playground.log 2>&1 &
 
       - name: Wait for Playground to be ready
         run: |
