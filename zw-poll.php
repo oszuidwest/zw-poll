@@ -3,7 +3,7 @@
  * Plugin Name:       ZuidWest Poll
  * Plugin URI:        https://github.com/oszuidwest/zw-poll
  * Description:       Poll voor WordPress: laat lezers stemmen via een shortcode in artikelen en pagina's.
- * Version:           0.4.0
+ * Version:           0.5.0
  * Requires at least: 7.1
  * Requires PHP:      8.4
  * Author:            Streekomroep ZuidWest
